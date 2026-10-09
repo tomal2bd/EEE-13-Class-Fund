@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EEE-13 Class Fund</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #172033;
+    }
+    header {
+      background: #123c32;
+      color: white;
+      padding: 24px 18px;
+      text-align: center;
+    }
+    header h1 { margin: 0 0 8px; }
+    main {
+      width: min(92%, 650px);
+      margin: 24px auto;
+    }
+    .card {
+      background: white;
+      padding: 22px;
+      margin-bottom: 18px;
+      border-radius: 14px;
+      box-shadow: 0 3px 14px #0000000c;
+    }
+    h2 { margin-top: 0; }
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input, select {
+      border: 1px solid #cbd5e1;
+      background: white;
+    }
+    button {
+      border: 0;
+      margin-top: 16px;
+      background: #176b50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .note {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EEE-13 Class Fund</h1>
+    <p>Faridpur Engineering College</p>
+    <p>একসাথে, স্বচ্ছতার সাথে</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>স্বাগতম!</h2>
+      <p>আমাদের ব্যাচের Class Fund-এর হিসাব ও পেমেন্ট ব্যবস্থাপনা।</p>
+      <p class="note">
+        পেমেন্ট জমা দেওয়া ও হিসাব দেখার জন্য নিজের অ্যাকাউন্ট দিয়ে
+        লগইন করতে হবে।
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Student Login</h2>
+      <label for="email">ইমেইল</label>
+      <input id="email" type="email" placeholder="তোমার ইমেইল">
+
+      <label for="password">পাসওয়ার্ড</label>
+      <input id="password" type="password" placeholder="পাসওয়ার্ড">
+
+      <button type="button" onclick="alert('Login এখনো চালু করা হয়নি।')">
+        Login
+      </button>
+      <p class="note">
+        এটি প্রাথমিক ডিজাইন। Login ও database সংযোগ পরের ধাপে চালু হবে।
+      </p>
+    </section>
+  </main>
+
+  <footer>EEE-13 · Class Fund Management</footer>
+</body>
+</html>

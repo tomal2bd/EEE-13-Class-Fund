@@ -2,105 +2,415 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EEE-13 Class Fund</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f1f5f9;
-      color: #172033;
-    }
-    header {
-      background: #123c32;
-      color: white;
-      padding: 24px 18px;
-      text-align: center;
-    }
-    header h1 { margin: 0 0 8px; }
-    main {
-      width: min(92%, 650px);
-      margin: 24px auto;
-    }
-    .card {
-      background: white;
-      padding: 22px;
-      margin-bottom: 18px;
-      border-radius: 14px;
-      box-shadow: 0 3px 14px #0000000c;
-    }
-    h2 { margin-top: 0; }
-    label {
-      display: block;
-      margin: 14px 0 6px;
-      font-weight: bold;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    input, select {
-      border: 1px solid #cbd5e1;
-      background: white;
-    }
-    button {
-      border: 0;
-      margin-top: 16px;
-      background: #176b50;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .note {
-      color: #64748b;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    footer {
-      text-align: center;
-      padding: 20px;
-      color: #64748b;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EEE-13 Class Fund</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--green:#176b50;--blue:#dff4f7;--ink:#163047}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f9fb;color:var(--ink)}
+header{padding:24px 16px;text-align:center;background:#e4f6f5;border-bottom:1px solid #c5e6e6}
+header h1{margin:0 0 8px;color:#125543}
+main{width:min(100% - 24px,850px);margin:20px auto}
+.card{background:white;border:1px solid #dce9ed;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 4px 16px #18384b0b}
+h2{margin-top:0;font-size:21px}
+label{display:block;font-weight:bold;margin:12px 0 6px}
+input,select,button{width:100%;padding:12px;border-radius:9px;font-size:16px}
+input,select{border:1px solid #cad9df;background:white}
+button{border:0;background:var(--green);color:white;font-weight:bold;cursor:pointer;margin-top:12px}
+button.secondary{background:#e4f2f5;color:#16465a}
+button.danger{background:#a83232}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.hidden{display:none!important}
+.note{font-size:14px;color:#607786;line-height:1.6}
+.item{padding:12px 0;border-bottom:1px solid #e6eef1;overflow-wrap:anywhere}
+.status{font-weight:bold;color:#176b50}
+#message{padding:12px;border-radius:8px;margin:12px 0;white-space:pre-wrap}
+footer{text-align:center;padding:20px;color:#607786}
+</style>
 </head>
 <body>
-  <header>
-    <h1>EEE-13 Class Fund</h1>
-    <p>Faridpur Engineering College</p>
-    <p>একসাথে, স্বচ্ছতার সাথে</p>
-  </header>
+<header>
+  <h1>EEE-13 Class Fund</h1>
+  <div>Faridpur Engineering College</div>
+  <p>একসাথে, স্বচ্ছতার সাথে</p>
+</header>
+<main>
+  <div id="message" class="hidden"></div>
 
-  <main>
-    <section class="card">
-      <h2>স্বাগতম!</h2>
-      <p>আমাদের ব্যাচের Class Fund-এর হিসাব ও পেমেন্ট ব্যবস্থাপনা।</p>
-      <p class="note">
-        পেমেন্ট জমা দেওয়া ও হিসাব দেখার জন্য নিজের অ্যাকাউন্ট দিয়ে
-        লগইন করতে হবে।
-      </p>
-    </section>
+  <section id="auth">
+    <div class="card">
+      <h2>অ্যাকাউন্ট</h2>
+      <div class="grid">
+        <button type="button" id="loginTab">Sign In</button>
+        <button type="button" class="secondary" id="signupTab">Student Sign Up</button>
+      </div>
+      <form id="signupForm" class="hidden">
+        <label>পূর্ণ নাম</label><input id="suName" required>
+        <label>Roll Number</label><input id="suRoll" required>
+        <label>Registration Number</label><input id="suReg" required>
+        <label>Gmail / Email</label><input id="suEmail" type="email" required>
+        <label>নিজের Password</label><input id="suPassword" type="password" minlength="8" required>
+        <button>অ্যাকাউন্ট তৈরি করো</button>
+        <p class="note">নিজের পাসওয়ার্ড নিজে সেট করবে। Admin তোমার আসল Password দেখতে পারবে না।</p>
+      </form>
+      <form id="loginForm">
+        <label>Email</label><input id="liEmail" type="email" required>
+        <label>Password</label><input id="liPassword" type="password" required>
+        <button>Sign In</button>
+      </form>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>Student Login</h2>
-      <label for="email">ইমেইল</label>
-      <input id="email" type="email" placeholder="তোমার ইমেইল">
+  <section id="dashboard" class="hidden">
+    <div class="card">
+      <div class="grid">
+        <div><h2 id="welcome">Dashboard</h2><div id="roleText" class="note"></div></div>
+        <div><button id="refreshBtn" class="secondary">Refresh</button><button id="logoutBtn" class="danger">Logout</button></div>
+      </div>
+    </div>
 
-      <label for="password">পাসওয়ার্ড</label>
-      <input id="password" type="password" placeholder="পাসওয়ার্ড">
+    <div id="pendingBox" class="card hidden">
+      <h2>Approval Pending</h2>
+      <p>তোমার অ্যাকাউন্ট Admin Approve করার পর Dashboard ব্যবহার করতে পারবে। পরে Email ও Password দিয়ে Sign In করবে।</p>
+    </div>
 
-      <button type="button" onclick="alert('Login এখনো চালু করা হয়নি।')">
-        Login
-      </button>
-      <p class="note">
-        এটি প্রাথমিক ডিজাইন। Login ও database সংযোগ পরের ধাপে চালু হবে।
-      </p>
-    </section>
-  </main>
+    <div id="studentPanel" class="hidden">
+      <div class="card">
+        <h2>আমার Weekly Dues</h2><div id="myDues"></div>
+      </div>
+      <div class="card">
+        <h2>পেমেন্ট জমা দাও</h2>
+        <form id="paymentForm">
+          <label>যে সপ্তাহের পেমেন্ট</label><select id="dueSelect" required></select>
+          <label>পেমেন্ট মাধ্যম</label>
+          <select id="payMethod"><option>bKash</option><option>Nagad</option><option>Cash</option></select>
+          <label>Transaction ID (Cash হলে ফাঁকা রাখা যাবে)</label><input id="txnId">
+          <button>Payment Submit</button>
+        </form>
+        <p id="paymentNumbers" class="note"></p>
+      </div>
+      <div class="card"><h2>আমার Payment History</h2><div id="myPayments"></div></div>
+    </div>
 
-  <footer>EEE-13 · Class Fund Management</footer>
+    <div id="adminPanel" class="hidden">
+      <div class="card">
+        <h2>Admin — Student Approval</h2><div id="studentList"></div>
+      </div>
+      <div class="card">
+        <h2>Weekly Dues তৈরি</h2>
+        <form id="duesForm">
+          <label>Student</label><select id="duesStudent" required></select>
+          <label>সপ্তাহের শুরুর তারিখ</label><input id="weekStart" type="date" required>
+          <label>টাকার পরিমাণ (৳)</label><input id="dueAmount" type="number" min="0" step="0.01" required>
+          <button>Due যোগ করো</button>
+        </form>
+      </div>
+      <div class="card"><h2>Payment Verification</h2><div id="paymentList"></div></div>
+      <div class="card">
+        <h2>Income / Expense</h2>
+        <form id="categoryForm">
+          <label>নতুন Expense Category</label><input id="categoryName" required>
+          <button class="secondary">Category যোগ করো</button>
+        </form>
+        <form id="expenseForm">
+          <label>Category</label><select id="expenseCategory" required></select>
+          <label>পরিমাণ (৳)</label><input id="expenseAmount" type="number" min="0.01" step="0.01" required>
+          <label>বিবরণ</label><input id="expenseDescription" required>
+          <label>খরচের তারিখ</label><input id="expenseDate" type="date" required>
+          <label>Receipt URL (ঐচ্ছিক)</label><input id="receiptUrl" type="url">
+          <button>Expense Save</button>
+        </form>
+        <div id="expenseList"></div>
+      </div>
+      <div class="card">
+        <h2>Admin Payment Settings</h2>
+        <form id="settingsForm">
+          <label>bKash Number</label><input id="bkash">
+          <label>Nagad Number</label><input id="nagad">
+          <label>Default Weekly Amount (৳)</label><input id="weeklyAmount" type="number" min="0" step="0.01">
+          <button>Settings Save</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="ledgerPanel" class="card hidden">
+      <h2>Class Fund Ledger</h2>
+      <p id="totals"></p><h3>Approved Payments</h3><div id="ledgerIncome"></div>
+      <h3>Expenses</h3><div id="ledgerExpenses"></div>
+    </div>
+  </section>
+</main>
+<footer>EEE-13 · Class Fund Management</footer>
+
+<script>
+const SUPABASE_URL = "https://olqigxetbwgwiofxwdev.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_AlaIdoge4ijCtpITV0HBpg_U4A6YWqY";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const $ = id => document.getElementById(id);
+let user = null, profile = null, myStudent = null, allStudents = [], allCategories = [], settings = null;
+let myDuesCache = [];
+
+function msg(text, bad=false) {
+  $("message").textContent = text;
+  $("message").classList.remove("hidden");
+  $("message").style.background = bad ? "#fff0f0" : "#e8f7ee";
+}
+function clearMsg(){ $("message").classList.add("hidden"); }
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function money(n){ return "৳" + Number(n || 0).toLocaleString("en-BD"); }
+function dateText(s){ return s ? esc(String(s).slice(0,10)) : "—"; }
+async function runQuery(query) {
+  const {data,error} = await query;
+  if(error) throw error;
+  return data;
+}
+function showAuth(signup=false) {
+  $("auth").classList.remove("hidden");
+  $("dashboard").classList.add("hidden");
+  $("signupForm").classList.toggle("hidden",!signup);
+  $("loginForm").classList.toggle("hidden",signup);
+}
+$("loginTab").onclick=()=>showAuth(false);
+$("signupTab").onclick=()=>showAuth(true);
+
+$("signupForm").onsubmit=async e=>{
+  e.preventDefault();clearMsg();
+  try{
+    const full_name=$("suName").value.trim();
+    const roll_number=$("suRoll").value.trim();
+    const registration_number=$("suReg").value.trim();
+    const {data,error}=await db.auth.signUp({
+      email:$("suEmail").value.trim(),
+      password:$("suPassword").value,
+      options:{data:{full_name,roll_number,registration_number}}
+    });
+    if(error) throw error;
+    msg(data.session
+      ? "অ্যাকাউন্ট তৈরি হয়েছে। Email confirmation চালু থাকলে ইমেইল যাচাই করো।"
+      : "Sign Up গ্রহণ করা হয়েছে। Email confirmation চাইলে ইমেইল যাচাই করে তারপর Sign In করো।");
+    $("signupForm").reset();
+  }catch(err){msg(err.message,true);}
+};
+$("loginForm").onsubmit=async e=>{
+  e.preventDefault();clearMsg();
+  try{
+    const {error}=await db.auth.signInWithPassword({
+      email:$("liEmail").value.trim(),password:$("liPassword").value
+    });
+    if(error) throw error;
+    await startApp();
+  }catch(err){msg(err.message,true);}
+};
+$("logoutBtn").onclick=async()=>{
+  await db.auth.signOut();user=null;profile=null;myStudent=null;showAuth();msg("Logout হয়েছে।");
+};
+$("refreshBtn").onclick=()=>startApp().catch(e=>msg(e.message,true));
+
+async function startApp(){
+  clearMsg();
+  const {data:{user:u},error:authErr}=await db.auth.getUser();
+  if(authErr) throw authErr;
+  if(!u){showAuth();return;}
+  user=u;
+  profile=await runQuery(db.from("profiles").select("*").eq("id",user.id).maybeSingle());
+  if(!profile){throw new Error("Profile পাওয়া যায়নি। Database signup trigger ও RLS পরীক্ষা করতে হবে।");}
+  $("auth").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+  $("welcome").textContent=profile.full_name || user.email;
+  $("roleText").textContent=user.email;
+  $("studentPanel").classList.add("hidden");
+  $("adminPanel").classList.add("hidden");
+  $("pendingBox").classList.add("hidden");
+  $("ledgerPanel").classList.add("hidden");
+
+  if(profile.role==="admin"){
+    $("roleText").textContent="Admin";
+    $("adminPanel").classList.remove("hidden");
+    await loadAdmin();
+    $("ledgerPanel").classList.remove("hidden");
+    await loadLedger();
+    return;
+  }
+  if(profile.approval_status!=="approved"){
+    $("pendingBox").classList.remove("hidden");
+    return;
+  }
+  myStudent=await runQuery(db.from("students").select("*").eq("user_id",user.id).maybeSingle());
+  if(!myStudent || !myStudent.is_active){
+    $("pendingBox").classList.remove("hidden");
+    return;
+  }
+  $("studentPanel").classList.remove("hidden");
+  $("ledgerPanel").classList.remove("hidden");
+  await loadStudent();
+  await loadLedger();
+}
+
+async function loadStudent(){
+  const dues=await runQuery(db.from("weekly_dues").select("*")
+    .eq("student_id",myStudent.id).order("week_start",{ascending:false}));
+  myDuesCache=dues;
+  $("myDues").innerHTML=dues.length ? dues.map(d=>
+    `<div class="item">Week: ${dateText(d.week_start)} — <b>${money(d.amount)}</b></div>`
+  ).join("") : "<p>এখনো কোনো Due যোগ করা হয়নি।</p>";
+  $("dueSelect").innerHTML=dues.length ? dues.map(d=>
+    `<option value="${esc(d.id)}">${dateText(d.week_start)} — ${money(d.amount)}</option>`
+  ).join("") : '<option value="">কোনো Due নেই</option>';
+  const payments=await runQuery(db.from("payments").select("*")
+    .eq("student_id",myStudent.id).order("submitted_at",{ascending:false}));
+  $("myPayments").innerHTML=payments.length ? payments.map(p=>
+    `<div class="item">${esc(p.payment_method)} — ${money((dues.find(d=>d.id===p.due_id)||{}).amount||0)}
+    <br>Transaction: ${esc(p.transaction_id||"—")}<br>Status: <b>${esc(p.status)}</b></div>`
+  ).join("") : "<p>কোনো Payment নেই।</p>";
+  settings=await runQuery(db.from("class_fund_settings").select("*").eq("id",true).maybeSingle());
+  $("paymentNumbers").textContent=settings
+    ? `bKash: ${settings.bkash_number||"সেট করা হয়নি"} · Nagad: ${settings.nagad_number||"সেট করা হয়নি"}`
+    : "Payment নম্বর এখনো সেট করা হয়নি।";
+}
+$("paymentForm").onsubmit=async e=>{
+  e.preventDefault();clearMsg();
+  try{
+    if(!myStudent) throw new Error("Student profile পাওয়া যায়নি।");
+    const due_id=$("dueSelect").value;
+    if(!due_id) throw new Error("আগে Admin-কে Weekly Due যোগ করতে হবে।");
+    const payment_method=$("payMethod").value;
+    const transaction_id=$("txnId").value.trim();
+    if(payment_method!=="Cash" && !transaction_id) throw new Error("Transaction ID দাও।");
+    await runQuery(db.from("payments").insert({
+      due_id,student_id:myStudent.id,payment_method,transaction_id:transaction_id||null,status:"pending"
+    }));
+    $("paymentForm").reset();
+    msg("Payment submission হয়েছে। Admin যাচাই করার পর Status আপডেট হবে।");
+    await loadStudent();
+  }catch(err){msg(err.message,true);}
+};
+
+async function loadAdmin(){
+  allStudents=await runQuery(db.from("students").select("*").order("created_at",{ascending:false}));
+  $("studentList").innerHTML=allStudents.length ? allStudents.map(s=>
+    `<div class="item"><b>${esc(s.full_name)}</b> · Roll ${esc(s.roll_number)} · Reg ${esc(s.registration_number)}
+    <br>Status: ${s.is_active?"Approved":"Pending"}
+    ${s.is_active?"":`<button data-approve="${esc(s.id)}">Approve Student</button>`}</div>`
+  ).join("") : "<p>কোনো Student নেই।</p>";
+  $("studentList").querySelectorAll("[data-approve]").forEach(b=>b.onclick=async()=>{
+    try{
+      const s=allStudents.find(x=>x.id===b.dataset.approve);
+      await runQuery(db.from("profiles").update({approval_status:"approved"}).eq("id",s.user_id));
+      await runQuery(db.from("students").update({is_active:true}).eq("id",s.id));
+      msg("Student Approved হয়েছে।");await loadAdmin();
+    }catch(err){msg(err.message,true);}
+  });
+  $("duesStudent").innerHTML=allStudents.filter(s=>s.is_active).map(s=>
+    `<option value="${esc(s.id)}">${esc(s.full_name)} · ${esc(s.roll_number)}</option>`
+  ).join("");
+  const dues=await runQuery(db.from("weekly_dues").select("*").order("week_start",{ascending:false}));
+  const payments=await runQuery(db.from("payments").select("*").order("submitted_at",{ascending:false}));
+  $("paymentList").innerHTML=payments.length ? payments.map(p=>{
+    const s=allStudents.find(x=>x.id===p.student_id);
+    const d=dues.find(x=>x.id===p.due_id);
+    return `<div class="item"><b>${esc(s?.full_name||"Student")}</b> · ${esc(s?.roll_number||"")}
+    <br>Week: ${dateText(d?.week_start)} · ${money(d?.amount)} · ${esc(p.payment_method)}
+    <br>Transaction: ${esc(p.transaction_id||"—")} · Status: ${esc(p.status)}
+    ${p.status==="pending"?`<button data-pay="${esc(p.id)}" data-status="approved">Approve</button><button class="danger" data-pay="${esc(p.id)}" data-status="rejected">Reject</button>`:""}</div>`;
+  }).join("") : "<p>কোনো Payment নেই।</p>";
+  $("paymentList").querySelectorAll("[data-pay]").forEach(b=>b.onclick=async()=>{
+    try{
+      await runQuery(db.from("payments").update({
+        status:b.dataset.status,verified_by:user.id,verified_at:new Date().toISOString()
+      }).eq("id",b.dataset.pay));
+      msg("Payment status update হয়েছে।");await loadAdmin();await loadLedger();
+    }catch(err){msg(err.message,true);}
+  });
+  allCategories=await runQuery(db.from("expense_categories").select("*").eq("is_active",true));
+  $("expenseCategory").innerHTML=allCategories.map(c=>
+    `<option value="${esc(c.id)}">${esc(c.name)}</option>`
+  ).join("");
+  const ex=await runQuery(db.from("expenses").select("*").order("spent_at",{ascending:false}));
+  $("expenseList").innerHTML=ex.map(x=>
+    `<div class="item">${dateText(x.spent_at)} · ${money(x.amount)} · ${esc(x.description)}</div>`
+  ).join("") || "<p>কোনো Expense নেই।</p>";
+  settings=await runQuery(db.from("class_fund_settings").select("*").eq("id",true).maybeSingle());
+  if(settings){
+    $("bkash").value=settings.bkash_number||"";
+    $("nagad").value=settings.nagad_number||"";
+    $("weeklyAmount").value=settings.weekly_amount||0;
+  }
+}
+$("duesForm").onsubmit=async e=>{
+  e.preventDefault();clearMsg();
+  try{
+    await runQuery(db.from("weekly_dues").insert({
+      student_id:$("duesStudent").value,
+      week_start:$("weekStart").value,
+      amount:Number($("dueAmount").value)
+    }));
+    msg("Weekly Due যোগ হয়েছে।");$("duesForm").reset();await loadAdmin();
+  }catch(err){msg(err.message,true);}
+};
+$("categoryForm").onsubmit=async e=>{
+  e.preventDefault();clearMsg();
+  try{
+    await runQuery(db.from("expense_categories").insert({name:$("categoryName").value.trim(),is_active:true}));
+    $("categoryForm").reset();msg("Category যোগ হয়েছে।");await loadAdmin();
+  }catch(err){msg(err.message,true);}
+};
+$("expenseForm").onsubmit=async e=>{
+  e.preventDefault();clearMsg();
+  try{
+    await runQuery(db.from("expenses").insert({
+      category_id:$("expenseCategory").value,amount:Number($("expenseAmount").value),
+      description:$("expenseDescription").value.trim(),spent_at:$("expenseDate").value,
+      receipt_url:$("receiptUrl").value.trim()||null,created_by:user.id
+    }));
+    $("expenseForm").reset();msg("Expense Save হয়েছে।");await loadAdmin();await loadLedger();
+  }catch(err){msg(err.message,true);}
+};
+$("settingsForm").onsubmit=async e=>{
+  e.preventDefault();clearMsg();
+  try{
+    await runQuery(db.from("class_fund_settings").upsert({
+      id:true,bkash_number:$("bkash").value.trim(),nagad_number:$("nagad").value.trim(),
+      weekly_amount:Number($("weeklyAmount").value||0),updated_by:user.id,
+      updated_at:new Date().toISOString()
+    },{onConflict:"id"}));
+    msg("Settings Save হয়েছে।");settings=await runQuery(db.from("class_fund_settings").select("*").eq("id",true).maybeSingle());
+  }catch(err){msg(err.message,true);}
+};
+
+async function loadLedger(){
+  try{
+    const [income,expenses]=await Promise.all([
+      runQuery(db.from("public_payment_ledger").select("*").order("paid_at",{ascending:false})),
+      runQuery(db.from("public_expense_ledger").select("*").order("spent_at",{ascending:false}))
+    ]);
+    const totalIn=income.reduce((n,x)=>n+Number(x.due_amount||0),0);
+    const totalOut=expenses.reduce((n,x)=>n+Number(x.amount||0),0);
+    $("totals").textContent=`Approved contribution: ${money(totalIn)} · Expenses: ${money(totalOut)} · Difference: ${money(totalIn-totalOut)}`;
+    $("ledgerIncome").innerHTML=income.map(x=>
+      `<div class="item">${esc(x.full_name)} · Roll ${esc(x.roll_number)} · ${dateText(x.paid_at)} · ${money(x.due_amount)}</div>`
+    ).join("")||"<p>এখনো approved contribution নেই অথবা Ledger permission নেই।</p>";
+    $("ledgerExpenses").innerHTML=expenses.map(x=>
+      `<div class="item">${dateText(x.spent_at)} · ${money(x.amount)} · ${esc(x.description)}</div>`
+    ).join("")||"<p>এখনো Expense নেই অথবা Ledger permission নেই।</p>";
+  }catch(err){
+    $("totals").textContent="Ledger এখন লোড করা যায়নি। Database view permissions যাচাই করতে হবে।";
+  }
+}
+db.auth.onAuthStateChange((event,session)=>{
+  if(event==="SIGNED_OUT"){showAuth();}
+});
+(async()=>{
+  try{
+    const {data:{session}}=await db.auth.getSession();
+    if(session) await startApp();
+  }catch(err){msg(err.message,true);}
+})();
+</script>
 </body>
 </html>

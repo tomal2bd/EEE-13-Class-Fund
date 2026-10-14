@@ -23,29 +23,40 @@ input:focus{border-color:var(--g4);box-shadow:0 0 0 3px rgba(16,185,129,.18)}
 .btn.full{width:100%;padding:12px}
 .err{color:#dc2626;font-size:14px;margin:12px 0 0}
 .ok{color:#047857;font-size:14px;margin:12px 0 0}
-
-/* ---------- Login ---------- */
-.login{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
-.hero{position:relative;overflow:hidden;color:#fff;padding:48px;display:flex;align-items:center;background:linear-gradient(135deg,#022c22 0%,#064e3b 55%,#047857 100%)}
-.circuit{position:absolute;inset:0;width:100%;height:100%}
 .t{stroke-dasharray:6 10;animation:flow 1.4s linear infinite}
 @keyframes flow{to{stroke-dashoffset:-16}}
 @media (prefers-reduced-motion:reduce){.t{animation:none}}
-.hero-in{position:relative;z-index:1;max-width:540px}
-.badge{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);padding:6px 14px;border-radius:999px;font-size:13px;letter-spacing:.4px}
-.big{font-size:88px;font-weight:800;line-height:1;margin:20px 0 10px;letter-spacing:-2px}
-.big span{color:#34d399}
-.dept{font-size:18px;opacity:.92}
-.college{font-size:24px;font-weight:700;margin:6px 0 22px;color:#a7f3d0}
-.tag{font-size:17px;opacity:.9;margin:0 0 22px}
-.feats{list-style:none;padding:0;margin:0;display:grid;gap:12px}
-.feats li{display:flex;gap:10px;align-items:center;font-size:15px}
-.feats b{width:22px;height:22px;border-radius:50%;background:#34d399;color:#064e3b;display:grid;place-items:center;font-size:13px;flex-shrink:0}
-.formside{display:flex;align-items:center;justify-content:center;padding:32px;background:#fff}
-.lcard{width:100%;max-width:380px}
-.lcard h1{font-size:28px;margin:0 0 6px;color:var(--g2)}
-.lcard p.sub{color:var(--m);margin:0 0 26px;font-size:14px}
-.note{margin-top:22px;font-size:12px;color:var(--m);text-align:center}
+
+/* ---------- Auth ---------- */
+.auth{min-height:100vh;background:#f4faf7;background-image:radial-gradient(#cfe8dc 1.3px,transparent 1.3px);background-size:28px 28px;padding-bottom:40px;position:relative}
+.ahead{display:flex;align-items:center;gap:14px;background:#fff;border-bottom:1px solid #d7ece3;padding:14px 32px}
+.logo13{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--g3),var(--g5));color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px}
+.atitle{font-size:20px;font-weight:800;color:var(--g1)}
+.asub{font-size:12px;color:var(--m)}
+.banner{position:relative;overflow:hidden;max-width:1100px;margin:28px auto 0;padding:28px 32px;border-radius:22px;background:linear-gradient(135deg,#ecfdf5,#f0fdfa);border:1px solid #b7e4d0;box-shadow:0 8px 30px rgba(5,150,105,.08)}
+.bcircuit{position:absolute;right:0;top:0;height:100%;width:60%}
+.bwm{position:absolute;right:40px;bottom:-6px;font-size:120px;font-weight:800;color:rgba(16,185,129,.09);letter-spacing:4px;line-height:1;pointer-events:none}
+.bin{position:relative;z-index:1;max-width:620px}
+.chip{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid #b7e4d0;border-radius:999px;padding:6px 16px 6px 6px;margin-bottom:14px}
+.chip b{background:linear-gradient(135deg,var(--g3),var(--g5));color:#fff;padding:7px 12px;border-radius:999px;font-size:15px;letter-spacing:1px}
+.chip span{font-weight:700;color:var(--g3);letter-spacing:1.5px;font-size:13px}
+.banner h2{font-size:34px;margin:0 0 8px;color:var(--g1)}
+.banner p{margin:0;color:var(--m);font-size:15px;line-height:1.6}
+.awrap{display:flex;justify-content:center;padding:28px 16px 0}
+.acard{position:relative;width:100%;max-width:470px;background:#fff;border-radius:24px;border:1px solid #bfe8d4;box-shadow:0 14px 40px rgba(5,150,105,.12);padding:36px 32px 28px}
+.acard::before{content:"";position:absolute;inset:9px;border:1px dashed #b7e4d0;border-radius:18px;pointer-events:none}
+.seal{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--g3),var(--g5));color:#fff;display:grid;place-items:center;font-size:26px;margin:-66px auto 12px;border:5px solid #f4faf7}
+.acard h1{text-align:center;font-size:24px;margin:0 0 4px;color:var(--g1)}
+.acard .sub{text-align:center;color:var(--m);font-size:14px;margin:0 0 18px}
+.tabs{display:flex;background:#eaf5ef;border:1px solid #d7ece3;border-radius:14px;padding:5px;gap:5px;margin-bottom:18px}
+.tab{flex:1;padding:11px;background:none;border:0;border-radius:10px;font-weight:600;color:#3f5f52;cursor:pointer;font-size:14px}
+.tab.on{background:#fff;color:var(--g3);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.roles{display:flex;gap:8px;margin-bottom:16px}
+.rbtn{flex:1;padding:9px;border:1px solid #cbd5e1;background:#fff;border-radius:10px;font-weight:600;font-size:13px;color:var(--m);cursor:pointer}
+.rbtn.on{background:var(--g6);border-color:var(--g5);color:var(--g3)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sidetxt{position:absolute;top:50%;writing-mode:vertical-rl;letter-spacing:12px;font-weight:800;color:rgba(16,185,129,.28);font-size:14px;transform:translateY(-50%)}
+.sidetxt.l{left:24px}.sidetxt.r{right:24px}
 
 /* ---------- App ---------- */
 .app{display:flex;min-height:100vh}
@@ -62,7 +73,7 @@ input:focus{border-color:var(--g4);box-shadow:0 0 0 3px rgba(16,185,129,.18)}
 .top h1{font-size:20px;margin:0}
 .user{display:flex;align-items:center;gap:12px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--g6);color:var(--g3);display:grid;place-items:center;font-weight:700;flex-shrink:0}
-.role{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--g6);color:var(--g3);font-weight:600;text-transform:capitalize}
+.rolepill{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--g6);color:var(--g3);font-weight:600;text-transform:capitalize}
 .who{font-size:13px;color:var(--m)}
 .pad{padding:24px}
 .card{background:#fff;border:1px solid var(--b);border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(15,23,42,.04);margin-bottom:20px}
@@ -73,6 +84,7 @@ input:focus{border-color:var(--g4);box-shadow:0 0 0 3px rgba(16,185,129,.18)}
 .ico.in{background:#d1fae5;color:#047857}
 .ico.out{background:#fee2e2;color:#dc2626}
 .ico.bal{background:rgba(255,255,255,.22);color:#fff}
+.ico.stu{background:#e0f2fe;color:#0369a1}
 .stat.hl{background:linear-gradient(135deg,var(--g3),var(--g5));color:#fff;border:0}
 .lbl{font-size:13px;color:var(--m)}
 .hl .lbl{color:#d1fae5}
@@ -91,18 +103,21 @@ th{background:#f8fafc;color:var(--m);font-size:12px;text-transform:uppercase;let
 .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
 .pill.ok{background:#d1fae5;color:#047857}
 .pill.no{background:#fee2e2;color:#dc2626}
-.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:6px}
-.form input{margin:0}
-.form+button{margin-top:6px}
+.prof{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.bigav{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--g3),var(--g5));color:#fff;display:grid;place-items:center;font-size:26px;font-weight:700}
+.pname{font-size:20px;font-weight:700}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.pv{font-size:16px;font-weight:600;margin-top:2px}
 a{color:var(--g3)}
 
-@media(max-width:860px){
-.login{grid-template-columns:1fr}
-.hero{padding:32px 24px}
-.big{font-size:60px}
-.feats{display:none}
-}
+@media(max-width:900px){.sidetxt{display:none}}
 @media(max-width:800px){
+.ahead{padding:12px 16px}
+.banner{margin:18px 12px 0;padding:22px 18px}
+.banner h2{font-size:26px}
+.bwm{font-size:64px}
+.bcircuit{opacity:.5}
+.two{grid-template-columns:1fr}
 .app{display:block}
 .side{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;height:auto;flex-direction:row;padding:6px;z-index:10;border-top:1px solid rgba(255,255,255,.15)}
 .brand,.side-foot{display:none}
@@ -117,54 +132,77 @@ a{color:var(--g3)}
 </head>
 <body>
 
-<!-- ================= LOGIN ================= -->
-<div class="login" id="login-view">
-  <div class="hero">
-    <svg class="circuit" viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <g fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".55">
-        <path class="t" d="M0 120H140V220H300V300"/>
-        <path class="t" d="M800 90H620V200H520V320"/>
-        <path class="t" d="M0 460H90V560H260V640H380V720"/>
-        <path class="t" d="M800 560H700V680H560V780H430"/>
-        <path class="t" d="M220 900V800H330V740"/>
-        <path class="t" d="M420 0V70H480V170"/>
-        <circle cx="300" cy="300" r="6"/><circle cx="520" cy="320" r="6"/>
-        <circle cx="380" cy="720" r="6"/><circle cx="430" cy="780" r="6"/>
-        <circle cx="480" cy="170" r="6"/><circle cx="330" cy="740" r="6"/>
-      </g>
-      <g fill="none" stroke="#a7f3d0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5">
-        <path d="M60 340h30l8-16 16 32 16-32 16 32 16-32 8 16h30"/>
-        <path d="M560 440h40M600 420v40M620 420v40M620 440h40"/>
-        <path d="M90 760h20a14 14 0 0 1 28 0a14 14 0 0 1 28 0a14 14 0 0 1 28 0a14 14 0 0 1 28 0h20"/>
-        <path d="M520 60q25-40 50 0t50 0t50 0"/>
-        <path d="M700 300l-30 50h25l-15 45 40-60h-25z"/>
-        <path d="M700 820v-30M680 820h40M688 832h24M696 844h8"/>
+<!-- ================= AUTH ================= -->
+<div class="auth" id="login-view">
+  <div class="sidetxt l">E E E</div>
+  <div class="sidetxt r">1 3</div>
+  <header class="ahead">
+    <div class="logo13">13</div>
+    <div>
+      <div class="atitle">EEE-13 Class Fund</div>
+      <div class="asub">Faridpur Engineering College · Transparent by design</div>
+    </div>
+  </header>
+
+  <section class="banner">
+    <svg class="bcircuit" viewBox="0 0 600 240" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+      <g fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".45">
+        <path class="t" d="M600 40H470V100H380V170"/>
+        <path class="t" d="M600 170H520V215H420"/>
+        <path class="t" d="M300 0V50H360V90"/>
+        <circle cx="380" cy="170" r="5"/><circle cx="420" cy="215" r="5"/><circle cx="360" cy="90" r="5"/>
+        <path d="M430 60h20l6-12 12 24 12-24 12 24 12-24 6 12h20"/>
+        <path d="M250 130q20-30 40 0t40 0t40 0"/>
+        <path d="M545 90l-18 30h15l-9 28 24-36h-15z"/>
       </g>
     </svg>
-    <div class="hero-in">
-      <span class="badge">⚡ Electrical &amp; Electronic Engineering</span>
-      <div class="big">EEE<span>-13</span></div>
-      <div class="dept">Department of Electrical &amp; Electronic Engineering</div>
-      <div class="college">Faridpur Engineering College</div>
-      <p class="tag">Transparent funding. Verified ledger.</p>
-      <ul class="feats">
-        <li><b>✓</b>Every approved contribution is public</li>
-        <li><b>✓</b>Payments verified manually by the CR</li>
-        <li><b>✓</b>Complete audit trail for every change</li>
-      </ul>
+    <div class="bwm">EEE-13</div>
+    <div class="bin">
+      <div class="chip"><b>EEE-13</b><span>CLASS FINANCE</span></div>
+      <h2>Together, with transparency.</h2>
+      <p>Track class contributions, payments, and expenses in one place with clear and accountable management.</p>
     </div>
-  </div>
-  <div class="formside">
-    <div class="lcard">
-      <h1>Welcome back</h1>
-      <p class="sub">Sign in to the EEE-13 Class Fund portal</p>
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="username">
-      <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Your password" autocomplete="current-password">
-      <button class="btn full" id="login-btn">Login</button>
+  </section>
+
+  <div class="awrap">
+    <div class="acard">
+      <div class="seal">⚡</div>
+      <h1>Welcome to Class Fund</h1>
+      <p class="sub" id="auth-sub">Sign in to your account</p>
+      <div class="tabs">
+        <button class="tab on" id="tab-in">Sign In</button>
+        <button class="tab" id="tab-up">Student Sign Up</button>
+      </div>
+
+      <div id="form-in">
+        <div class="roles">
+          <button class="rbtn on" data-role="student">Student</button>
+          <button class="rbtn" data-role="admin">Admin</button>
+        </div>
+        <label for="in-email">Email address</label>
+        <input id="in-email" type="email" placeholder="you@example.com" autocomplete="username">
+        <label for="in-password">Password</label>
+        <input id="in-password" type="password" placeholder="Your password" autocomplete="current-password">
+        <button class="btn full" id="login-btn">Sign In</button>
+      </div>
+
+      <div id="form-up" hidden>
+        <label for="u-name">Full name</label>
+        <input id="u-name" placeholder="Your full name" autocomplete="name">
+        <div class="two">
+          <div><label for="u-roll">Class roll</label><input id="u-roll" placeholder="e.g. 25"></div>
+          <div><label for="u-reg">Registration no</label><input id="u-reg" placeholder="Registration number"></div>
+        </div>
+        <label for="u-email">Email address</label>
+        <input id="u-email" type="email" placeholder="you@example.com" autocomplete="email">
+        <div class="two">
+          <div><label for="u-pass">Password</label><input id="u-pass" type="password" placeholder="Min 8 characters" autocomplete="new-password"></div>
+          <div><label for="u-pass2">Confirm password</label><input id="u-pass2" type="password" placeholder="Repeat password" autocomplete="new-password"></div>
+        </div>
+        <button class="btn full" id="signup-btn">Create Account</button>
+      </div>
+
       <p class="err" id="message"></p>
-      <p class="note">Students: use the email and password given by your CR.</p>
     </div>
   </div>
 </div>
@@ -180,7 +218,7 @@ a{color:var(--g3)}
     <div class="top">
       <h1 id="title">Overview</h1>
       <div class="user">
-        <span class="role" id="role"></span>
+        <span class="rolepill" id="role"></span>
         <span class="who" id="who"></span>
         <div class="avatar" id="avatar"></div>
         <button class="btn ghost" id="logout-btn">Logout</button>
@@ -193,6 +231,7 @@ a{color:var(--g3)}
           <div class="card stat"><div class="ico in">↓</div><div><div class="lbl">Total Contributions</div><div class="val" id="c-in">-</div></div></div>
           <div class="card stat"><div class="ico out">↑</div><div><div class="lbl">Total Expenses</div><div class="val" id="c-out">-</div></div></div>
           <div class="card stat hl"><div class="ico bal">৳</div><div><div class="lbl">Current Balance</div><div class="val" id="c-bal">-</div></div></div>
+          <div class="card stat" id="card-stu" hidden><div class="ico stu">★</div><div><div class="lbl">Registered Students</div><div class="val" id="c-stu">-</div></div></div>
         </div>
         <div class="card">
           <h2>Weekly Contributions</h2>
@@ -200,7 +239,31 @@ a{color:var(--g3)}
         </div>
         <div class="card" id="student-note" hidden>
           <h2>My Payments</h2>
-          <p class="empty">Your personal payment status and payment submission will appear here in the next update.</p>
+          <p class="empty">Payment submission and your personal payment status will appear here in the next update.</p>
+        </div>
+      </section>
+
+      <section id="page-profile" hidden>
+        <div class="card">
+          <div class="prof">
+            <div class="bigav" id="p-avatar">?</div>
+            <div><div class="pname" id="p-name">-</div><div class="lbl" id="p-email">-</div></div>
+          </div>
+          <div class="grid2">
+            <div><div class="lbl">Class Roll</div><div class="pv" id="p-roll">-</div></div>
+            <div><div class="lbl">Registration No</div><div class="pv" id="p-reg">-</div></div>
+            <div><div class="lbl">Joined</div><div class="pv" id="p-joined">-</div></div>
+            <div><div class="lbl">Account type</div><div class="pv">Student</div></div>
+          </div>
+          <p class="empty" id="p-note"></p>
+        </div>
+      </section>
+
+      <section id="page-students" hidden>
+        <div class="card">
+          <h2>Registered Students</h2>
+          <p class="err" id="s-msg"></p>
+          <div class="scroll"><table><thead><tr><th>Name</th><th>Class Roll</th><th>Registration No</th><th>Email</th><th>Status</th><th>Joined</th></tr></thead><tbody id="t-students"></tbody></table></div>
         </div>
       </section>
 
@@ -213,24 +276,6 @@ a{color:var(--g3)}
         <div class="card">
           <h2>Expenses</h2>
           <div class="scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-out"></tbody></table></div>
-        </div>
-      </section>
-
-      <section id="page-students" hidden>
-        <div class="card">
-          <h2>Add Student</h2>
-          <div class="form">
-            <input id="s-name" placeholder="Full name">
-            <input id="s-roll" placeholder="Roll no">
-            <input id="s-email" type="email" placeholder="Email">
-            <input id="s-phone" placeholder="Phone">
-          </div>
-          <button class="btn" id="s-add">Add Student</button>
-          <p id="s-msg"></p>
-        </div>
-        <div class="card">
-          <h2>All Students</h2>
-          <div class="scroll"><table><thead><tr><th>Name</th><th>Roll</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead><tbody id="t-students"></tbody></table></div>
         </div>
       </section>
 
@@ -250,15 +295,32 @@ const money = n => '৳' + Number(n || 0).toLocaleString('en-US', { minimumFract
 const ICON = {
   grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
   users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
   book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'
 };
 const NAV = {
   admin: [['overview', 'Overview', 'grid'], ['students', 'Students', 'users'], ['ledger', 'Public Ledger', 'book']],
-  student: [['overview', 'My Overview', 'grid'], ['ledger', 'Public Ledger', 'book']]
+  student: [['overview', 'My Overview', 'grid'], ['profile', 'My Profile', 'user'], ['ledger', 'Public Ledger', 'book']]
 };
-const TITLE = { overview: 'Overview', ledger: 'Public Ledger', students: 'Students' };
-const PAGES = ['overview', 'ledger', 'students'];
+const TITLE = { overview: 'Overview', profile: 'My Profile', students: 'Students', ledger: 'Public Ledger' };
+const PAGES = ['overview', 'profile', 'students', 'ledger'];
 let contribs = [];
+let loginRole = 'student';
+
+function setMsg(text, good) {
+  const m = $('message');
+  m.className = good ? 'ok' : 'err';
+  m.textContent = text || '';
+}
+
+function setTab(t) {
+  $('form-in').hidden = t !== 'in';
+  $('form-up').hidden = t !== 'up';
+  $('tab-in').classList.toggle('on', t === 'in');
+  $('tab-up').classList.toggle('on', t === 'up');
+  $('auth-sub').textContent = t === 'in' ? 'Sign in to your account' : 'Create your student account';
+  setMsg('');
+}
 
 function buildNav(role) {
   const nav = $('nav');
@@ -359,67 +421,119 @@ async function loadData() {
   fill($('t-out'), o.data || [], [r => r.expense_date, r => r.reason, r => r.category || '-', r => money(r.amount), r => receiptCell(r.receipt_url)], 'No records yet');
 }
 
-async function loadStudents() {
+async function loadStudentsList() {
+  $('s-msg').textContent = '';
   const r = await db.from('students').select('*').order('created_at', { ascending: false });
-  if (r.error) { $('s-msg').className = 'err'; $('s-msg').textContent = 'Could not load students: ' + r.error.message; return; }
-  fill($('t-students'), r.data || [], [x => x.full_name, x => x.roll_no || '-', x => x.email || '-', x => x.phone || '-', x => pill(x.is_active ? 'Active' : 'Inactive', x.is_active)], 'No students yet');
+  if (r.error) { $('s-msg').textContent = 'Could not load students: ' + r.error.message; return; }
+  const list = r.data || [];
+  $('c-stu').textContent = list.length;
+  fill($('t-students'), list, [
+    x => x.full_name || '-', x => x.roll_no || '-', x => x.registration_no || '-', x => x.email || '-',
+    x => pill(x.is_active ? 'Active' : 'Inactive', x.is_active), x => String(x.created_at).slice(0, 10)
+  ], 'No students have signed up yet');
 }
 
-async function showApp(user) {
+async function loadProfile(user, email) {
+  const r = await db.from('students').select('*').eq('profile_id', user.id).maybeSingle();
+  $('p-email').textContent = email;
+  if (r.error || !r.data) {
+    $('p-note').textContent = r.error ? 'Could not load your profile: ' + r.error.message : 'No student record found for this account.';
+    return;
+  }
+  $('p-note').textContent = '';
+  $('p-name').textContent = r.data.full_name || '-';
+  $('p-avatar').textContent = (r.data.full_name || '?').charAt(0).toUpperCase();
+  $('p-roll').textContent = r.data.roll_no || '-';
+  $('p-reg').textContent = r.data.registration_no || '-';
+  $('p-joined').textContent = String(r.data.created_at).slice(0, 10);
+}
+
+async function showApp(user, expected) {
   const p = await db.from('profiles').select('email, role').eq('id', user.id).single();
   if (p.error || !p.data) {
-    $('message').textContent = 'Profile not found: ' + (p.error ? p.error.message : 'no data');
+    setMsg('Profile not found: ' + (p.error ? p.error.message : 'no data'));
     await db.auth.signOut(); return;
   }
   const role = p.data.role === 'admin' ? 'admin' : 'student';
+  if (expected && expected !== role) {
+    await db.auth.signOut();
+    setMsg('This is a ' + role + ' account. Please choose "' + (role === 'admin' ? 'Admin' : 'Student') + '" above and sign in again.');
+    return;
+  }
   $('role').textContent = role;
   $('who').textContent = p.data.email;
   $('avatar').textContent = (p.data.email || '?').charAt(0).toUpperCase();
   $('student-note').hidden = role === 'admin';
+  $('card-stu').hidden = role !== 'admin';
   buildNav(role);
   $('login-view').hidden = true;
   $('app-view').hidden = false;
   showPage('overview');
   await loadData();
-  if (role === 'admin') await loadStudents();
+  if (role === 'admin') await loadStudentsList(); else await loadProfile(user, p.data.email);
 }
 
 async function doLogin() {
   const btn = $('login-btn');
-  $('message').textContent = '';
+  setMsg('');
   btn.disabled = true; btn.textContent = 'Signing in...';
-  const r = await db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
-  btn.disabled = false; btn.textContent = 'Login';
-  if (r.error) { $('message').textContent = 'Login failed: ' + r.error.message; return; }
-  await showApp(r.data.user);
+  const r = await db.auth.signInWithPassword({ email: $('in-email').value.trim(), password: $('in-password').value });
+  btn.disabled = false; btn.textContent = 'Sign In';
+  if (r.error) { setMsg('Sign in failed: ' + r.error.message); return; }
+  await showApp(r.data.user, loginRole);
 }
 
+async function doSignup() {
+  const name = $('u-name').value.trim();
+  const roll = $('u-roll').value.trim();
+  const reg = $('u-reg').value.trim();
+  const email = $('u-email').value.trim();
+  const pw = $('u-pass').value;
+  const pw2 = $('u-pass2').value;
+  setMsg('');
+  if (!name || !roll || !reg || !email || !pw) { setMsg('Please fill in all fields.'); return; }
+  if (pw.length < 8) { setMsg('Password must be at least 8 characters.'); return; }
+  if (pw !== pw2) { setMsg('Passwords do not match.'); return; }
+  const btn = $('signup-btn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  const r = await db.auth.signUp({
+    email, password: pw,
+    options: { data: { full_name: name, class_roll: roll, registration_no: reg } }
+  });
+  btn.disabled = false; btn.textContent = 'Create Account';
+  if (r.error) {
+    const m = r.error.message || '';
+    if (/database error/i.test(m)) setMsg('Could not create the account. This registration number may already be registered.');
+    else if (/already registered/i.test(m)) setMsg('This email is already registered. Please sign in instead.');
+    else if (/rate limit/i.test(m)) setMsg('Too many attempts. Please wait a while and try again.');
+    else setMsg('Sign up failed: ' + m);
+    return;
+  }
+  if (!r.data.session) {
+    setMsg('Account created, but Supabase still requires email confirmation. The "Confirm email" setting must be turned off.');
+    return;
+  }
+  await showApp(r.data.user, 'student');
+}
+
+$('tab-in').addEventListener('click', () => setTab('in'));
+$('tab-up').addEventListener('click', () => setTab('up'));
+document.querySelectorAll('.rbtn').forEach(b => b.addEventListener('click', () => {
+  loginRole = b.dataset.role;
+  document.querySelectorAll('.rbtn').forEach(x => x.classList.toggle('on', x === b));
+}));
 $('login-btn').addEventListener('click', doLogin);
-$('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('signup-btn').addEventListener('click', doSignup);
+$('in-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('u-pass2').addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
 $('search').addEventListener('input', drawContribs);
 
 $('logout-btn').addEventListener('click', async () => {
   await db.auth.signOut();
-  $('password').value = '';
+  ['in-password', 'u-pass', 'u-pass2'].forEach(id => { $(id).value = ''; });
   $('app-view').hidden = true;
   $('login-view').hidden = false;
-});
-
-$('s-add').addEventListener('click', async () => {
-  const msg = $('s-msg');
-  msg.className = ''; msg.textContent = '';
-  const name = $('s-name').value.trim();
-  if (!name) { msg.className = 'err'; msg.textContent = 'Full name is required.'; return; }
-  const r = await db.from('students').insert({
-    full_name: name,
-    roll_no: $('s-roll').value.trim() || null,
-    email: $('s-email').value.trim() || null,
-    phone: $('s-phone').value.trim() || null
-  });
-  if (r.error) { msg.className = 'err'; msg.textContent = 'Could not add student: ' + r.error.message; return; }
-  ['s-name', 's-roll', 's-email', 's-phone'].forEach(id => { $(id).value = ''; });
-  msg.className = 'ok'; msg.textContent = 'Student added.';
-  await loadStudents();
+  setTab('in');
 });
 
 db.auth.getSession().then(({ data }) => { if (data.session) showApp(data.session.user); });

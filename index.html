@@ -3,105 +3,237 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EEE-13 Class Fund</title>
+<meta name="theme-color" content="#064e3b">
+<title>EEE-13 Class Fund | Faridpur Engineering College</title>
 <style>
-:root{--g:#059669;--gd:#047857;--bg:#f0fdf4;--t:#111827;--m:#6b7280;--b:#e5e7eb}
+:root{--g1:#022c22;--g2:#064e3b;--g3:#047857;--g4:#059669;--g5:#10b981;--g6:#d1fae5;--bg:#f3f8f6;--t:#0f172a;--m:#64748b;--b:#e2e8f0}
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--t)}
+body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--t)}
 [hidden]{display:none!important}
-.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
-.card{background:#fff;border:1px solid var(--b);border-radius:12px;padding:20px}
-.login .card{width:100%;max-width:360px;padding:32px}
-h1{color:var(--gd);margin:0 0 4px;font-size:24px}
-h2{font-size:18px;margin:0 0 12px}
-.sub{color:var(--m);margin:0 0 20px;font-size:14px}
-input{width:100%;padding:10px;margin-bottom:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
-button{padding:10px 16px;background:var(--g);color:#fff;border:0;border-radius:8px;font-size:14px;cursor:pointer}
-button:hover{background:var(--gd)}
-.full{width:100%}
-.err{color:#b91c1c;font-size:14px;margin-top:12px}
-.ok{color:#047857;font-size:14px;margin-top:12px}
+button,input{font-family:inherit}
+h2{font-size:16px;margin:0 0 14px}
+label{display:block;font-size:13px;font-weight:600;margin:0 0 6px}
+input{width:100%;padding:11px 12px;margin-bottom:14px;border:1px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;background:#fff}
+input:focus{border-color:var(--g4);box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+.btn{padding:10px 18px;background:var(--g4);color:#fff;border:0;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--g3)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:#fff;color:var(--t);border:1px solid var(--b)}
+.btn.ghost:hover{background:#f1f5f9}
+.btn.full{width:100%;padding:12px}
+.err{color:#dc2626;font-size:14px;margin:12px 0 0}
+.ok{color:#047857;font-size:14px;margin:12px 0 0}
+
+/* ---------- Login ---------- */
+.login{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.hero{position:relative;overflow:hidden;color:#fff;padding:48px;display:flex;align-items:center;background:linear-gradient(135deg,#022c22 0%,#064e3b 55%,#047857 100%)}
+.circuit{position:absolute;inset:0;width:100%;height:100%}
+.t{stroke-dasharray:6 10;animation:flow 1.4s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion:reduce){.t{animation:none}}
+.hero-in{position:relative;z-index:1;max-width:540px}
+.badge{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);padding:6px 14px;border-radius:999px;font-size:13px;letter-spacing:.4px}
+.big{font-size:88px;font-weight:800;line-height:1;margin:20px 0 10px;letter-spacing:-2px}
+.big span{color:#34d399}
+.dept{font-size:18px;opacity:.92}
+.college{font-size:24px;font-weight:700;margin:6px 0 22px;color:#a7f3d0}
+.tag{font-size:17px;opacity:.9;margin:0 0 22px}
+.feats{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.feats li{display:flex;gap:10px;align-items:center;font-size:15px}
+.feats b{width:22px;height:22px;border-radius:50%;background:#34d399;color:#064e3b;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.formside{display:flex;align-items:center;justify-content:center;padding:32px;background:#fff}
+.lcard{width:100%;max-width:380px}
+.lcard h1{font-size:28px;margin:0 0 6px;color:var(--g2)}
+.lcard p.sub{color:var(--m);margin:0 0 26px;font-size:14px}
+.note{margin-top:22px;font-size:12px;color:var(--m);text-align:center}
+
+/* ---------- App ---------- */
 .app{display:flex;min-height:100vh}
-.side{width:220px;background:#fff;border-right:1px solid var(--b);padding:20px 12px;flex-shrink:0}
-.brand{color:var(--gd);font-weight:bold;font-size:18px;padding:0 8px 16px}
-.nav{display:block;width:100%;text-align:left;background:none;color:var(--t);margin-bottom:4px}
-.nav:hover,.nav.on{background:#d1fae5;color:var(--gd)}
+.side{width:240px;background:linear-gradient(180deg,var(--g1),var(--g2));color:#fff;padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;flex-shrink:0}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 22px;font-weight:700;font-size:17px}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--g5);display:grid;place-items:center;font-size:18px}
+.nav{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;margin-bottom:4px;background:none;border:0;border-radius:10px;color:#a7f3d0;font-size:14px;cursor:pointer;text-align:left}
+.nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nav:hover{background:rgba(255,255,255,.09)}
+.nav.on{background:#fff;color:var(--g3);font-weight:600}
+.side-foot{margin-top:auto;font-size:12px;color:#6ee7b7;padding:8px}
 .main{flex:1;min-width:0}
-.top{display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--b);padding:12px 20px;gap:12px}
-.who{font-size:14px;color:var(--m)}
-.pad{padding:20px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
-.lbl{color:var(--m);font-size:13px}
-.val{font-size:26px;font-weight:bold;color:var(--gd);margin-top:6px}
-.scroll{overflow-x:auto;margin-bottom:20px}
-.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px}
-.form input{margin-bottom:0}
+.top{display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--b);padding:14px 24px;position:sticky;top:0;z-index:5;gap:12px}
+.top h1{font-size:20px;margin:0}
+.user{display:flex;align-items:center;gap:12px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--g6);color:var(--g3);display:grid;place-items:center;font-weight:700;flex-shrink:0}
+.role{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--g6);color:var(--g3);font-weight:600;text-transform:capitalize}
+.who{font-size:13px;color:var(--m)}
+.pad{padding:24px}
+.card{background:#fff;border:1px solid var(--b);border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(15,23,42,.04);margin-bottom:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px}
+.cards .card{margin-bottom:0}
+.stat{display:flex;gap:14px;align-items:center}
+.ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:20px;font-weight:700;flex-shrink:0}
+.ico.in{background:#d1fae5;color:#047857}
+.ico.out{background:#fee2e2;color:#dc2626}
+.ico.bal{background:rgba(255,255,255,.22);color:#fff}
+.stat.hl{background:linear-gradient(135deg,var(--g3),var(--g5));color:#fff;border:0}
+.lbl{font-size:13px;color:var(--m)}
+.hl .lbl{color:#d1fae5}
+.val{font-size:26px;font-weight:700;margin-top:2px}
+.bars{display:flex;align-items:flex-end;gap:10px;height:170px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:var(--m)}
+.bar div{width:100%;max-width:40px;background:linear-gradient(180deg,var(--g5),var(--g3));border-radius:8px 8px 0 0;min-height:3px}
+.bar span{margin-top:6px}
+.empty{color:var(--m);font-size:14px}
+.tools{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.tools input{max-width:280px;margin:0}
+.scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:8px;border-bottom:1px solid var(--b);white-space:nowrap}
-th{color:var(--m);font-weight:600}
-@media(max-width:700px){
-.app{flex-direction:column}
-.side{width:100%;display:flex;gap:6px;align-items:center;padding:10px;border-right:0;border-bottom:1px solid var(--b);overflow-x:auto}
-.brand{padding:0 8px 0 0;white-space:nowrap}
-.nav{width:auto;margin:0;white-space:nowrap}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--b);white-space:nowrap}
+th{background:#f8fafc;color:var(--m);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.ok{background:#d1fae5;color:#047857}
+.pill.no{background:#fee2e2;color:#dc2626}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:6px}
+.form input{margin:0}
+.form+button{margin-top:6px}
+a{color:var(--g3)}
+
+@media(max-width:860px){
+.login{grid-template-columns:1fr}
+.hero{padding:32px 24px}
+.big{font-size:60px}
+.feats{display:none}
+}
+@media(max-width:800px){
+.app{display:block}
+.side{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;height:auto;flex-direction:row;padding:6px;z-index:10;border-top:1px solid rgba(255,255,255,.15)}
+.brand,.side-foot{display:none}
+.side nav{display:flex;width:100%;gap:4px}
+.nav{flex:1;flex-direction:column;gap:3px;font-size:11px;padding:8px 4px;margin:0;justify-content:center;text-align:center}
+.main{padding-bottom:80px}
+.top{padding:12px 16px}
+.who{display:none}
+.pad{padding:16px}
 }
 </style>
 </head>
 <body>
 
+<!-- ================= LOGIN ================= -->
 <div class="login" id="login-view">
-  <div class="card">
-    <h1>EEE-13 Class Fund</h1>
-    <p class="sub">Faridpur Engineering College</p>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button class="full" id="login-btn">Login</button>
-    <p class="err" id="message"></p>
+  <div class="hero">
+    <svg class="circuit" viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".55">
+        <path class="t" d="M0 120H140V220H300V300"/>
+        <path class="t" d="M800 90H620V200H520V320"/>
+        <path class="t" d="M0 460H90V560H260V640H380V720"/>
+        <path class="t" d="M800 560H700V680H560V780H430"/>
+        <path class="t" d="M220 900V800H330V740"/>
+        <path class="t" d="M420 0V70H480V170"/>
+        <circle cx="300" cy="300" r="6"/><circle cx="520" cy="320" r="6"/>
+        <circle cx="380" cy="720" r="6"/><circle cx="430" cy="780" r="6"/>
+        <circle cx="480" cy="170" r="6"/><circle cx="330" cy="740" r="6"/>
+      </g>
+      <g fill="none" stroke="#a7f3d0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5">
+        <path d="M60 340h30l8-16 16 32 16-32 16 32 16-32 8 16h30"/>
+        <path d="M560 440h40M600 420v40M620 420v40M620 440h40"/>
+        <path d="M90 760h20a14 14 0 0 1 28 0a14 14 0 0 1 28 0a14 14 0 0 1 28 0a14 14 0 0 1 28 0h20"/>
+        <path d="M520 60q25-40 50 0t50 0t50 0"/>
+        <path d="M700 300l-30 50h25l-15 45 40-60h-25z"/>
+        <path d="M700 820v-30M680 820h40M688 832h24M696 844h8"/>
+      </g>
+    </svg>
+    <div class="hero-in">
+      <span class="badge">⚡ Electrical &amp; Electronic Engineering</span>
+      <div class="big">EEE<span>-13</span></div>
+      <div class="dept">Department of Electrical &amp; Electronic Engineering</div>
+      <div class="college">Faridpur Engineering College</div>
+      <p class="tag">Transparent funding. Verified ledger.</p>
+      <ul class="feats">
+        <li><b>✓</b>Every approved contribution is public</li>
+        <li><b>✓</b>Payments verified manually by the CR</li>
+        <li><b>✓</b>Complete audit trail for every change</li>
+      </ul>
+    </div>
+  </div>
+  <div class="formside">
+    <div class="lcard">
+      <h1>Welcome back</h1>
+      <p class="sub">Sign in to the EEE-13 Class Fund portal</p>
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="username">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Your password" autocomplete="current-password">
+      <button class="btn full" id="login-btn">Login</button>
+      <p class="err" id="message"></p>
+      <p class="note">Students: use the email and password given by your CR.</p>
+    </div>
   </div>
 </div>
 
+<!-- ================= APP ================= -->
 <div class="app" id="app-view" hidden>
   <aside class="side">
-    <div class="brand">EEE-13 Fund</div>
-    <button class="nav on" data-page="overview">Overview</button>
-    <button class="nav" data-page="ledger">Public Ledger</button>
-    <button class="nav" data-page="students" id="nav-students" hidden>Students</button>
+    <div class="brand"><div class="logo">⚡</div><div>EEE-13 Fund</div></div>
+    <nav id="nav"></nav>
+    <div class="side-foot">Faridpur Engineering College</div>
   </aside>
   <div class="main">
     <div class="top">
-      <span class="who" id="who"></span>
-      <button id="logout-btn">Logout</button>
+      <h1 id="title">Overview</h1>
+      <div class="user">
+        <span class="role" id="role"></span>
+        <span class="who" id="who"></span>
+        <div class="avatar" id="avatar"></div>
+        <button class="btn ghost" id="logout-btn">Logout</button>
+      </div>
     </div>
     <div class="pad">
+
       <section id="page-overview">
-        <h2>Overview</h2>
         <div class="cards">
-          <div class="card"><div class="lbl">Total Contributions</div><div class="val" id="c-in">-</div></div>
-          <div class="card"><div class="lbl">Total Expenses</div><div class="val" id="c-out">-</div></div>
-          <div class="card"><div class="lbl">Current Balance</div><div class="val" id="c-bal">-</div></div>
+          <div class="card stat"><div class="ico in">↓</div><div><div class="lbl">Total Contributions</div><div class="val" id="c-in">-</div></div></div>
+          <div class="card stat"><div class="ico out">↑</div><div><div class="lbl">Total Expenses</div><div class="val" id="c-out">-</div></div></div>
+          <div class="card stat hl"><div class="ico bal">৳</div><div><div class="lbl">Current Balance</div><div class="val" id="c-bal">-</div></div></div>
+        </div>
+        <div class="card">
+          <h2>Weekly Contributions</h2>
+          <div class="bars" id="chart"></div>
+        </div>
+        <div class="card" id="student-note" hidden>
+          <h2>My Payments</h2>
+          <p class="empty">Your personal payment status and payment submission will appear here in the next update.</p>
         </div>
       </section>
+
       <section id="page-ledger" hidden>
-        <h2>Approved Contributions</h2>
-        <div class="card scroll"><table><thead><tr><th>Student</th><th>Date</th><th>Week</th><th>Amount</th></tr></thead><tbody id="t-in"></tbody></table></div>
-        <h2>Expenses</h2>
-        <div class="card scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-out"></tbody></table></div>
+        <div class="card">
+          <h2>Approved Contributions</h2>
+          <div class="tools"><input id="search" placeholder="Search by student name"></div>
+          <div class="scroll"><table><thead><tr><th>Student</th><th>Date</th><th>Week</th><th>Amount</th><th>Status</th></tr></thead><tbody id="t-in"></tbody></table></div>
+        </div>
+        <div class="card">
+          <h2>Expenses</h2>
+          <div class="scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-out"></tbody></table></div>
+        </div>
       </section>
+
       <section id="page-students" hidden>
-        <h2>Add Student</h2>
-        <div class="card" style="margin-bottom:20px">
+        <div class="card">
+          <h2>Add Student</h2>
           <div class="form">
             <input id="s-name" placeholder="Full name">
             <input id="s-roll" placeholder="Roll no">
             <input id="s-email" type="email" placeholder="Email">
             <input id="s-phone" placeholder="Phone">
           </div>
-          <button id="s-add">Add Student</button>
+          <button class="btn" id="s-add">Add Student</button>
           <p id="s-msg"></p>
         </div>
-        <h2>All Students</h2>
-        <div class="card scroll"><table><thead><tr><th>Name</th><th>Roll</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead><tbody id="t-students"></tbody></table></div>
+        <div class="card">
+          <h2>All Students</h2>
+          <div class="scroll"><table><thead><tr><th>Name</th><th>Roll</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead><tbody id="t-students"></tbody></table></div>
+        </div>
       </section>
+
     </div>
   </div>
 </div>
@@ -113,26 +245,103 @@ const db = window.supabase.createClient(
   'sb_publishable_6diM-UcWc9yIE0FMU9mPsA_4cvpG_JB'
 );
 const $ = id => document.getElementById(id);
-const money = n => '৳' + Number(n || 0).toFixed(2);
+const money = n => '৳' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const ICON = {
+  grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'
+};
+const NAV = {
+  admin: [['overview', 'Overview', 'grid'], ['students', 'Students', 'users'], ['ledger', 'Public Ledger', 'book']],
+  student: [['overview', 'My Overview', 'grid'], ['ledger', 'Public Ledger', 'book']]
+};
+const TITLE = { overview: 'Overview', ledger: 'Public Ledger', students: 'Students' };
 const PAGES = ['overview', 'ledger', 'students'];
+let contribs = [];
+
+function buildNav(role) {
+  const nav = $('nav');
+  nav.innerHTML = '';
+  NAV[role].forEach(([page, label, icon]) => {
+    const b = document.createElement('button');
+    b.className = 'nav';
+    b.dataset.page = page;
+    b.innerHTML = '<svg viewBox="0 0 24 24">' + ICON[icon] + '</svg><span></span>';
+    b.querySelector('span').textContent = label;
+    b.addEventListener('click', () => showPage(page));
+    nav.appendChild(b);
+  });
+}
 
 function showPage(name) {
   document.querySelectorAll('.nav').forEach(x => x.classList.toggle('on', x.dataset.page === name));
   PAGES.forEach(p => { $('page-' + p).hidden = p !== name; });
+  $('title').textContent = TITLE[name];
+}
+
+function pill(text, ok) {
+  const s = document.createElement('span');
+  s.className = 'pill ' + (ok ? 'ok' : 'no');
+  s.textContent = text;
+  return s;
 }
 
 function fill(tbody, list, cols, emptyText) {
   tbody.innerHTML = '';
   if (!list.length) {
     const tr = document.createElement('tr'), td = document.createElement('td');
-    td.colSpan = cols.length; td.textContent = emptyText;
+    td.colSpan = cols.length; td.className = 'empty'; td.textContent = emptyText;
     tr.appendChild(td); tbody.appendChild(tr); return;
   }
   list.forEach(r => {
     const tr = document.createElement('tr');
-    cols.forEach(c => { const td = document.createElement('td'); td.textContent = c(r); tr.appendChild(td); });
+    cols.forEach(c => {
+      const td = document.createElement('td');
+      const v = c(r);
+      if (v instanceof Node) td.appendChild(v); else td.textContent = v;
+      tr.appendChild(td);
+    });
     tbody.appendChild(tr);
   });
+}
+
+function receiptCell(url) {
+  if (url && /^https?:\/\//i.test(url)) {
+    const a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = 'View';
+    return a;
+  }
+  return '-';
+}
+
+function drawChart() {
+  const box = $('chart');
+  box.innerHTML = '';
+  const byWeek = {};
+  contribs.forEach(r => { byWeek[r.week_start] = (byWeek[r.week_start] || 0) + Number(r.amount); });
+  const weeks = Object.keys(byWeek).sort().slice(-8);
+  if (!weeks.length) {
+    box.style.display = 'block';
+    box.innerHTML = '<p class="empty">No approved contributions yet.</p>';
+    return;
+  }
+  box.style.display = 'flex';
+  const max = Math.max(...weeks.map(w => byWeek[w]));
+  weeks.forEach(w => {
+    const col = document.createElement('div'); col.className = 'bar';
+    const bar = document.createElement('div');
+    bar.style.height = Math.max(3, (byWeek[w] / max) * 85) + '%';
+    bar.title = money(byWeek[w]);
+    const lab = document.createElement('span'); lab.textContent = String(w).slice(5);
+    col.appendChild(bar); col.appendChild(lab); box.appendChild(col);
+  });
+}
+
+function drawContribs() {
+  const q = $('search').value.trim().toLowerCase();
+  const list = contribs.filter(r => (r.student_name || '').toLowerCase().includes(q));
+  fill($('t-in'), list, [r => r.student_name, r => r.payment_date, r => r.week_start, r => money(r.amount), () => pill('Approved', true)], 'No records yet');
 }
 
 async function loadData() {
@@ -143,11 +352,77 @@ async function loadData() {
     $('c-bal').textContent = money(s.data.current_balance);
   }
   const i = await db.from('public_contributions').select('*').order('payment_date', { ascending: false });
-  fill($('t-in'), i.data || [], [r => r.student_name, r => r.payment_date, r => r.week_start, r => money(r.amount)], 'No records yet');
+  contribs = i.data || [];
+  drawContribs();
+  drawChart();
   const o = await db.from('public_expenses').select('*').order('expense_date', { ascending: false });
-  fill($('t-out'), o.data || [], [r => r.expense_date, r => r.reason, r => r.category || '-', r => money(r.amount), r => r.receipt_url || '-'], 'No records yet');
+  fill($('t-out'), o.data || [], [r => r.expense_date, r => r.reason, r => r.category || '-', r => money(r.amount), r => receiptCell(r.receipt_url)], 'No records yet');
 }
 
 async function loadStudents() {
   const r = await db.from('students').select('*').order('created_at', { ascending: false });
-  if
+  if (r.error) { $('s-msg').className = 'err'; $('s-msg').textContent = 'Could not load students: ' + r.error.message; return; }
+  fill($('t-students'), r.data || [], [x => x.full_name, x => x.roll_no || '-', x => x.email || '-', x => x.phone || '-', x => pill(x.is_active ? 'Active' : 'Inactive', x.is_active)], 'No students yet');
+}
+
+async function showApp(user) {
+  const p = await db.from('profiles').select('email, role').eq('id', user.id).single();
+  if (p.error || !p.data) {
+    $('message').textContent = 'Profile not found: ' + (p.error ? p.error.message : 'no data');
+    await db.auth.signOut(); return;
+  }
+  const role = p.data.role === 'admin' ? 'admin' : 'student';
+  $('role').textContent = role;
+  $('who').textContent = p.data.email;
+  $('avatar').textContent = (p.data.email || '?').charAt(0).toUpperCase();
+  $('student-note').hidden = role === 'admin';
+  buildNav(role);
+  $('login-view').hidden = true;
+  $('app-view').hidden = false;
+  showPage('overview');
+  await loadData();
+  if (role === 'admin') await loadStudents();
+}
+
+async function doLogin() {
+  const btn = $('login-btn');
+  $('message').textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  const r = await db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+  btn.disabled = false; btn.textContent = 'Login';
+  if (r.error) { $('message').textContent = 'Login failed: ' + r.error.message; return; }
+  await showApp(r.data.user);
+}
+
+$('login-btn').addEventListener('click', doLogin);
+$('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('search').addEventListener('input', drawContribs);
+
+$('logout-btn').addEventListener('click', async () => {
+  await db.auth.signOut();
+  $('password').value = '';
+  $('app-view').hidden = true;
+  $('login-view').hidden = false;
+});
+
+$('s-add').addEventListener('click', async () => {
+  const msg = $('s-msg');
+  msg.className = ''; msg.textContent = '';
+  const name = $('s-name').value.trim();
+  if (!name) { msg.className = 'err'; msg.textContent = 'Full name is required.'; return; }
+  const r = await db.from('students').insert({
+    full_name: name,
+    roll_no: $('s-roll').value.trim() || null,
+    email: $('s-email').value.trim() || null,
+    phone: $('s-phone').value.trim() || null
+  });
+  if (r.error) { msg.className = 'err'; msg.textContent = 'Could not add student: ' + r.error.message; return; }
+  ['s-name', 's-roll', 's-email', 's-phone'].forEach(id => { $(id).value = ''; });
+  msg.className = 'ok'; msg.textContent = 'Student added.';
+  await loadStudents();
+});
+
+db.auth.getSession().then(({ data }) => { if (data.session) showApp(data.session.user); });
+</script>
+</body>
+</html>

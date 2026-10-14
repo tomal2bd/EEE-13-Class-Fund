@@ -20,6 +20,7 @@ button{padding:10px 16px;background:var(--g);color:#fff;border:0;border-radius:8
 button:hover{background:var(--gd)}
 .full{width:100%}
 .err{color:#b91c1c;font-size:14px;margin-top:12px}
+.ok{color:#047857;font-size:14px;margin-top:12px}
 .app{display:flex;min-height:100vh}
 .side{width:220px;background:#fff;border-right:1px solid var(--b);padding:20px 12px;flex-shrink:0}
 .brand{color:var(--gd);font-weight:bold;font-size:18px;padding:0 8px 16px}
@@ -33,6 +34,8 @@ button:hover{background:var(--gd)}
 .lbl{color:var(--m);font-size:13px}
 .val{font-size:26px;font-weight:bold;color:var(--gd);margin-top:6px}
 .scroll{overflow-x:auto;margin-bottom:20px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px}
+.form input{margin-bottom:0}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:8px;border-bottom:1px solid var(--b);white-space:nowrap}
 th{color:var(--m);font-weight:600}
@@ -62,6 +65,7 @@ th{color:var(--m);font-weight:600}
     <div class="brand">EEE-13 Fund</div>
     <button class="nav on" data-page="overview">Overview</button>
     <button class="nav" data-page="ledger">Public Ledger</button>
+    <button class="nav" data-page="students" id="nav-students" hidden>Students</button>
   </aside>
   <div class="main">
     <div class="top">
@@ -83,6 +87,21 @@ th{color:var(--m);font-weight:600}
         <h2>Expenses</h2>
         <div class="card scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-out"></tbody></table></div>
       </section>
+      <section id="page-students" hidden>
+        <h2>Add Student</h2>
+        <div class="card" style="margin-bottom:20px">
+          <div class="form">
+            <input id="s-name" placeholder="Full name">
+            <input id="s-roll" placeholder="Roll no">
+            <input id="s-email" type="email" placeholder="Email">
+            <input id="s-phone" placeholder="Phone">
+          </div>
+          <button id="s-add">Add Student</button>
+          <p id="s-msg"></p>
+        </div>
+        <h2>All Students</h2>
+        <div class="card scroll"><table><thead><tr><th>Name</th><th>Roll</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead><tbody id="t-students"></tbody></table></div>
+      </section>
     </div>
   </div>
 </div>
@@ -95,6 +114,12 @@ const db = window.supabase.createClient(
 );
 const $ = id => document.getElementById(id);
 const money = n => '৳' + Number(n || 0).toFixed(2);
+const PAGES = ['overview', 'ledger', 'students'];
+
+function showPage(name) {
+  document.querySelectorAll('.nav').forEach(x => x.classList.toggle('on', x.dataset.page === name));
+  PAGES.forEach(p => { $('page-' + p).hidden = p !== name; });
+}
 
 function fill(tbody, list, cols, emptyText) {
   tbody.innerHTML = '';
@@ -123,39 +148,6 @@ async function loadData() {
   fill($('t-out'), o.data || [], [r => r.expense_date, r => r.reason, r => r.category || '-', r => money(r.amount), r => r.receipt_url || '-'], 'No records yet');
 }
 
-async function showApp(user) {
-  const p = await db.from('profiles').select('email, role').eq('id', user.id).single();
-  if (p.error || !p.data) {
-    $('message').textContent = 'Profile not found: ' + (p.error ? p.error.message : 'no data');
-    await db.auth.signOut(); return;
-  }
-  $('who').textContent = p.data.email + ' (' + p.data.role + ')';
-  $('login-view').hidden = true;
-  $('app-view').hidden = false;
-  await loadData();
-}
-
-$('login-btn').addEventListener('click', async () => {
-  $('message').textContent = '';
-  const r = await db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
-  if (r.error) { $('message').textContent = 'Login failed: ' + r.error.message; return; }
-  await showApp(r.data.user);
-});
-
-$('logout-btn').addEventListener('click', async () => {
-  await db.auth.signOut();
-  $('app-view').hidden = true;
-  $('login-view').hidden = false;
-});
-
-document.querySelectorAll('.nav').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.nav').forEach(x => x.classList.remove('on'));
-  b.classList.add('on');
-  $('page-overview').hidden = b.dataset.page !== 'overview';
-  $('page-ledger').hidden = b.dataset.page !== 'ledger';
-}));
-
-db.auth.getSession().then(({ data }) => { if (data.session) showApp(data.session.user); });
-</script>
-</body>
-</html>
+async function loadStudents() {
+  const r = await db.from('students').select('*').order('created_at', { ascending: false });
+  if

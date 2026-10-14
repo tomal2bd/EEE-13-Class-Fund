@@ -5,81 +5,157 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EEE-13 Class Fund</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #ecfdf5; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-  .card { background: #fff; padding: 32px; border-radius: 12px; width: 100%; max-width: 360px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-  h1 { color: #047857; margin: 0 0 4px; font-size: 24px; }
-  .sub { color: #6b7280; margin: 0 0 24px; font-size: 14px; }
-  input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-  button { width: 100%; padding: 10px; background: #059669; color: #fff; border: 0; border-radius: 8px; font-size: 15px; cursor: pointer; }
-  button:hover { background: #047857; }
-  #message { margin-top: 12px; font-size: 14px; color: #b91c1c; }
+:root{--g:#059669;--gd:#047857;--bg:#f0fdf4;--t:#111827;--m:#6b7280;--b:#e5e7eb}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--t)}
+[hidden]{display:none!important}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:#fff;border:1px solid var(--b);border-radius:12px;padding:20px}
+.login .card{width:100%;max-width:360px;padding:32px}
+h1{color:var(--gd);margin:0 0 4px;font-size:24px}
+h2{font-size:18px;margin:0 0 12px}
+.sub{color:var(--m);margin:0 0 20px;font-size:14px}
+input{width:100%;padding:10px;margin-bottom:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
+button{padding:10px 16px;background:var(--g);color:#fff;border:0;border-radius:8px;font-size:14px;cursor:pointer}
+button:hover{background:var(--gd)}
+.full{width:100%}
+.err{color:#b91c1c;font-size:14px;margin-top:12px}
+.app{display:flex;min-height:100vh}
+.side{width:220px;background:#fff;border-right:1px solid var(--b);padding:20px 12px;flex-shrink:0}
+.brand{color:var(--gd);font-weight:bold;font-size:18px;padding:0 8px 16px}
+.nav{display:block;width:100%;text-align:left;background:none;color:var(--t);margin-bottom:4px}
+.nav:hover,.nav.on{background:#d1fae5;color:var(--gd)}
+.main{flex:1;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--b);padding:12px 20px;gap:12px}
+.who{font-size:14px;color:var(--m)}
+.pad{padding:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.lbl{color:var(--m);font-size:13px}
+.val{font-size:26px;font-weight:bold;color:var(--gd);margin-top:6px}
+.scroll{overflow-x:auto;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--b);white-space:nowrap}
+th{color:var(--m);font-weight:600}
+@media(max-width:700px){
+.app{flex-direction:column}
+.side{width:100%;display:flex;gap:6px;align-items:center;padding:10px;border-right:0;border-bottom:1px solid var(--b);overflow-x:auto}
+.brand{padding:0 8px 0 0;white-space:nowrap}
+.nav{width:auto;margin:0;white-space:nowrap}
+}
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>EEE-13 Class Fund</h1>
-  <p class="sub">Faridpur Engineering College</p>
 
-  <div id="login-box">
+<div class="login" id="login-view">
+  <div class="card">
+    <h1>EEE-13 Class Fund</h1>
+    <p class="sub">Faridpur Engineering College</p>
     <input id="email" type="email" placeholder="Email">
     <input id="password" type="password" placeholder="Password">
-    <button id="login-btn">Login</button>
+    <button class="full" id="login-btn">Login</button>
+    <p class="err" id="message"></p>
   </div>
+</div>
 
-  <div id="welcome-box" hidden>
-    <p id="welcome-text"></p>
-    <button id="logout-btn">Logout</button>
+<div class="app" id="app-view" hidden>
+  <aside class="side">
+    <div class="brand">EEE-13 Fund</div>
+    <button class="nav on" data-page="overview">Overview</button>
+    <button class="nav" data-page="ledger">Public Ledger</button>
+  </aside>
+  <div class="main">
+    <div class="top">
+      <span class="who" id="who"></span>
+      <button id="logout-btn">Logout</button>
+    </div>
+    <div class="pad">
+      <section id="page-overview">
+        <h2>Overview</h2>
+        <div class="cards">
+          <div class="card"><div class="lbl">Total Contributions</div><div class="val" id="c-in">-</div></div>
+          <div class="card"><div class="lbl">Total Expenses</div><div class="val" id="c-out">-</div></div>
+          <div class="card"><div class="lbl">Current Balance</div><div class="val" id="c-bal">-</div></div>
+        </div>
+      </section>
+      <section id="page-ledger" hidden>
+        <h2>Approved Contributions</h2>
+        <div class="card scroll"><table><thead><tr><th>Student</th><th>Date</th><th>Week</th><th>Amount</th></tr></thead><tbody id="t-in"></tbody></table></div>
+        <h2>Expenses</h2>
+        <div class="card scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-out"></tbody></table></div>
+      </section>
+    </div>
   </div>
-
-  <p id="message"></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-  const SUPABASE_URL = 'https://odrehouprwotoveklwnq.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_6diM-UcWc9yIE0FMU9mPsA_4cvpG_JB';
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.supabase.createClient(
+  'https://odrehouprwotoveklwnq.supabase.co',
+  'sb_publishable_6diM-UcWc9yIE0FMU9mPsA_4cvpG_JB'
+);
+const $ = id => document.getElementById(id);
+const money = n => '৳' + Number(n || 0).toFixed(2);
 
-  const loginBox = document.getElementById('login-box');
-  const welcomeBox = document.getElementById('welcome-box');
-  const welcomeText = document.getElementById('welcome-text');
-  const message = document.getElementById('message');
-
-  async function showProfile(user) {
-    const { data, error } = await db
-      .from('profiles')
-      .select('email, role')
-      .eq('id', user.id)
-      .single();
-
-    if (error || !data) {
-      message.textContent = 'Profile not found: ' + (error ? error.message : 'no data');
-      return;
-    }
-    message.textContent = '';
-    welcomeText.textContent = 'Logged in as ' + data.email + ' (role: ' + data.role + ')';
-    loginBox.hidden = true;
-    welcomeBox.hidden = false;
+function fill(tbody, list, cols, emptyText) {
+  tbody.innerHTML = '';
+  if (!list.length) {
+    const tr = document.createElement('tr'), td = document.createElement('td');
+    td.colSpan = cols.length; td.textContent = emptyText;
+    tr.appendChild(td); tbody.appendChild(tr); return;
   }
-
-  document.getElementById('login-btn').addEventListener('click', async () => {
-    message.textContent = '';
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const { data, error } = await db.auth.signInWithPassword({ email, password });
-    if (error) { message.textContent = 'Login failed: ' + error.message; return; }
-    await showProfile(data.user);
+  list.forEach(r => {
+    const tr = document.createElement('tr');
+    cols.forEach(c => { const td = document.createElement('td'); td.textContent = c(r); tr.appendChild(td); });
+    tbody.appendChild(tr);
   });
+}
 
-  document.getElementById('logout-btn').addEventListener('click', async () => {
-    await db.auth.signOut();
-    welcomeBox.hidden = true;
-    loginBox.hidden = false;
-  });
+async function loadData() {
+  const s = await db.from('public_summary').select('*').single();
+  if (s.data) {
+    $('c-in').textContent = money(s.data.total_contributions);
+    $('c-out').textContent = money(s.data.total_expenses);
+    $('c-bal').textContent = money(s.data.current_balance);
+  }
+  const i = await db.from('public_contributions').select('*').order('payment_date', { ascending: false });
+  fill($('t-in'), i.data || [], [r => r.student_name, r => r.payment_date, r => r.week_start, r => money(r.amount)], 'No records yet');
+  const o = await db.from('public_expenses').select('*').order('expense_date', { ascending: false });
+  fill($('t-out'), o.data || [], [r => r.expense_date, r => r.reason, r => r.category || '-', r => money(r.amount), r => r.receipt_url || '-'], 'No records yet');
+}
 
-  db.auth.getSession().then(({ data }) => {
-    if (data.session) showProfile(data.session.user);
-  });
+async function showApp(user) {
+  const p = await db.from('profiles').select('email, role').eq('id', user.id).single();
+  if (p.error || !p.data) {
+    $('message').textContent = 'Profile not found: ' + (p.error ? p.error.message : 'no data');
+    await db.auth.signOut(); return;
+  }
+  $('who').textContent = p.data.email + ' (' + p.data.role + ')';
+  $('login-view').hidden = true;
+  $('app-view').hidden = false;
+  await loadData();
+}
+
+$('login-btn').addEventListener('click', async () => {
+  $('message').textContent = '';
+  const r = await db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+  if (r.error) { $('message').textContent = 'Login failed: ' + r.error.message; return; }
+  await showApp(r.data.user);
+});
+
+$('logout-btn').addEventListener('click', async () => {
+  await db.auth.signOut();
+  $('app-view').hidden = true;
+  $('login-view').hidden = false;
+});
+
+document.querySelectorAll('.nav').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.nav').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  $('page-overview').hidden = b.dataset.page !== 'overview';
+  $('page-ledger').hidden = b.dataset.page !== 'ledger';
+}));
+
+db.auth.getSession().then(({ data }) => { if (data.session) showApp(data.session.user); });
 </script>
 </body>
 </html>

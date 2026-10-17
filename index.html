@@ -12,14 +12,15 @@
   .card.stat.s-in  { background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important; border: 1px solid #6ee7b7 !important; }
   .card.stat.s-out { background: linear-gradient(135deg, #fee2e2, #fecaca) !important; border: 1px solid #fca5a5 !important; }
   .card.stat.s-bal { background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important; border: 1px solid #93c5fd !important; }
-  .card.stat.s-mon { background: linear-gradient(135deg, #fef3c7, #fde68a) !important; border: 1px solid #fcd34d !important; }
   .card.stat.s-stu { background: linear-gradient(135deg, #ede9fe, #ddd6fe) !important; border: 1px solid #c4b5fd !important; }
   .card.stat.s-in  .lbl, .card.stat.s-in  .val { color: #065f46 !important; }
   .card.stat.s-out .lbl, .card.stat.s-out .val { color: #991b1b !important; }
   .card.stat.s-bal .lbl, .card.stat.s-bal .val { color: #1e3a8a !important; }
-  .card.stat.s-mon .lbl, .card.stat.s-mon .val { color: #92400e !important; }
   .card.stat.s-stu .lbl, .card.stat.s-stu .val { color: #5b21b6 !important; }
   .chart-total { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-weight: 700; color: #065f46; }
+  /* Weekly and Monthly graphs side by side (stacked on small screens) */
+  .graphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .graphs .card { margin: 0; }
 </style>
 </head>
 <body>
@@ -253,7 +254,6 @@
         </div>
         <div class="cards" id="stats">
           <div class="card stat s-in"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>
-          <div class="card stat s-mon"><div class="ico bal">★</div><div><div class="lbl">Monthly contribution</div><div class="val" id="c-month">-</div></div></div>
           <div class="card stat s-out"><div class="ico out">↑</div><div><div class="lbl">Total expenses</div><div class="val" id="c-out">-</div></div></div>
           <div class="card stat s-bal hl"><div class="ico bal">৳</div><div><div class="lbl">Current balance</div><div class="val" id="c-bal">-</div></div></div>
           <div class="card stat s-stu" id="card-stu" hidden><div class="ico stu">★</div><div><div class="lbl">Active members</div><div class="val" id="c-stu">-</div></div></div>
@@ -262,10 +262,17 @@
           <h2>Live payments <span class="live">LIVE</span></h2>
           <div id="feed"></div>
         </div>
-        <div class="card">
-          <h2>Weekly contributions</h2>
-          <div class="bars" id="chart"></div>
-          <div class="chart-total" id="chart-total">Total collected: -</div>
+        <div class="graphs">
+          <div class="card">
+            <h2>Weekly contributions</h2>
+            <div class="bars" id="chart"></div>
+            <div class="chart-total" id="chart-total">Total collected: -</div>
+          </div>
+          <div class="card">
+            <h2>Monthly contributions</h2>
+            <div class="bars" id="chart-month"></div>
+            <div class="chart-total" id="chart-month-total">Total collected: -</div>
+          </div>
         </div>
       </section>
 

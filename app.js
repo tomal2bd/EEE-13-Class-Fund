@@ -360,6 +360,19 @@
     S.student = r.data || null;
     return r;
   }
+  function setProfileEditing(on) {
+    $('p-roll-in').disabled = !on;
+    $('p-phone-in').disabled = !on;
+    $('p-edit').hidden = on;
+    $('p-save').hidden = !on;
+    $('p-cancel').hidden = !on;
+  }
+  async function loadMyTotal() {
+    const r = await db.from('payments').select('amount').eq('status', 'approved');
+    if (r.error) { $('p-total').textContent = '-'; return; }
+    const total = (r.data || []).reduce((a, p) => a + Number(p.amount || 0), 0);
+    $('p-total').textContent = money(total);
+  }
   function renderProfile() {
     const s = S.student;
     if (!s) return;
@@ -370,6 +383,8 @@
     $('p-joined').textContent = fmtDate(s.created_at);
     $('p-roll-in').value = s.roll_no || '';
     $('p-phone-in').value = s.phone || '';
+    setProfileEditing(false);
+    loadMyTotal();
   }
   async function saveProfile() {
     const msg = $('p-msg'); msg.className = ''; msg.textContent = '';
@@ -404,6 +419,7 @@
   async function refreshAll() {
     await loadPublic();
     if (S.role === 'admin') await loadMembers();
+    if (S.role === 'student' && $('p-edit') && !$('p-edit').hidden) loadMyTotal();
     for (const fn of EEE.refreshHooks) { try { await fn(); } catch (e) { console.error(e); } }
   }
   EEE.refresh = refreshAll;
@@ -555,6 +571,8 @@
   $('r-search').addEventListener('input', renderReport);
   $('m-search').addEventListener('input', renderMembers);
   $('p-save').addEventListener('click', saveProfile);
+  $('p-edit').addEventListener('click', () => setProfileEditing(true));
+  $('p-cancel').addEventListener('click', () => { renderProfile(); $('p-msg').textContent = ''; });
   $('s-pw-save').addEventListener('click', savePassword);
   document.querySelectorAll('.paybtn').forEach(b => b.addEventListener('click', () => {
     if (typeof EEE.openPay === 'function') EEE.openPay(b.dataset.pay);

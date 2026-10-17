@@ -280,6 +280,80 @@
   EEE.addPage('mypayments', { title: 'My Payments', label: 'My Payments', icon: 'card', roles: ['student'], onShow: renderMy });
   EEE.refreshHooks.push(renderMy);
 
+  /* ---------- Student: Notifications (payment approved / rejected) ---------- */
+  function seenKey() {
+    return 'eee_notif_seen_' + (EEE.state.user ? EEE.state.user.id : 'x');
+  }
+  function getSeen() {
+    try { return localStorage.getItem(seenKey()) || ''; } catch (e) { return ''; }
+  }
+  function setSeen(v) {
+    try { localStorage.setItem(seenKey(), v); } catch (e) { /* storage not available */ }
+  }
+  function isUnread(p, seen) {
+    if (!p.reviewed_at) return false;
+    if (!seen) return true;
+    return new Date(p.reviewed_at) > new Date(seen);
+  }
+  async function loadNotifs() {
+    return db.from('payments')
+      .select('id, method, status, amount, review_note, reviewed_at, payment_weeks(week_start)')
+      .in('status', ['approved', 'rejected'])
+      .order('reviewed_at', { ascending: false });
+  }
+
+  async function updateNotifBadge() {
+    if (EEE.state.role !== 'student') return;
+    const r = await loadNotifs();
+    if (r.error) return;
+    const seen = getSeen();
+    const n = (r.data || []).filter(p => isUnread(p, seen)).length;
+    EEE.setBadge('notifications', n);
+  }
+
+  async function renderNotifs() {
+    if (EEE.state.role !== 'student') return;
+    const sec = $('page-notifications');
+    if (!sec) return;
+    const r = await loadNotifs();
+    sec.innerHTML = '';
+    if (r.error) {
+      sec.appendChild(el('p', 'err', 'Could not load notifications: ' + r.error.message));
+      return;
+    }
+    const list = r.data || [];
+    const seen = getSeen();
+    const card = el('div', 'card');
+    card.appendChild(el('h2', '', 'Notifications'));
+    if (!list.length) {
+      card.appendChild(el('p', 'empty', 'No notifications yet. You will see here when the admin approves or rejects your payment.'));
+    }
+    list.forEach(p => {
+      const ok = p.status === 'approved';
+      const weeks = EEE.weeksText((p.payment_weeks || []).map(w => w.week_start).sort());
+      const row = el('div', 'feed-item');
+      row.appendChild(el('div', 'fav', ok ? '✓' : '✕'));
+      const main = el('div', 'fmain');
+      let text = 'Your ' + (p.method || '') + ' payment of ' + money(p.amount) + (weeks ? ' for ' + weeks : '') +
+        (ok ? ' was approved.' : ' was rejected.');
+      const title = el('div', 'fname', text);
+      if (isUnread(p, seen)) title.style.fontWeight = '800';
+      main.appendChild(title);
+      let sub = EEE.fmtTime(p.reviewed_at);
+      if (!ok && p.review_note) sub += ' · Reason: ' + p.review_note;
+      main.appendChild(el('div', 'fsub', sub));
+      row.appendChild(main);
+      row.appendChild(ok ? EEE.pill('Approved', 'ok') : EEE.pill('Rejected', 'no'));
+      card.appendChild(row);
+    });
+    sec.appendChild(card);
+    setSeen(new Date().toISOString());
+    EEE.setBadge('notifications', 0);
+  }
+
+  EEE.addPage('notifications', { title: 'Notifications', label: 'Notifications', icon: 'clock', roles: ['student'], onShow: renderNotifs });
+  EEE.refreshHooks.push(updateNotifBadge);
+
   EEE.openPay = openPay;
   const bar = $('paybar');
   if (bar && EEE.state.role === 'student') bar.hidden = false;

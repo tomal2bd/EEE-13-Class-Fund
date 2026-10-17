@@ -144,27 +144,42 @@
   /* ---------- contact & footer ---------- */
   function renderContactFooter() {
     const st = S.settings || {};
+    const people = [
+      { name: st.owner_name, phone: st.owner_phone, email: st.owner_email },
+      { name: st.assistant_name, phone: st.assistant_phone, email: st.assistant_email }
+    ].filter(p => p.phone || p.email);
+
     const box = $('contact'); box.innerHTML = '';
-    box.appendChild(el('h4', '', 'Contact'));
-    let any = false;
-    [['Admin', st.owner_name, st.owner_phone, st.owner_email], ['Assistant', st.assistant_name, st.assistant_phone, st.assistant_email]].forEach(([role, name, phone, email]) => {
-      if (!phone && !email) return;
-      any = true;
+    box.appendChild(el('h4', '', 'Contact Us'));
+    people.forEach(p => {
       const d = el('div', 'cp');
-      d.appendChild(el('b', '', (name ? name + ' ' : '') + '(' + role + ')'));
-      if (phone) { const a = el('a', '', phone); a.href = 'tel:' + phone.replace(/[^0-9+]/g, ''); d.appendChild(a); d.appendChild(el('br')); }
-      if (email && /^[^\s@]+@[^\s@]+$/.test(email)) { const a = el('a', '', email); a.href = 'mailto:' + email; d.appendChild(a); }
+      d.appendChild(el('b', '', p.name || 'Contact'));
+      d.appendChild(el('br'));
+      if (p.phone) {
+        const a = el('a', '', p.phone);
+        a.href = 'tel:' + p.phone.replace(/[^0-9+]/g, '');
+        d.appendChild(a);
+        d.appendChild(el('br'));
+      }
+      if (p.email && /^[^\s@]+@[^\s@]+$/.test(p.email)) {
+        const a = el('a', '', p.email);
+        a.href = 'mailto:' + p.email;
+        d.appendChild(a);
+      }
       box.appendChild(d);
     });
-    if (!any) box.appendChild(el('div', 'cp', 'Contact details will be added by the admin.'));
+    if (!people.length) box.appendChild(el('div', 'cp', 'Contact details will be added soon.'));
 
     const f = $('foot'); f.innerHTML = '';
     f.appendChild(document.createTextNode('EEE-13 · Class Fund'));
-    if (st.owner_name || st.assistant_name) {
+    if (people.length) {
       f.appendChild(el('br'));
-      if (st.owner_name) { f.appendChild(document.createTextNode('Managed by ')); f.appendChild(el('b', '', st.owner_name)); }
-      if (st.owner_name && st.assistant_name) f.appendChild(document.createTextNode(' · '));
-      if (st.assistant_name) { f.appendChild(document.createTextNode('Assisted by ')); f.appendChild(el('b', '', st.assistant_name)); }
+      f.appendChild(document.createTextNode('Contact: '));
+      people.forEach((p, i) => {
+        if (i) f.appendChild(document.createTextNode(' · '));
+        f.appendChild(el('b', '', p.name || 'Contact'));
+        if (p.phone) f.appendChild(document.createTextNode(' ' + p.phone));
+      });
     }
   }
 

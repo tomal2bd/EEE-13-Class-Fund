@@ -36,13 +36,59 @@
     if (EEE.refresh) await EEE.refresh(); else await load();
   }
 
+  /* ---------- method badge & TrxID helpers ---------- */
+  function methodBadge(method) {
+    const m = String(method || '-');
+    const b = el('span', '', m);
+    const low = m.toLowerCase();
+    let bg = '#e5e7eb', fg = '#374151';
+    if (low === 'bkash') { bg = '#e2136e'; fg = '#ffffff'; }
+    else if (low === 'nagad') { bg = '#f6921e'; fg = '#ffffff'; }
+    b.style.cssText = 'display:inline-block;padding:3px 12px;border-radius:999px;font-weight:700;font-size:13px;background:' + bg + ';color:' + fg + ';';
+    return b;
+  }
+
+  function trxText(trx) {
+    const s = el('span', '', trx || '-');
+    s.style.cssText = 'font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;letter-spacing:.5px;background:#f1f5f9;padding:2px 8px;border-radius:6px;';
+    return s;
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => toast('TrxID copied.'), () => toast('Could not copy.'));
+    } else {
+      toast('Copy is not supported on this browser.');
+    }
+  }
+
   function pendingCard(p) {
     const card = el('div', 'card');
     const st = p.students || {};
-    card.appendChild(el('h2', '', (st.full_name || 'Unknown') + (st.roll_no ? ' (Roll ' + st.roll_no + ')' : '')));
+
+    // Header: name + method badge
+    const head = el('div');
+    head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;';
+    head.appendChild(el('h2', '', (st.full_name || 'Unknown') + (st.roll_no ? ' (Roll ' + st.roll_no + ')' : '')));
+    head.appendChild(methodBadge(p.method));
+    card.appendChild(head);
+
+    // TrxID highlight box
+    const trxBox = el('div');
+    trxBox.style.cssText = 'margin:10px 0;padding:12px;border:2px dashed #10b981;border-radius:10px;background:#ecfdf5;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;';
+    const trxLeft = el('div');
+    const trxLbl = el('div', 'lbl', 'TrxID / Transaction Reference');
+    const trxVal = el('div', '', p.transaction_id || '-');
+    trxVal.style.cssText = 'font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;font-weight:800;letter-spacing:1px;color:#065f46;word-break:break-all;';
+    trxLeft.appendChild(trxLbl);
+    trxLeft.appendChild(trxVal);
+    const copyBtn = el('button', 'btn ghost sm', 'Copy');
+    copyBtn.addEventListener('click', () => copyText(p.transaction_id || ''));
+    trxBox.appendChild(trxLeft);
+    trxBox.appendChild(copyBtn);
+    card.appendChild(trxBox);
+
     const lines = [
-      ['Method', p.method],
-      ['TrxID', p.transaction_id],
       ['Sender number', p.sender_number || '-'],
       ['Weeks', weeksOf(p) || '-'],
       ['Amount', money(p.amount)],
@@ -54,6 +100,7 @@
       d.appendChild(el('b', '', v));
       card.appendChild(d);
     });
+
     const note = el('input'); note.placeholder = 'Reason (optional, for Reject)';
     note.style.marginTop = '10px';
     card.appendChild(note);
@@ -61,12 +108,12 @@
     const ok = el('button', 'btn sm', 'Approve');
     const no = el('button', 'btn danger sm', 'Reject');
     ok.addEventListener('click', async () => {
-      if (!confirm('Approve ' + money(p.amount) + ' from ' + (st.full_name || 'this student') + '?\nTrxID: ' + p.transaction_id)) return;
+      if (!confirm('Approve ' + money(p.amount) + ' from ' + (st.full_name || 'this student') + '?\nMethod: ' + p.method + '\nTrxID: ' + p.transaction_id)) return;
       ok.disabled = no.disabled = true; await review(p, true, note.value.trim());
       ok.disabled = no.disabled = false;
     });
     no.addEventListener('click', async () => {
-      if (!confirm('Reject this payment?\nTrxID: ' + p.transaction_id)) return;
+      if (!confirm('Reject this payment?\nStudent: ' + (st.full_name || '-') + '\nMethod: ' + p.method + '\nTrxID: ' + p.transaction_id)) return;
       ok.disabled = no.disabled = true; await review(p, false, note.value.trim());
       ok.disabled = no.disabled = false;
     });
@@ -99,8 +146,8 @@
     page.appendChild(hist);
     fill(tb, done, [
       p => (p.students && p.students.full_name) || '-',
-      p => p.method,
-      p => p.transaction_id,
+      p => methodBadge(p.method),
+      p => trxText(p.transaction_id),
       p => p.sender_number || '-',
       p => weeksOf(p) || '-',
       p => money(p.amount),

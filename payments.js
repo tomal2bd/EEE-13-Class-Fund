@@ -64,6 +64,7 @@
     const months = Array.from(new Set(weeks.map(w => w.month)));
     let curMonth = months[months.length - 1];
     const picked = new Set();
+    const typed = { sender: '', trx: '' };
 
     const back = el('div', 'modal-back');
     back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
@@ -117,11 +118,14 @@
 
       box.appendChild(el('label', '', 'Sender number (the number you sent from)'));
       const sender = el('input'); sender.type = 'tel'; sender.placeholder = '01XXXXXXXXX'; sender.id = 'pay-sender';
-      sender.value = box.dataset.sender || '';
+      sender.value = typed.sender;
+      sender.addEventListener('input', () => { typed.sender = sender.value; });
       box.appendChild(sender);
 
       box.appendChild(el('label', '', 'TrxID (required)'));
       const trx = el('input'); trx.placeholder = 'e.g. 9H7ABC1234'; trx.id = 'pay-trx';
+      trx.value = typed.trx;
+      trx.addEventListener('input', () => { typed.trx = trx.value; });
       box.appendChild(trx);
 
       const msg = el('p', 'err');

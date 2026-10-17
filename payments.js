@@ -2,9 +2,10 @@
   'use strict';
   const EEE = window.EEE;
   if (!EEE) return;
-  const { db, $, el, money, toast, fmtDay } = EEE;
+  const { db, $, el, money, toast } = EEE;
 
   const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
 
   function iso(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -98,9 +99,9 @@
       sel.addEventListener('change', () => { curMonth = sel.value; draw(); });
       box.appendChild(sel);
 
-      box.appendChild(el('label', '', 'Weeks (' + money(weekly) + ' per week)'));
+      box.appendChild(el('label', '', 'Select week (' + money(weekly) + ' per week)'));
       const wrap = el('div');
-      weeks.filter(w => w.month === curMonth).forEach(w => {
+      weeks.filter(w => w.month === curMonth).forEach((w, i) => {
         const row = el('label');
         row.style.cssText = 'display:flex;gap:8px;align-items:center;margin:6px 0;';
         const cb = el('input'); cb.type = 'checkbox';
@@ -108,7 +109,8 @@
         cb.disabled = isTaken; cb.checked = picked.has(w.iso);
         cb.addEventListener('change', () => { if (cb.checked) picked.add(w.iso); else picked.delete(w.iso); draw(); });
         row.appendChild(cb);
-        row.appendChild(document.createTextNode('Week of ' + fmtDay(w.iso) + (isTaken ? ' (already paid or pending)' : '')));
+        const label = (ORD[i] || (i + 1) + 'th') + ' week' + (isTaken ? ' - already paid or pending' : '');
+        row.appendChild(document.createTextNode(label));
         wrap.appendChild(row);
       });
       box.appendChild(wrap);

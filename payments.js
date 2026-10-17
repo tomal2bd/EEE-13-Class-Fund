@@ -19,6 +19,11 @@
     const d = new Date(k + '-01T00:00:00');
     return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
   }
+  function weekName(isoDate) {
+    const day = parseInt(isoDate.slice(8, 10), 10);
+    const n = Math.ceil(day / 7);
+    return (ORD[n - 1] || n + 'th') + ' week';
+  }
 
   function allWeeks(startStr) {
     const start = new Date(startStr + 'T00:00:00');
@@ -65,6 +70,8 @@
     const months = Array.from(new Set(weeks.map(w => w.month)));
     let curMonth = months[months.length - 1];
     const picked = new Set();
+    const currentWeek = weeks.length ? weeks[weeks.length - 1] : null;
+    if (currentWeek && !taken.has(currentWeek.iso)) picked.add(currentWeek.iso);
     const typed = { sender: '', trx: '' };
 
     const back = el('div', 'modal-back');
@@ -101,7 +108,7 @@
 
       box.appendChild(el('label', '', 'Select week (' + money(weekly) + ' per week)'));
       const wrap = el('div');
-      weeks.filter(w => w.month === curMonth).forEach((w, i) => {
+      weeks.filter(w => w.month === curMonth).forEach(w => {
         const row = el('label');
         row.style.cssText = 'display:flex;gap:8px;align-items:center;margin:6px 0;';
         const cb = el('input'); cb.type = 'checkbox';
@@ -109,7 +116,7 @@
         cb.disabled = isTaken; cb.checked = picked.has(w.iso);
         cb.addEventListener('change', () => { if (cb.checked) picked.add(w.iso); else picked.delete(w.iso); draw(); });
         row.appendChild(cb);
-        const label = (ORD[i] || (i + 1) + 'th') + ' week' + (isTaken ? ' - already paid or pending' : '');
+        const label = weekName(w.iso) + (isTaken ? ' - already paid or pending' : '');
         row.appendChild(document.createTextNode(label));
         wrap.appendChild(row);
       });

@@ -360,9 +360,10 @@
     S.student = r.data || null;
     return r;
   }
+  // Only the class roll can be edited. The phone number is always locked.
   function setProfileEditing(on) {
     $('p-roll-in').disabled = !on;
-    $('p-phone-in').disabled = !on;
+    $('p-phone-in').disabled = true;
     $('p-edit').hidden = on;
     $('p-save').hidden = !on;
     $('p-cancel').hidden = !on;
@@ -389,15 +390,14 @@
   async function saveProfile() {
     const msg = $('p-msg'); msg.className = ''; msg.textContent = '';
     const roll = $('p-roll-in').value.trim();
-    const phone = $('p-phone-in').value.trim();
+    const phone = (S.student && S.student.phone) || '';
     if (!roll) { msg.className = 'err'; msg.textContent = 'Class roll is required.'; return; }
-    if (phone && !/^01[0-9]{9}$/.test(phone)) { msg.className = 'err'; msg.textContent = 'Phone must be 11 digits and start with 01.'; return; }
     const btn = $('p-save'); btn.disabled = true;
     const r = await db.rpc('update_my_profile', { new_roll: roll, new_phone: phone });
     btn.disabled = false;
     if (r.error) { msg.className = 'err'; msg.textContent = 'Could not save: ' + r.error.message; return; }
     await loadStudentRow(); renderProfile();
-    msg.className = 'ok'; msg.textContent = 'Profile updated.';
+    msg.className = 'ok'; msg.textContent = 'Roll updated.';
   }
 
   /* ---------- settings: change password ---------- */
@@ -419,7 +419,6 @@
   async function refreshAll() {
     await loadPublic();
     if (S.role === 'admin') await loadMembers();
-    if (S.role === 'student' && $('p-edit') && !$('p-edit').hidden) loadMyTotal();
     for (const fn of EEE.refreshHooks) { try { await fn(); } catch (e) { console.error(e); } }
   }
   EEE.refresh = refreshAll;
@@ -571,9 +570,14 @@
   $('r-search').addEventListener('input', renderReport);
   $('m-search').addEventListener('input', renderMembers);
   $('p-save').addEventListener('click', saveProfile);
-  $('p-edit').addEventListener('click', () => setProfileEditing(true));
-  $('p-cancel').addEventListener('click', () => { renderProfile(); $('p-msg').textContent = ''; });
   $('s-pw-save').addEventListener('click', savePassword);
+
+  // Profile Edit / Cancel buttons (delegated so they always work)
+  document.addEventListener('click', e => {
+    if (e.target.closest('#p-edit')) { setProfileEditing(true); $('p-roll-in').focus(); }
+    if (e.target.closest('#p-cancel')) { renderProfile(); $('p-msg').textContent = ''; }
+  });
+
   document.querySelectorAll('.paybtn').forEach(b => b.addEventListener('click', () => {
     if (typeof EEE.openPay === 'function') EEE.openPay(b.dataset.pay);
     else toast('Payments will be enabled in the next update.');

@@ -4,36 +4,46 @@
   if (!EEE) return;
   const { db, $, el, money, toast } = EEE;
 
-  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
+  const START_DAYS = [1, 8, 15, 22, 29];
 
-  function iso(d) {
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
+  function pad(n) { return String(n).padStart(2, '0'); }
   function todayDhaka() {
     const s = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
-    return new Date(s + 'T00:00:00');
+    const p = s.split('-').map(Number);
+    return { y: p[0], m: p[1], d: p[2] };
   }
-  function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function monthKey(y, m) { return y + '-' + pad(m); }
   function monthLabel(k) {
     const d = new Date(k + '-01T00:00:00');
     return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
   }
-  function weekName(isoDate) {
-    const day = parseInt(isoDate.slice(8, 10), 10);
-    const n = Math.ceil(day / 7);
-    return (ORD[n - 1] || n + 'th') + ' week';
+  function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+
+  function buildMonths(startStr) {
+    const sp = startStr.split('-').map(Number);
+    const t = todayDhaka();
+    const months = [];
+    let y = sp[0], m = sp[1];
+    while (y < t.y || (y === t.y && m <= t.m)) {
+      const key = monthKey(y, m);
+      const weeks = [];
+      START_DAYS.forEach((day, i) => {
+        if (day > daysInMonth(y, m)) return;
+        const isFuture = y === t.y && m === t.m && day > t.d;
+        if (isFuture) return;
+        weeks.push({ iso: key + '-' + pad(day), name: ORD[i] + ' week', idx: i });
+      });
+      months.push({ key, weeks });
+      m++; if (m > 12) { m = 1; y++; }
+    }
+    return months;
   }
 
-  function allWeeks(startStr) {
-    const start = new Date(startStr + 'T00:00:00');
-    const today = todayDhaka();
-    const list = [];
-    for (let t = start.getTime(); t <= today.getTime(); t += WEEK_MS) {
-      const d = new Date(t);
-      list.push({ iso: iso(d), month: monthKey(d) });
-    }
-    return list;
+  function currentWeekIso(months) {
+    const last = months[months.length - 1];
+    if (!last || !last.weeks.length) return null;
+    return last.weeks[last.weeks.length - 1].iso;
   }
 
   async function takenWeeks() {
@@ -65,13 +75,13 @@
       return;
     }
     const weekly = Number(st.weekly_amount || 30);
-    const weeks = allWeeks(st.start_date);
+    const months = buildMonths(st.start_date);
+    if (!months.length) { toast('No weeks available yet.'); return; }
     const taken = await takenWeeks();
-    const months = Array.from(new Set(weeks.map(w => w.month)));
-    let curMonth = months[months.length - 1];
+    let curMonth = months[months.length - 1].key;
     const picked = new Set();
-    const currentWeek = weeks.length ? weeks[weeks.length - 1] : null;
-    if (currentWeek && !taken.has(currentWeek.iso)) picked.add(currentWeek.iso);
+    const cw = currentWeekIso(months);
+    if (cw && !taken.has(cw)) picked.add(cw);
     const typed = { sender: '', trx: '' };
 
     const back = el('div', 'modal-back');
@@ -99,8 +109,8 @@
 
       box.appendChild(el('label', '', 'Month'));
       const sel = el('select');
-      months.forEach(m => {
-        const o = el('option', '', monthLabel(m)); o.value = m; if (m === curMonth) o.selected = true;
+      months.forEach(mo => {
+        const o = el('option', '', monthLabel(mo.key)); o.value = mo.key; if (mo.key === curMonth) o.selected = true;
         sel.appendChild(o);
       });
       sel.addEventListener('change', () => { curMonth = sel.value; draw(); });
@@ -108,7 +118,8 @@
 
       box.appendChild(el('label', '', 'Select week (' + money(weekly) + ' per week)'));
       const wrap = el('div');
-      weeks.filter(w => w.month === curMonth).forEach(w => {
+      const mo = months.find(x => x.key === curMonth);
+      mo.weeks.forEach(w => {
         const row = el('label');
         row.style.cssText = 'display:flex;gap:8px;align-items:center;margin:6px 0;';
         const cb = el('input'); cb.type = 'checkbox';
@@ -116,14 +127,12 @@
         cb.disabled = isTaken; cb.checked = picked.has(w.iso);
         cb.addEventListener('change', () => { if (cb.checked) picked.add(w.iso); else picked.delete(w.iso); draw(); });
         row.appendChild(cb);
-        const label = weekName(w.iso) + (isTaken ? ' - already paid or pending' : '');
-        row.appendChild(document.createTextNode(label));
+        row.appendChild(document.createTextNode(w.name + (isTaken ? ' - already paid or pending' : '')));
         wrap.appendChild(row);
       });
       box.appendChild(wrap);
 
-      const total = el('div', 'pname', 'Total: ' + money(picked.size * weekly));
-      box.appendChild(total);
+      box.appendChild(el('div', 'pname', 'Total: ' + money(picked.size * weekly)));
 
       box.appendChild(el('label', '', 'Sender number (the number you sent from)'));
       const sender = el('input'); sender.type = 'tel'; sender.placeholder = '01XXXXXXXXX'; sender.id = 'pay-sender';

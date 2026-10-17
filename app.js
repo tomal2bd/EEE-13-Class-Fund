@@ -52,6 +52,10 @@
   const fmtDay = s => { const d = parseDate(s); return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '-'; };
   const fmtTime = s => { const d = parseDate(s); return d ? d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '-'; };
   const monthName = k => { const d = parseDate(k + '-01'); return d ? d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : k; };
+  const monthShortYear = k => {
+    const d = parseDate(k + '-01');
+    return d ? d.toLocaleDateString('en-GB', { month: 'short' }) + ' ' + String(d.getFullYear()).slice(2) : k;
+  };
   function pill(text, kind) { return el('span', 'pill ' + kind, text); }
   function fill(tbody, list, cols, emptyText) {
     tbody.innerHTML = '';
@@ -236,20 +240,40 @@
       box.appendChild(row);
     });
   }
+  function drawBars(boxId, totalId, keys, byKey, labelFn, titleFn) {
+    const box = $(boxId); box.innerHTML = '';
+    const totalBox = $(totalId);
+    if (!keys.length) {
+      box.style.display = 'block';
+      box.appendChild(el('p', 'empty', 'No approved contributions yet.'));
+      if (totalBox) totalBox.textContent = 'Total collected: ' + money(0);
+      return;
+    }
+    box.style.display = 'flex';
+    const max = Math.max(...keys.map(k => byKey[k]));
+    let total = 0;
+    keys.forEach(k => {
+      total += byKey[k];
+      const col = el('div', 'bar');
+      const bar = el('div'); bar.style.height = Math.max(3, (byKey[k] / max) * 85) + '%'; bar.title = titleFn(k) + ': ' + money(byKey[k]);
+      col.appendChild(bar); col.appendChild(el('span', '', labelFn(k)));
+      box.appendChild(col);
+    });
+    if (totalBox) totalBox.textContent = 'Total collected: ' + money(total);
+  }
   function renderChart() {
-    const box = $('chart'); box.innerHTML = '';
     const byWeek = {};
     S.contribs.forEach(r => { byWeek[r.week_start] = (byWeek[r.week_start] || 0) + Number(r.amount); });
     const weeks = Object.keys(byWeek).sort().slice(-8);
-    if (!weeks.length) { box.style.display = 'block'; box.appendChild(el('p', 'empty', 'No approved contributions yet.')); return; }
-    box.style.display = 'flex';
-    const max = Math.max(...weeks.map(w => byWeek[w]));
-    weeks.forEach(w => {
-      const col = el('div', 'bar');
-      const bar = el('div'); bar.style.height = Math.max(3, (byWeek[w] / max) * 85) + '%'; bar.title = weeksText([w]) + ': ' + money(byWeek[w]);
-      col.appendChild(bar); col.appendChild(el('span', '', weekShort(w)));
-      box.appendChild(col);
+    drawBars('chart', 'chart-total', weeks, byWeek, weekShort, w => weeksText([w]));
+
+    const byMonth = {};
+    S.contribs.forEach(r => {
+      const k = String(r.week_start).slice(0, 7);
+      byMonth[k] = (byMonth[k] || 0) + Number(r.amount);
     });
+    const months = Object.keys(byMonth).sort().slice(-6);
+    drawBars('chart-month', 'chart-month-total', months, byMonth, monthShortYear, monthName);
   }
 
   /* ---------- fund report ---------- */

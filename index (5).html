@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#064e3b">
+<title>EEE-13 Class Fund | Faridpur Engineering College</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= AUTH ================= -->
+<div class="auth" id="login-view">
+  <div class="sidetxt l">E E E</div>
+  <div class="sidetxt r">1 3</div>
+  <header class="ahead">
+    <div class="logo13">13</div>
+    <div>
+      <div class="atitle">EEE-13 Class Fund</div>
+      <div class="asub">Faridpur Engineering College · Transparent by design</div>
+    </div>
+  </header>
+
+  <section class="banner">
+    <svg class="bcircuit" viewBox="0 0 600 240" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+      <g fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".45">
+        <path class="t" d="M600 40H470V100H380V170"/>
+        <path class="t" d="M600 170H520V215H420"/>
+        <path class="t" d="M300 0V50H360V90"/>
+        <circle cx="380" cy="170" r="5"/><circle cx="420" cy="215" r="5"/><circle cx="360" cy="90" r="5"/>
+        <path d="M430 60h20l6-12 12 24 12-24 12 24 12-24 6 12h20"/>
+        <path d="M250 130q20-30 40 0t40 0t40 0"/>
+        <path d="M545 90l-18 30h15l-9 28 24-36h-15z"/>
+      </g>
+    </svg>
+    <div class="bwm">EEE-13</div>
+    <div class="bin">
+      <div class="chip"><b>EEE-13</b><span>CLASS FINANCE</span></div>
+      <h2>Together, with transparency.</h2>
+      <p>Track class contributions, payments, and expenses in one place with clear and accountable management.</p>
+    </div>
+  </section>
+
+  <div class="awrap">
+    <div class="acard">
+      <div class="seal">⚡</div>
+      <h1>Welcome to Class Fund</h1>
+      <p class="sub" id="auth-sub">Sign in to your account</p>
+      <div class="tabs">
+        <button class="tab on" id="tab-in">Sign In</button>
+        <button class="tab" id="tab-up">Student Sign Up</button>
+      </div>
+
+      <div id="form-in">
+        <div class="roles">
+          <button class="rbtn on" data-role="student">Student</button>
+          <button class="rbtn" data-role="admin">Admin</button>
+        </div>
+        <label for="in-email">Email address</label>
+        <input id="in-email" type="email" placeholder="you@example.com" autocomplete="username">
+        <label for="in-password">Password</label>
+        <input id="in-password" type="password" placeholder="Your password" autocomplete="current-password">
+        <button class="btn full" id="login-btn">Sign In</button>
+        <a href="#" class="forgot" id="forgot">Forgot password?</a>
+      </div>
+
+      <div id="form-up" hidden>
+        <label for="u-name">Full name</label>
+        <input id="u-name" placeholder="Your full name" autocomplete="name">
+        <div class="two">
+          <div><label for="u-roll">Class roll</label><input id="u-roll" placeholder="e.g. 25"></div>
+          <div><label for="u-reg">Registration no</label><input id="u-reg" placeholder="Registration number"></div>
+        </div>
+        <label for="u-phone">Phone number</label>
+        <input id="u-phone" type="tel" placeholder="01XXXXXXXXX" autocomplete="tel">
+        <label for="u-email">Email address</label>
+        <input id="u-email" type="email" placeholder="you@example.com" autocomplete="email">
+        <div class="two">
+          <div><label for="u-pass">Password</label><input id="u-pass" type="password" placeholder="Min 8 characters" autocomplete="new-password"></div>
+          <div><label for="u-pass2">Confirm password</label><input id="u-pass2" type="password" placeholder="Repeat password" autocomplete="new-password"></div>
+        </div>
+        <button class="btn full" id="signup-btn">Create Account</button>
+      </div>
+
+      <p class="err" id="message"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="app" id="app-view" hidden>
+  <aside class="side" id="side">
+    <div class="brand"><div class="logo">⚡</div><div>EEE-13 Fund</div></div>
+    <nav id="nav"></nav>
+    <div class="contact" id="contact"></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <div class="top">
+      <div class="tl">
+        <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+        <h1 id="title">Dashboard</h1>
+      </div>
+      <div class="user">
+        <span class="rolepill" id="role"></span>
+        <span class="who" id="who"></span>
+        <div class="avatar" id="avatar"></div>
+        <button class="btn ghost sm" id="logout-btn">Logout</button>
+      </div>
+    </div>
+
+    <div class="pad" id="pages">
+
+      <section id="page-overview">
+        <div class="paybar" id="paybar" hidden>
+          <button class="paybtn bkash" data-pay="bKash">bKash<small>Pay your weekly fund</small></button>
+          <button class="paybtn nagad" data-pay="Nagad">Nagad<small>Pay your weekly fund</small></button>
+        </div>
+        <div class="cards" id="stats">
+          <div class="card stat"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>
+          <div class="card stat"><div class="ico out">↑</div><div><div class="lbl">Total expenses</div><div class="val" id="c-out">-</div></div></div>
+          <div class="card stat hl"><div class="ico bal">৳</div><div><div class="lbl">Current balance</div><div class="val" id="c-bal">-</div></div></div>
+          <div class="card stat" id="card-stu" hidden><div class="ico stu">★</div><div><div class="lbl">Active members</div><div class="val" id="c-stu">-</div></div></div>
+        </div>
+        <div class="card">
+          <h2>Live payments <span class="live">LIVE</span></h2>
+          <div id="feed"></div>
+        </div>
+        <div class="card">
+          <h2>Weekly contributions</h2>
+          <div class="bars" id="chart"></div>
+        </div>
+      </section>
+
+      <section id="page-students" hidden>
+        <div class="card">
+          <h2>Members</h2>
+          <div class="tools"><input id="m-search" placeholder="Search name, roll, phone or email"></div>
+          <p class="err" id="m-msg"></p>
+          <div class="scroll"><table><thead><tr><th>Name</th><th>Class roll</th><th>Registration no</th><th>Phone</th><th>Email</th><th>Joined</th><th>Status</th><th>Action</th></tr></thead><tbody id="t-members"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="page-report" hidden>
+        <div class="card">
+          <div class="tabs">
+            <button class="tab on" id="r-tab-in">Money in</button>
+            <button class="tab" id="r-tab-out">Money out</button>
+          </div>
+          <div id="r-in-wrap">
+            <div class="help">Every payment here was checked and approved by the admin.</div>
+            <div class="tools"><input id="r-search" placeholder="Search by student name"></div>
+            <div class="scroll"><table><thead><tr><th>Student</th><th>Weeks</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody id="t-rin"></tbody></table></div>
+          </div>
+          <div id="r-out-wrap" hidden>
+            <div class="help">Every expense of the class fund, with its reason and receipt.</div>
+            <div class="scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-rout"></tbody></table></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Top contributors</h2>
+          <div id="r-top"></div>
+        </div>
+        <div class="card">
+          <h2>Monthly summary</h2>
+          <div class="scroll"><table><thead><tr><th>Month</th><th>Collected</th></tr></thead><tbody id="t-month"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="page-profile" hidden>
+        <div class="card">
+          <div class="prof">
+            <div class="bigav" id="p-avatar">?</div>
+            <div><div class="pname" id="p-name">-</div><div class="lbl" id="p-email">-</div></div>
+          </div>
+          <div class="grid2">
+            <div><div class="lbl">Registration no</div><div class="pv" id="p-reg">-</div></div>
+            <div><div class="lbl">Joined</div><div class="pv" id="p-joined">-</div></div>
+            <div><div class="lbl">Account type</div><div class="pv">Student</div></div>
+          </div>
+          <div class="sec">Edit details</div>
+          <div class="formgrid">
+            <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll"></div>
+            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX"></div>
+          </div>
+          <p class="hint">Your name and registration number can only be changed by the admin.</p>
+          <button class="btn" id="p-save">Save changes</button>
+          <p id="p-msg"></p>
+        </div>
+      </section>
+
+      <section id="page-settings" hidden>
+        <div class="card">
+          <h2>Change password</h2>
+          <div class="formgrid">
+            <div><label for="s-pw">New password</label><input id="s-pw" type="password" placeholder="Min 8 characters" autocomplete="new-password"></div>
+            <div><label for="s-pw2">Confirm new password</label><input id="s-pw2" type="password" placeholder="Repeat password" autocomplete="new-password"></div>
+          </div>
+          <button class="btn" id="s-pw-save">Change password</button>
+          <p id="s-pw-msg"></p>
+        </div>
+        <div id="settings-extra"></div>
+      </section>
+
+    </div>
+
+    <footer class="foot" id="foot"></footer>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

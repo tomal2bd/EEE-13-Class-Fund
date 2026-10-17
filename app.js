@@ -77,10 +77,40 @@
     }
     return '-';
   }
-  function weeksText(weeks) {
-    if (weeks.length <= 3) return (weeks.length === 1 ? 'Week of ' : 'Weeks: ') + weeks.map(fmtDay).join(', ');
-    return weeks.length + ' weeks (' + fmtDay(weeks[0]) + ' to ' + fmtDay(weeks[weeks.length - 1]) + ')';
+
+  /* ---------- calendar weeks: 1-7 = 1st, 8-14 = 2nd, 15-21 = 3rd, 22-28 = 4th, 29-end = 5th ---------- */
+  const WEEK_ORD = ['1st', '2nd', '3rd', '4th', '5th'];
+  const WEEK_START_DAYS = [1, 8, 15, 22, 29];
+  function weekIndex(iso) {
+    const day = Number(String(iso).slice(8, 10));
+    return WEEK_START_DAYS.indexOf(day);
   }
+  function weekMonthYear(iso) {
+    const d = parseDate(iso);
+    return d ? d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '';
+  }
+  function weekMonthShort(iso) {
+    const d = parseDate(iso);
+    return d ? d.toLocaleDateString('en-GB', { month: 'short' }) : '';
+  }
+  function weekShort(iso) {
+    const i = weekIndex(iso);
+    return i === -1 ? fmtDay(iso) : weekMonthShort(iso) + ' W' + (i + 1);
+  }
+  function weeksText(weeks) {
+    const groups = new Map();
+    weeks.forEach(w => {
+      const mon = weekMonthYear(w);
+      const i = weekIndex(w);
+      const label = i === -1 ? fmtDay(w) : WEEK_ORD[i];
+      if (!groups.has(mon)) groups.set(mon, []);
+      groups.get(mon).push(label);
+    });
+    return Array.from(groups.entries()).map(([mon, labels]) =>
+      labels.join(', ') + (labels.length > 1 ? ' weeks' : ' week') + ' · ' + mon
+    ).join(' | ');
+  }
+
   function groupPayments(rows) {
     const map = new Map();
     rows.forEach(r => {
@@ -95,7 +125,7 @@
     return list;
   }
 
-  Object.assign(EEE, { toast, fmtDate, fmtDay, fmtTime, pill, fill, weeksText, groupPayments });
+  Object.assign(EEE, { toast, fmtDate, fmtDay, fmtTime, pill, fill, weeksText, weekShort, groupPayments });
 
   /* ---------- pages & navigation ---------- */
   EEE.addPage = (id, def) => { PAGE_DEFS[id] = def; };
@@ -216,8 +246,8 @@
     const max = Math.max(...weeks.map(w => byWeek[w]));
     weeks.forEach(w => {
       const col = el('div', 'bar');
-      const bar = el('div'); bar.style.height = Math.max(3, (byWeek[w] / max) * 85) + '%'; bar.title = money(byWeek[w]);
-      col.appendChild(bar); col.appendChild(el('span', '', fmtDay(w)));
+      const bar = el('div'); bar.style.height = Math.max(3, (byWeek[w] / max) * 85) + '%'; bar.title = weeksText([w]) + ': ' + money(byWeek[w]);
+      col.appendChild(bar); col.appendChild(el('span', '', weekShort(w)));
       box.appendChild(col);
     });
   }

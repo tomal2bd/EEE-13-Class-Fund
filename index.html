@@ -39,6 +39,12 @@
   /* Profile: locked inputs */
   #page-profile input:disabled { background: #f1f5f9; color: #475569; cursor: not-allowed; }
   [hidden] { display: none !important; }
+  /* bKash / Nagad buttons with icons */
+  .paybtn { display: flex; align-items: center; gap: 12px; text-align: left; }
+  .payico { width: 44px; height: 44px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .payico svg { width: 28px; height: 28px; display: block; }
+  .paytxt { display: flex; flex-direction: column; line-height: 1.25; font-weight: 800; }
+  .paytxt small { display: block; font-weight: 500; opacity: .9; }
 </style>
 </head>
 <body>
@@ -268,8 +274,24 @@
 
       <section id="page-overview">
         <div class="paybar" id="paybar" hidden>
-          <button class="paybtn bkash" data-pay="bKash">bKash<small>Pay your weekly fund</small></button>
-          <button class="paybtn nagad" data-pay="Nagad">Nagad<small>Pay your weekly fund</small></button>
+          <button class="paybtn bkash" data-pay="bKash">
+            <span class="payico">
+              <svg viewBox="0 0 32 32" aria-hidden="true">
+                <path d="M3 9 L21 3 L17 14 L29 12 L11 29 L14 17 Z" fill="#e2136e"/>
+                <path d="M17 14 L14 17 L11 29 L29 12 Z" fill="#a50e50"/>
+              </svg>
+            </span>
+            <span class="paytxt">bKash<small>Pay your weekly fund</small></span>
+          </button>
+          <button class="paybtn nagad" data-pay="Nagad">
+            <span class="payico">
+              <svg viewBox="0 0 32 32" aria-hidden="true">
+                <circle cx="16" cy="16" r="15" fill="#f6921e"/>
+                <text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff" font-family="'Noto Sans Bengali','Kalpurush','Nirmala UI',sans-serif">নগদ</text>
+              </svg>
+            </span>
+            <span class="paytxt">Nagad<small>Pay your weekly fund</small></span>
+          </button>
         </div>
         <div class="cards" id="stats">
           <div class="card stat s-in"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>

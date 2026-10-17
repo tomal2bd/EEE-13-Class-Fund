@@ -250,12 +250,6 @@
         <div class="card">
           <h2>Weekly contributions</h2>
           <div class="bars" id="chart"></div>
-          <div class="lbl" id="chart-total" style="margin-top:10px">Total collected: ৳0</div>
-        </div>
-        <div class="card">
-          <h2>Monthly contributions</h2>
-          <div class="bars" id="chart-month"></div>
-          <div class="lbl" id="chart-month-total" style="margin-top:10px">Total collected: ৳0</div>
         </div>
       </section>
 
@@ -304,19 +298,14 @@
             <div><div class="lbl">Registration no</div><div class="pv" id="p-reg">-</div></div>
             <div><div class="lbl">Joined</div><div class="pv" id="p-joined">-</div></div>
             <div><div class="lbl">Account type</div><div class="pv">Student</div></div>
-            <div><div class="lbl">Total paid (approved)</div><div class="pv" id="p-total">-</div></div>
           </div>
-          <div class="sec">My details</div>
+          <div class="sec">Edit details</div>
           <div class="formgrid">
-            <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll" disabled></div>
-            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX" disabled></div>
+            <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll"></div>
+            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX"></div>
           </div>
-          <p class="hint">Only your class roll can be edited. Your name, registration number and phone can only be changed by the admin.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn" id="p-edit">Edit</button>
-            <button class="btn" id="p-save" hidden>Save changes</button>
-            <button class="btn ghost" id="p-cancel" hidden>Cancel</button>
-          </div>
+          <p class="hint">Your name and registration number can only be changed by the admin.</p>
+          <button class="btn" id="p-save">Save changes</button>
           <p id="p-msg"></p>
         </div>
       </section>

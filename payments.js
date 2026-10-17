@@ -280,7 +280,7 @@
   EEE.addPage('mypayments', { title: 'My Payments', label: 'My Payments', icon: 'card', roles: ['student'], onShow: renderMy });
   EEE.refreshHooks.push(renderMy);
 
-  /* ---------- Student: Notifications (payment approved / rejected) ---------- */
+  /* ---------- Student: Notification bell (top bar) ---------- */
   function seenKey() {
     return 'eee_notif_seen_' + (EEE.state.user ? EEE.state.user.id : 'x');
   }
@@ -302,31 +302,52 @@
       .order('reviewed_at', { ascending: false });
   }
 
+  function setBell(n) {
+    const badge = $('bell-badge');
+    if (!badge) return;
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.hidden = !n;
+  }
+
   async function updateNotifBadge() {
-    if (EEE.state.role !== 'student') return;
+    const bell = $('bell-btn');
+    if (!bell) return;
+    if (EEE.state.role !== 'student') { bell.hidden = true; return; }
+    bell.hidden = false;
     const r = await loadNotifs();
     if (r.error) return;
     const seen = getSeen();
-    const n = (r.data || []).filter(p => isUnread(p, seen)).length;
-    EEE.setBadge('notifications', n);
+    setBell((r.data || []).filter(p => isUnread(p, seen)).length);
   }
 
-  async function renderNotifs() {
+  async function openNotifs() {
     if (EEE.state.role !== 'student') return;
-    const sec = $('page-notifications');
-    if (!sec) return;
+    const old = document.getElementById('notif-panel-back');
+    if (old) { old.remove(); return; }
+
+    const back = el('div', 'modal-back');
+    back.id = 'notif-panel-back';
+    back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9999;';
+    const box = el('div', 'card');
+    box.style.cssText = 'position:absolute;top:64px;right:12px;width:min(400px,calc(100% - 24px));max-height:75vh;overflow:auto;margin:0;';
+    back.appendChild(box);
+    back.addEventListener('click', e => { if (e.target === back) back.remove(); });
+    document.body.appendChild(back);
+
+    box.appendChild(el('h2', '', 'Notifications'));
+    box.appendChild(el('p', 'help', 'Loading...'));
+
     const r = await loadNotifs();
-    sec.innerHTML = '';
+    box.innerHTML = '';
+    box.appendChild(el('h2', '', 'Notifications'));
     if (r.error) {
-      sec.appendChild(el('p', 'err', 'Could not load notifications: ' + r.error.message));
+      box.appendChild(el('p', 'err', 'Could not load notifications: ' + r.error.message));
       return;
     }
     const list = r.data || [];
     const seen = getSeen();
-    const card = el('div', 'card');
-    card.appendChild(el('h2', '', 'Notifications'));
     if (!list.length) {
-      card.appendChild(el('p', 'empty', 'No notifications yet. You will see here when the admin approves or rejects your payment.'));
+      box.appendChild(el('p', 'empty', 'No notifications yet. You will see here when the admin approves or rejects your payment.'));
     }
     list.forEach(p => {
       const ok = p.status === 'approved';
@@ -334,7 +355,7 @@
       const row = el('div', 'feed-item');
       row.appendChild(el('div', 'fav', ok ? '✓' : '✕'));
       const main = el('div', 'fmain');
-      let text = 'Your ' + (p.method || '') + ' payment of ' + money(p.amount) + (weeks ? ' for ' + weeks : '') +
+      const text = 'Your ' + (p.method || '') + ' payment of ' + money(p.amount) + (weeks ? ' for ' + weeks : '') +
         (ok ? ' was approved.' : ' was rejected.');
       const title = el('div', 'fname', text);
       if (isUnread(p, seen)) title.style.fontWeight = '800';
@@ -344,14 +365,20 @@
       main.appendChild(el('div', 'fsub', sub));
       row.appendChild(main);
       row.appendChild(ok ? EEE.pill('Approved', 'ok') : EEE.pill('Rejected', 'no'));
-      card.appendChild(row);
+      box.appendChild(row);
     });
-    sec.appendChild(card);
+
+    const closeBtn = el('button', 'btn ghost full', 'Close');
+    closeBtn.style.marginTop = '10px';
+    closeBtn.addEventListener('click', () => back.remove());
+    box.appendChild(closeBtn);
+
     setSeen(new Date().toISOString());
-    EEE.setBadge('notifications', 0);
+    setBell(0);
   }
 
-  EEE.addPage('notifications', { title: 'Notifications', label: 'Notifications', icon: 'clock', roles: ['student'], onShow: renderNotifs });
+  const bellBtn = $('bell-btn');
+  if (bellBtn) bellBtn.addEventListener('click', openNotifs);
   EEE.refreshHooks.push(updateNotifBadge);
 
   EEE.openPay = openPay;

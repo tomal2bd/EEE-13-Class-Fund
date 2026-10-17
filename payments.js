@@ -154,6 +154,132 @@
     draw();
   }
 
+  /* ---------- Student: My Payments page ---------- */
+  function statCard(cls, icon, label, value) {
+    const c = el('div', 'card stat ' + cls);
+    c.appendChild(el('div', 'ico', icon));
+    const wrap = el('div');
+    wrap.appendChild(el('div', 'lbl', label));
+    wrap.appendChild(el('div', 'val', value));
+    c.appendChild(wrap);
+    return c;
+  }
+
+  function statusCell(p) {
+    const wrap = el('span');
+    if (p.status === 'approved') wrap.appendChild(EEE.pill('Approved', 'ok'));
+    else if (p.status === 'rejected') wrap.appendChild(EEE.pill('Rejected', 'no'));
+    else {
+      const pe = EEE.pill('Pending', '');
+      pe.style.cssText = 'background:#fef3c7;color:#92400e;';
+      wrap.appendChild(pe);
+    }
+    if (p.status === 'rejected' && p.review_note) {
+      const n = el('div', 'help', 'Reason: ' + p.review_note);
+      wrap.appendChild(n);
+    }
+    return wrap;
+  }
+
+  async function renderMy() {
+    if (EEE.state.role !== 'student') return;
+    const sec = $('page-mypayments');
+    if (!sec) return;
+
+    const r = await db.from('payments')
+      .select('id, method, transaction_id, status, amount, submitted_at, review_note, payment_weeks(week_start, amount)')
+      .order('submitted_at', { ascending: false });
+    sec.innerHTML = '';
+    if (r.error) {
+      sec.appendChild(el('p', 'err', 'Could not load your payments: ' + r.error.message));
+      return;
+    }
+    const list = r.data || [];
+    const t = todayDhaka();
+    const mk = monthKey(t.y, t.m);
+    const weekly = Number((EEE.state.settings || {}).weekly_amount || 30);
+
+    let totalPaid = 0, monthPaid = 0, pendingAmt = 0;
+    const wstat = {};
+    list.forEach(p => {
+      const ws = p.payment_weeks || [];
+      if (p.status === 'approved') {
+        totalPaid += Number(p.amount);
+        ws.forEach(w => { if (String(w.week_start).slice(0, 7) === mk) monthPaid += Number(w.amount); });
+      }
+      if (p.status === 'pending') pendingAmt += Number(p.amount);
+      if (p.status === 'approved' || p.status === 'pending') {
+        ws.forEach(w => {
+          if (wstat[w.week_start] !== 'approved') wstat[w.week_start] = p.status;
+        });
+      }
+    });
+
+    // This month's weeks up to the current week
+    const weeks = [];
+    START_DAYS.forEach((day, i) => {
+      if (day > daysInMonth(t.y, t.m) || day > t.d) return;
+      const endDay = i === 4 ? daysInMonth(t.y, t.m) : day + 6;
+      const iso = mk + '-' + pad(day);
+      const isCurrent = t.d >= day && t.d <= endDay;
+      weeks.push({ iso, name: ORD[i] + ' week (' + day + ' - ' + endDay + ')', isCurrent, status: wstat[iso] || 'due' });
+    });
+    const dueCount = weeks.filter(w => w.status === 'due').length;
+
+    const cards = el('div', 'cards');
+    cards.appendChild(statCard('s-in', '↓', 'Total paid (approved)', money(totalPaid)));
+    cards.appendChild(statCard('s-bal', '৳', 'Paid this month', money(monthPaid)));
+    cards.appendChild(statCard('s-stu', '⏳', 'Waiting for approval', money(pendingAmt)));
+    cards.appendChild(statCard('s-out', '!', 'Due this month', money(dueCount * weekly)));
+    sec.appendChild(cards);
+
+    // This month weeks
+    const wcard = el('div', 'card');
+    wcard.appendChild(el('h2', '', 'This month: ' + monthLabel(mk)));
+    weeks.forEach(w => {
+      const row = el('div', 'feed-item');
+      const main = el('div', 'fmain');
+      main.appendChild(el('div', 'fname', w.name + (w.isCurrent ? ' · This week' : '')));
+      row.appendChild(main);
+      let p;
+      if (w.status === 'approved') p = EEE.pill('Paid', 'ok');
+      else if (w.status === 'pending') { p = EEE.pill('Pending', ''); p.style.cssText = 'background:#fef3c7;color:#92400e;'; }
+      else p = EEE.pill('Due', 'no');
+      row.appendChild(p);
+      wcard.appendChild(row);
+    });
+    wcard.appendChild(el('div', 'chart-total', dueCount ? ('Weeks still due this month: ' + dueCount) : 'You are all paid up for this month.'));
+    sec.appendChild(wcard);
+
+    // History
+    const hcard = el('div', 'card');
+    hcard.appendChild(el('h2', '', 'My payment history'));
+    const scroll = el('div', 'scroll');
+    const table = el('table');
+    const thead = el('thead');
+    const hr = el('tr');
+    ['Date', 'Method', 'TrxID', 'Weeks', 'Amount', 'Status'].forEach(h => hr.appendChild(el('th', '', h)));
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    const tbody = el('tbody');
+    table.appendChild(tbody);
+    scroll.appendChild(table);
+    hcard.appendChild(scroll);
+    sec.appendChild(hcard);
+
+    EEE.fill(tbody, list, [
+      p => EEE.fmtTime(p.submitted_at),
+      p => p.method || '-',
+      p => p.transaction_id || '-',
+      p => EEE.weeksText((p.payment_weeks || []).map(w => w.week_start).sort()),
+      p => money(p.amount),
+      p => statusCell(p)
+    ], 'You have not made any payment yet');
+  }
+
+  EEE.addPage('mypayments', { title: 'My Payments', label: 'My Payments', icon: 'card', roles: ['student'], onShow: renderMy });
+  EEE.refreshHooks.push(renderMy);
+
   EEE.openPay = openPay;
   const bar = $('paybar');
   if (bar && EEE.state.role === 'student') bar.hidden = false;

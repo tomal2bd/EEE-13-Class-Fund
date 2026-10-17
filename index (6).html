@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#064e3b">
+<title>EEE-13 · Class Fund</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="circuit.css">
+</head>
+<body>
+
+<!-- ================= AUTH ================= -->
+<div class="auth" id="login-view">
+<svg class="bgcircuit" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+<path class="trace" d="M800 450 L800 100 L600 100 L600 0 L400 0"/>
+<path class="pulse" pathLength="1000" d="M800 450 L800 100 L600 100 L600 0 L400 0" style="animation-duration:8.2s;animation-delay:-6.0s"/>
+<path class="trace" d="M0 400 L0 650 L200 650 L200 850"/>
+<path class="pulse" pathLength="1000" d="M0 400 L0 650 L200 650 L200 850" style="animation-duration:8.2s;animation-delay:-3.9s"/>
+<path class="trace" d="M1350 550 L1350 900 L1000 900 L1000 1000 L1200 1000"/>
+<path class="pulse" pathLength="1000" d="M1350 550 L1350 900 L1000 900 L1000 1000 L1200 1000" style="animation-duration:7.6s;animation-delay:-4.3s"/>
+<path class="trace" d="M1100 400 L1500 400 L1500 100 L1600 100 L1600 0"/>
+<path class="pulse" pathLength="1000" d="M1100 400 L1500 400 L1500 100 L1600 100 L1600 0" style="animation-duration:7.5s;animation-delay:-1.0s"/>
+<path class="trace" d="M1450 600 L1200 600 L1200 350 L1500 350 L1500 0"/>
+<path class="pulse" pathLength="1000" d="M1450 600 L1200 600 L1200 350 L1500 350 L1500 0" style="animation-duration:6.1s;animation-delay:-6.9s"/>
+<path class="trace" d="M600 1000 L350 1000 L250 1000 L450 1000"/>
+<path class="pulse" pathLength="1000" d="M600 1000 L350 1000 L250 1000 L450 1000" style="animation-duration:5.5s;animation-delay:-1.3s"/>
+<path class="trace" d="M700 250 L250 250 L250 600 L150 600 L150 400 L0 400"/>
+<path class="pulse" pathLength="1000" d="M700 250 L250 250 L250 600 L150 600 L150 400 L0 400" style="animation-duration:5.5s;animation-delay:-2.2s"/>
+<path class="trace" d="M1500 800 L1150 800 L1150 950 L1600 950"/>
+<path class="pulse" pathLength="1000" d="M1500 800 L1150 800 L1150 950 L1600 950" style="animation-duration:5.1s;animation-delay:-1.7s"/>
+<path class="trace" d="M500 200 L200 200 L200 500 L0 500 L0 200 L400 200"/>
+<path class="pulse" pathLength="1000" d="M500 200 L200 200 L200 500 L0 500 L0 200 L400 200" style="animation-duration:5.0s;animation-delay:-2.8s"/>
+<path class="trace" d="M250 100 L250 0 L500 0 L500 250 L850 250 L850 50"/>
+<path class="pulse" pathLength="1000" d="M250 100 L250 0 L500 0 L500 250 L850 250 L850 50" style="animation-duration:6.6s;animation-delay:-7.6s"/>
+<path class="trace" d="M1150 250 L1450 250 L1450 50 L1300 50 L1300 300"/>
+<path class="pulse" pathLength="1000" d="M1150 250 L1450 250 L1450 50 L1300 50 L1300 300" style="animation-duration:6.2s;animation-delay:-7.0s"/>
+<path class="trace" d="M900 200 L900 350 L800 350 L800 0"/>
+<path class="pulse" pathLength="1000" d="M900 200 L900 350 L800 350 L800 0" style="animation-duration:4.7s;animation-delay:-3.8s"/>
+<path class="trace" d="M650 50 L650 0 L900 0 L900 300 L800 300 L800 0"/>
+<path class="pulse" pathLength="1000" d="M650 50 L650 0 L900 0 L900 300 L800 300 L800 0" style="animation-duration:4.7s;animation-delay:-4.3s"/>
+<path class="trace" d="M950 200 L950 300 L1050 300 L1050 150 L900 150"/>
+<path class="pulse" pathLength="1000" d="M950 200 L950 300 L1050 300 L1050 150 L900 150" style="animation-duration:6.6s;animation-delay:-2.2s"/>
+<path class="trace" d="M1350 250 L1350 350 L1200 350 L1200 600 L1600 600 L1600 800"/>
+<path class="pulse" pathLength="1000" d="M1350 250 L1350 350 L1200 350 L1200 600 L1600 600 L1600 800" style="animation-duration:4.8s;animation-delay:-1.2s"/>
+<path class="trace" d="M800 400 L1200 400 L1200 150 L1500 150"/>
+<path class="pulse" pathLength="1000" d="M800 400 L1200 400 L1200 150 L1500 150" style="animation-duration:4.8s;animation-delay:-4.6s"/>
+<path class="trace" d="M1200 750 L1200 500 L1000 500 L1000 400"/>
+<path class="pulse" pathLength="1000" d="M1200 750 L1200 500 L1000 500 L1000 400" style="animation-duration:6.9s;animation-delay:-2.5s"/>
+<path class="trace" d="M150 300 L150 400 L0 400 L0 700 L0 900"/>
+<path class="pulse" pathLength="1000" d="M150 300 L150 400 L0 400 L0 700 L0 900" style="animation-duration:5.1s;animation-delay:-0.2s"/>
+<path class="trace" d="M1600 0 L1200 0 L1050 0"/>
+<path class="pulse" pathLength="1000" d="M1600 0 L1200 0 L1050 0" style="animation-duration:5.8s;animation-delay:-1.2s"/>
+<path class="trace" d="M400 550 L400 850 L100 850 L100 700 L0 700 L0 400"/>
+<path class="pulse" pathLength="1000" d="M400 550 L400 850 L100 850 L100 700 L0 700 L0 400" style="animation-duration:7.2s;animation-delay:-4.9s"/>
+<path class="trace" d="M1100 600 L1100 900 L1250 900 L1250 1000 L1600 1000"/>
+<path class="pulse" pathLength="1000" d="M1100 600 L1100 900 L1250 900 L1250 1000 L1600 1000" style="animation-duration:4.6s;animation-delay:-1.6s"/>
+<path class="trace" d="M1500 650 L1600 650 L1600 900 L1450 900"/>
+<path class="pulse" pathLength="1000" d="M1500 650 L1600 650 L1600 900 L1450 900" style="animation-duration:5.3s;animation-delay:-0.0s"/>
+<path class="trace" d="M650 650 L650 500 L500 500 L500 400 L750 400"/>
+<path class="pulse" pathLength="1000" d="M650 650 L650 500 L500 500 L500 400 L750 400" style="animation-duration:5.6s;animation-delay:-7.9s"/>
+<path class="trace" d="M150 350 L300 350 L300 650 L150 650"/>
+<path class="pulse" pathLength="1000" d="M150 350 L300 350 L300 650 L150 650" style="animation-duration:4.3s;animation-delay:-5.0s"/>
+<rect class="chip-box" x="120" y="640" width="140" height="90" rx="8"/>
+<line class="chip-pin" x1="140" y1="640" x2="140" y2="624"/><line class="chip-pin" x1="140" y1="730" x2="140" y2="746"/>
+<line class="chip-pin" x1="165" y1="640" x2="165" y2="624"/><line class="chip-pin" x1="165" y1="730" x2="165" y2="746"/>
+<line class="chip-pin" x1="190" y1="640" x2="190" y2="624"/><line class="chip-pin" x1="190" y1="730" x2="190" y2="746"/>
+<line class="chip-pin" x1="215" y1="640" x2="215" y2="624"/><line class="chip-pin" x1="215" y1="730" x2="215" y2="746"/>
+<line class="chip-pin" x1="240" y1="640" x2="240" y2="624"/><line class="chip-pin" x1="240" y1="730" x2="240" y2="746"/>
+<text class="chip-txt" x="190" y="695" text-anchor="middle">EEE</text>
+<rect class="chip-box" x="1330" y="140" width="140" height="90" rx="8"/>
+<line class="chip-pin" x1="1350" y1="140" x2="1350" y2="124"/><line class="chip-pin" x1="1350" y1="230" x2="1350" y2="246"/>
+<line class="chip-pin" x1="1375" y1="140" x2="1375" y2="124"/><line class="chip-pin" x1="1375" y1="230" x2="1375" y2="246"/>
+<line class="chip-pin" x1="1400" y1="140" x2="1400" y2="124"/><line class="chip-pin" x1="1400" y1="230" x2="1400" y2="246"/>
+<line class="chip-pin" x1="1425" y1="140" x2="1425" y2="124"/><line class="chip-pin" x1="1425" y1="230" x2="1425" y2="246"/>
+<line class="chip-pin" x1="1450" y1="140" x2="1450" y2="124"/><line class="chip-pin" x1="1450" y1="230" x2="1450" y2="246"/>
+<text class="chip-txt" x="1400" y="195" text-anchor="middle">13</text>
+<rect class="chip-box" x="1280" y="760" width="140" height="90" rx="8"/>
+<line class="chip-pin" x1="1300" y1="760" x2="1300" y2="744"/><line class="chip-pin" x1="1300" y1="850" x2="1300" y2="866"/>
+<line class="chip-pin" x1="1325" y1="760" x2="1325" y2="744"/><line class="chip-pin" x1="1325" y1="850" x2="1325" y2="866"/>
+<line class="chip-pin" x1="1350" y1="760" x2="1350" y2="744"/><line class="chip-pin" x1="1350" y1="850" x2="1350" y2="866"/>
+<line class="chip-pin" x1="1375" y1="760" x2="1375" y2="744"/><line class="chip-pin" x1="1375" y1="850" x2="1375" y2="866"/>
+<line class="chip-pin" x1="1400" y1="760" x2="1400" y2="744"/><line class="chip-pin" x1="1400" y1="850" x2="1400" y2="866"/>
+<text class="chip-txt" x="1350" y="815" text-anchor="middle">EEE</text>
+<circle class="node" cx="800" cy="450" r="5" style="animation-delay:-0.1s"/>
+<circle class="node" cx="400" cy="0" r="5" style="animation-delay:-0.4s"/>
+<circle class="node" cx="0" cy="400" r="5" style="animation-delay:-2.3s"/>
+<circle class="node" cx="200" cy="850" r="5" style="animation-delay:-1.7s"/>
+<circle class="node" cx="1350" cy="550" r="5" style="animation-delay:-0.9s"/>
+<circle class="node" cx="1200" cy="1000" r="5" style="animation-delay:-0.5s"/>
+<circle class="node" cx="1100" cy="400" r="5" style="animation-delay:-1.3s"/>
+<circle class="node" cx="1600" cy="0" r="5" style="animation-delay:-1.9s"/>
+<circle class="node" cx="1450" cy="600" r="5" style="animation-delay:-2.7s"/>
+<circle class="node" cx="1500" cy="0" r="5" style="animation-delay:-2.4s"/>
+<circle class="node" cx="600" cy="1000" r="5" style="animation-delay:-2.1s"/>
+<circle class="node" cx="450" cy="1000" r="5" style="animation-delay:-0.3s"/>
+<circle class="node" cx="700" cy="250" r="5" style="animation-delay:-1.8s"/>
+<circle class="node" cx="0" cy="400" r="5" style="animation-delay:-0.2s"/>
+<circle class="node" cx="1500" cy="800" r="5" style="animation-delay:-2.4s"/>
+<circle class="node" cx="1600" cy="950" r="5" style="animation-delay:-1.1s"/>
+<circle class="node" cx="500" cy="200" r="5" style="animation-delay:-0.1s"/>
+<circle class="node" cx="400" cy="200" r="5" style="animation-delay:-1.2s"/>
+<circle class="node" cx="250" cy="100" r="5" style="animation-delay:-0.4s"/>
+<circle class="node" cx="850" cy="50" r="5" style="animation-delay:-0.2s"/>
+<circle class="node" cx="1150" cy="250" r="5" style="animation-delay:-3.0s"/>
+<circle class="node" cx="1300" cy="300" r="5" style="animation-delay:-0.1s"/>
+<circle class="node" cx="900" cy="200" r="5" style="animation-delay:-1.1s"/>
+<circle class="node" cx="800" cy="0" r="5" style="animation-delay:-1.0s"/>
+<circle class="node" cx="650" cy="50" r="5" style="animation-delay:-2.4s"/>
+<circle class="node" cx="800" cy="0" r="5" style="animation-delay:-1.6s"/>
+<circle class="node" cx="950" cy="200" r="5" style="animation-delay:-0.3s"/>
+<circle class="node" cx="900" cy="150" r="5" style="animation-delay:-1.0s"/>
+<circle class="node" cx="1350" cy="250" r="5" style="animation-delay:-0.9s"/>
+<circle class="node" cx="1600" cy="800" r="5" style="animation-delay:-1.6s"/>
+<circle class="node" cx="800" cy="400" r="5" style="animation-delay:-2.9s"/>
+<circle class="node" cx="1500" cy="150" r="5" style="animation-delay:-1.4s"/>
+<circle class="node" cx="1200" cy="750" r="5" style="animation-delay:-2.7s"/>
+<circle class="node" cx="1000" cy="400" r="5" style="animation-delay:-1.5s"/>
+<circle class="node" cx="150" cy="300" r="5" style="animation-delay:-0.3s"/>
+<circle class="node" cx="0" cy="900" r="5" style="animation-delay:-0.9s"/>
+<circle class="node" cx="1600" cy="0" r="5" style="animation-delay:-1.4s"/>
+<circle class="node" cx="1050" cy="0" r="5" style="animation-delay:-1.1s"/>
+<circle class="node" cx="400" cy="550" r="5" style="animation-delay:-1.5s"/>
+<circle class="node" cx="0" cy="400" r="5" style="animation-delay:-2.3s"/>
+<circle class="node" cx="1100" cy="600" r="5" style="animation-delay:-1.0s"/>
+<circle class="node" cx="1600" cy="1000" r="5" style="animation-delay:-1.7s"/>
+<circle class="node" cx="1500" cy="650" r="5" style="animation-delay:-1.6s"/>
+<circle class="node" cx="1450" cy="900" r="5" style="animation-delay:-3.0s"/>
+<circle class="node" cx="650" cy="650" r="5" style="animation-delay:-0.5s"/>
+<circle class="node" cx="750" cy="400" r="5" style="animation-delay:-0.6s"/>
+<circle class="node" cx="150" cy="350" r="5" style="animation-delay:-1.6s"/>
+<circle class="node" cx="150" cy="650" r="5" style="animation-delay:-1.6s"/>
+</svg>
+  <div class="sidetxt l">E E E</div>
+  <div class="sidetxt r">1 3</div>
+  <header class="ahead">
+    <div class="logo13">13</div>
+    <div>
+      <div class="atitle">EEE-13 · Class Fund</div>
+      <div class="asub">Transparent by design</div>
+    </div>
+  </header>
+
+  <section class="banner">
+    <svg class="bcircuit" viewBox="0 0 600 240" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+      <g fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".45">
+        <path class="t" d="M600 40H470V100H380V170"/>
+        <path class="t" d="M600 170H520V215H420"/>
+        <path class="t" d="M300 0V50H360V90"/>
+        <circle cx="380" cy="170" r="5"/><circle cx="420" cy="215" r="5"/><circle cx="360" cy="90" r="5"/>
+        <path d="M430 60h20l6-12 12 24 12-24 12 24 12-24 6 12h20"/>
+        <path d="M250 130q20-30 40 0t40 0t40 0"/>
+        <path d="M545 90l-18 30h15l-9 28 24-36h-15z"/>
+      </g>
+    </svg>
+    <div class="bwm">EEE-13</div>
+    <div class="bin">
+      <div class="chip"><b>EEE-13</b><span>CLASS FUND</span></div>
+      <h2>Together, with transparency.</h2>
+      <p>Track class contributions, payments, and expenses in one place with clear and accountable management.</p>
+    </div>
+  </section>
+
+  <div class="awrap">
+    <div class="acard">
+      <div class="seal">⚡</div>
+      <h1>Welcome to Class Fund</h1>
+      <p class="sub" id="auth-sub">Sign in to your account</p>
+      <div class="tabs">
+        <button class="tab on" id="tab-in">Sign In</button>
+        <button class="tab" id="tab-up">Student Sign Up</button>
+      </div>
+
+      <div id="form-in">
+        <div class="roles">
+          <button class="rbtn on" data-role="student">Student</button>
+          <button class="rbtn" data-role="admin">Admin</button>
+        </div>
+        <label for="in-email">Email address</label>
+        <input id="in-email" type="email" placeholder="you@example.com" autocomplete="username">
+        <label for="in-password">Password</label>
+        <input id="in-password" type="password" placeholder="Your password" autocomplete="current-password">
+        <button class="btn full" id="login-btn">Sign In</button>
+        <a href="#" class="forgot" id="forgot">Forgot password?</a>
+      </div>
+
+      <div id="form-up" hidden>
+        <label for="u-name">Full name</label>
+        <input id="u-name" placeholder="Your full name" autocomplete="name">
+        <div class="two">
+          <div><label for="u-roll">Class roll</label><input id="u-roll" placeholder="e.g. 25"></div>
+          <div><label for="u-reg">Registration no</label><input id="u-reg" placeholder="Registration number"></div>
+        </div>
+        <label for="u-phone">Phone number</label>
+        <input id="u-phone" type="tel" placeholder="01XXXXXXXXX" autocomplete="tel">
+        <label for="u-email">Email address</label>
+        <input id="u-email" type="email" placeholder="you@example.com" autocomplete="email">
+        <div class="two">
+          <div><label for="u-pass">Password</label><input id="u-pass" type="password" placeholder="Min 8 characters" autocomplete="new-password"></div>
+          <div><label for="u-pass2">Confirm password</label><input id="u-pass2" type="password" placeholder="Repeat password" autocomplete="new-password"></div>
+        </div>
+        <button class="btn full" id="signup-btn">Create Account</button>
+      </div>
+
+      <p class="err" id="message"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="app" id="app-view" hidden>
+  <aside class="side" id="side">
+    <div class="brand"><div class="logo">⚡</div><div>EEE-13 · Class Fund</div></div>
+    <nav id="nav"></nav>
+    <div class="contact" id="contact"></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <div class="top">
+      <div class="tl">
+        <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+        <h1 id="title">Dashboard</h1>
+      </div>
+      <div class="user">
+        <span class="rolepill" id="role"></span>
+        <span class="who" id="who"></span>
+        <div class="avatar" id="avatar"></div>
+        <button class="btn ghost sm" id="logout-btn">Logout</button>
+      </div>
+    </div>
+
+    <div class="pad" id="pages">
+
+      <section id="page-overview">
+        <div class="paybar" id="paybar" hidden>
+          <button class="paybtn bkash" data-pay="bKash">bKash<small>Pay your weekly fund</small></button>
+          <button class="paybtn nagad" data-pay="Nagad">Nagad<small>Pay your weekly fund</small></button>
+        </div>
+        <div class="cards" id="stats">
+          <div class="card stat"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>
+          <div class="card stat"><div class="ico out">↑</div><div><div class="lbl">Total expenses</div><div class="val" id="c-out">-</div></div></div>
+          <div class="card stat hl"><div class="ico bal">৳</div><div><div class="lbl">Current balance</div><div class="val" id="c-bal">-</div></div></div>
+          <div class="card stat" id="card-stu" hidden><div class="ico stu">★</div><div><div class="lbl">Active members</div><div class="val" id="c-stu">-</div></div></div>
+        </div>
+        <div class="card">
+          <h2>Live payments <span class="live">LIVE</span></h2>
+          <div id="feed"></div>
+        </div>
+        <div class="card">
+          <h2>Weekly contributions</h2>
+          <div class="bars" id="chart"></div>
+        </div>
+      </section>
+
+      <section id="page-students" hidden>
+        <div class="card">
+          <h2>Members</h2>
+          <div class="tools"><input id="m-search" placeholder="Search name, roll, phone or email"></div>
+          <p class="err" id="m-msg"></p>
+          <div class="scroll"><table><thead><tr><th>Name</th><th>Class roll</th><th>Registration no</th><th>Phone</th><th>Email</th><th>Joined</th><th>Status</th><th>Action</th></tr></thead><tbody id="t-members"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="page-report" hidden>
+        <div class="card">
+          <div class="tabs">
+            <button class="tab on" id="r-tab-in">Money in</button>
+            <button class="tab" id="r-tab-out">Money out</button>
+          </div>
+          <div id="r-in-wrap">
+            <div class="help">Every payment here was checked and approved by the admin.</div>
+            <div class="tools"><input id="r-search" placeholder="Search by student name"></div>
+            <div class="scroll"><table><thead><tr><th>Student</th><th>Weeks</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody id="t-rin"></tbody></table></div>
+          </div>
+          <div id="r-out-wrap" hidden>
+            <div class="help">Every expense of the class fund, with its reason and receipt.</div>
+            <div class="scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-rout"></tbody></table></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Top contributors</h2>
+          <div id="r-top"></div>
+        </div>
+        <div class="card">
+          <h2>Monthly summary</h2>
+          <div class="scroll"><table><thead><tr><th>Month</th><th>Collected</th></tr></thead><tbody id="t-month"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="page-profile" hidden>
+        <div class="card">
+          <div class="prof">
+            <div class="bigav" id="p-avatar">?</div>
+            <div><div class="pname" id="p-name">-</div><div class="lbl" id="p-email">-</div></div>
+          </div>
+          <div class="grid2">
+            <div><div class="lbl">Registration no</div><div class="pv" id="p-reg">-</div></div>
+            <div><div class="lbl">Joined</div><div class="pv" id="p-joined">-</div></div>
+            <div><div class="lbl">Account type</div><div class="pv">Student</div></div>
+          </div>
+          <div class="sec">Edit details</div>
+          <div class="formgrid">
+            <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll"></div>
+            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX"></div>
+          </div>
+          <p class="hint">Your name and registration number can only be changed by the admin.</p>
+          <button class="btn" id="p-save">Save changes</button>
+          <p id="p-msg"></p>
+        </div>
+      </section>
+
+      <section id="page-settings" hidden>
+        <div class="card">
+          <h2>Change password</h2>
+          <div class="formgrid">
+            <div><label for="s-pw">New password</label><input id="s-pw" type="password" placeholder="Min 8 characters" autocomplete="new-password"></div>
+            <div><label for="s-pw2">Confirm new password</label><input id="s-pw2" type="password" placeholder="Repeat password" autocomplete="new-password"></div>
+          </div>
+          <button class="btn" id="s-pw-save">Change password</button>
+          <p id="s-pw-msg"></p>
+        </div>
+        <div id="settings-extra"></div>
+      </section>
+
+    </div>
+
+    <footer class="foot" id="foot"></footer>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

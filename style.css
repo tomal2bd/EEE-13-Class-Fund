@@ -140,8 +140,13 @@ th{background:#f8fafc;color:var(--m);font-size:12px;text-transform:uppercase;let
 
 /* ---------- Payments ---------- */
 .paybar{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-.paybtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:20px 12px;border:0;border-radius:16px;color:#fff;font-size:20px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.12)}
-.paybtn small{font-size:12px;font-weight:500;opacity:.92}
+.paybtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 12px;border:0;border-radius:18px;color:#fff;font-size:20px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.16);transition:transform .15s ease,box-shadow .15s ease}
+.paybtn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(0,0,0,.22)}
+.paybtn:active{transform:translateY(0)}
+.paybtn small{font-size:12px;font-weight:500;opacity:.95}
+.plogo{display:grid;place-items:center;background:#fff;border-radius:14px;width:68px;height:68px;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.plogo img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.pname2{font-size:20px;font-weight:800;line-height:1.1}
 .paybtn.bkash{background:linear-gradient(135deg,#e2136e,#c4105d)}
 .paybtn.nagad{background:linear-gradient(135deg,#f6921e,#e0780b)}
 .back{position:fixed;inset:0;background:rgba(2,44,34,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -182,5 +187,7 @@ th{background:#f8fafc;color:var(--m);font-size:12px;text-transform:uppercase;let
 .two{grid-template-columns:1fr}
 .rolepill{display:none}
 .paybar{gap:10px}
-.paybtn{font-size:17px;padding:16px 8px}
+.paybtn{font-size:17px;padding:14px 8px}
+.plogo{width:56px;height:56px}
+.pname2{font-size:17px}
 }

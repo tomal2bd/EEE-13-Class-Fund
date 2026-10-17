@@ -36,6 +36,9 @@
   .set-item .set-body { padding: 16px; }
   .set-item .arrow { color: #64748b; transition: transform .2s; }
   .set-item[open] .arrow { transform: rotate(180deg); }
+  /* Profile: locked inputs */
+  #page-profile input:disabled { background: #f1f5f9; color: #475569; cursor: not-allowed; }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -337,14 +340,19 @@
             <div><div class="lbl">Registration no</div><div class="pv" id="p-reg">-</div></div>
             <div><div class="lbl">Joined</div><div class="pv" id="p-joined">-</div></div>
             <div><div class="lbl">Account type</div><div class="pv">Student</div></div>
+            <div><div class="lbl">Total paid (approved)</div><div class="pv" id="p-total">-</div></div>
           </div>
-          <div class="sec">Edit details</div>
+          <div class="sec">Details</div>
           <div class="formgrid">
-            <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll"></div>
-            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX"></div>
+            <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll" disabled></div>
+            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX" disabled></div>
           </div>
           <p class="hint">Your name and registration number can only be changed by the admin.</p>
-          <button class="btn" id="p-save">Save changes</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn ghost" id="p-edit">Edit</button>
+            <button class="btn" id="p-save" hidden>Save changes</button>
+            <button class="btn ghost" id="p-cancel" hidden>Cancel</button>
+          </div>
           <p id="p-msg"></p>
         </div>
       </section>

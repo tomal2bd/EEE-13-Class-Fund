@@ -7,45 +7,6 @@
 <title>EEE-13 · Class Fund</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="circuit.css">
-<style>
-  /* Colored dashboard cards */
-  .card.stat.s-in  { background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important; border: 1px solid #6ee7b7 !important; }
-  .card.stat.s-out { background: linear-gradient(135deg, #fee2e2, #fecaca) !important; border: 1px solid #fca5a5 !important; }
-  .card.stat.s-bal { background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important; border: 1px solid #93c5fd !important; }
-  .card.stat.s-stu { background: linear-gradient(135deg, #ede9fe, #ddd6fe) !important; border: 1px solid #c4b5fd !important; }
-  .card.stat.s-in  .lbl, .card.stat.s-in  .val { color: #065f46 !important; }
-  .card.stat.s-out .lbl, .card.stat.s-out .val { color: #991b1b !important; }
-  .card.stat.s-bal .lbl, .card.stat.s-bal .val { color: #1e3a8a !important; }
-  .card.stat.s-stu .lbl, .card.stat.s-stu .val { color: #5b21b6 !important; }
-  .chart-total { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-weight: 700; color: #065f46; }
-  /* Weekly and Monthly graphs side by side (stacked on small screens) */
-  .graphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-  .graphs .card { margin: 0; }
-  /* Notification bell in the top bar */
-  .bell-btn { position: relative; background: #fff; border: 1px solid #d1d5db; border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-  .bell-btn[hidden] { display: none; }
-  .bell-badge { position: absolute; top: -4px; right: -4px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
-  .bell-badge[hidden] { display: none; }
-  /* Logout button inside the sidebar */
-  .logout-side { margin: 14px 12px 6px; width: calc(100% - 24px); background: rgba(255,255,255,.12) !important; color: #fff !important; border: 1px solid rgba(255,255,255,.35) !important; font-weight: 700; }
-  /* Settings: collapsible sub-option */
-  .set-item { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
-  .set-item > summary { cursor: pointer; padding: 14px 16px; font-weight: 700; background: #f8fafc; list-style: none; display: flex; align-items: center; justify-content: space-between; }
-  .set-item > summary::-webkit-details-marker { display: none; }
-  .set-item[open] > summary { border-bottom: 1px solid #e5e7eb; }
-  .set-item .set-body { padding: 16px; }
-  .set-item .arrow { color: #64748b; transition: transform .2s; }
-  .set-item[open] .arrow { transform: rotate(180deg); }
-  /* Profile: locked inputs */
-  #page-profile input:disabled { background: #f1f5f9; color: #475569; cursor: not-allowed; }
-  [hidden] { display: none !important; }
-  /* bKash / Nagad buttons with icons */
-  .paybtn { display: flex; align-items: center; gap: 12px; text-align: left; }
-  .payico { width: 44px; height: 44px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
-  .payico svg { width: 28px; height: 28px; display: block; }
-  .paytxt { display: flex; flex-direction: column; line-height: 1.25; font-weight: 800; }
-  .paytxt small { display: block; font-weight: 500; opacity: .9; }
-</style>
 </head>
 <body>
 
@@ -251,7 +212,6 @@
   <aside class="side" id="side">
     <div class="brand"><div class="logo">⚡</div><div>EEE-13 · Class Fund</div></div>
     <nav id="nav"></nav>
-    <button class="btn logout-side" id="logout-btn">Logout</button>
     <div class="contact" id="contact"></div>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -263,10 +223,10 @@
         <h1 id="title">Dashboard</h1>
       </div>
       <div class="user">
-        <button class="bell-btn" id="bell-btn" aria-label="Notifications" hidden>🔔<span class="bell-badge" id="bell-badge" hidden>0</span></button>
         <span class="rolepill" id="role"></span>
         <span class="who" id="who"></span>
         <div class="avatar" id="avatar"></div>
+        <button class="btn ghost sm" id="logout-btn">Logout</button>
       </div>
     </div>
 
@@ -274,46 +234,22 @@
 
       <section id="page-overview">
         <div class="paybar" id="paybar" hidden>
-          <button class="paybtn bkash" data-pay="bKash">
-            <span class="payico">
-              <svg viewBox="0 0 32 32" aria-hidden="true">
-                <path d="M3 9 L21 3 L17 14 L29 12 L11 29 L14 17 Z" fill="#e2136e"/>
-                <path d="M17 14 L14 17 L11 29 L29 12 Z" fill="#a50e50"/>
-              </svg>
-            </span>
-            <span class="paytxt">bKash<small>Pay your weekly fund</small></span>
-          </button>
-          <button class="paybtn nagad" data-pay="Nagad">
-            <span class="payico">
-              <svg viewBox="0 0 32 32" aria-hidden="true">
-                <circle cx="16" cy="16" r="15" fill="#f6921e"/>
-                <text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff" font-family="'Noto Sans Bengali','Kalpurush','Nirmala UI',sans-serif">নগদ</text>
-              </svg>
-            </span>
-            <span class="paytxt">Nagad<small>Pay your weekly fund</small></span>
-          </button>
+          <button class="paybtn bkash" data-pay="bKash"><span class="plogo"><img src="bkash.png" alt="" onerror="this.parentNode.style.display='none'"></span><span class="pname2">bKash</span><small>Pay your weekly fund</small></button>
+          <button class="paybtn nagad" data-pay="Nagad"><span class="plogo"><img src="nagad.png" alt="" onerror="this.parentNode.style.display='none'"></span><span class="pname2">Nagad</span><small>Pay your weekly fund</small></button>
         </div>
         <div class="cards" id="stats">
-          <div class="card stat s-in"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>
-          <div class="card stat s-out"><div class="ico out">↑</div><div><div class="lbl">Total expenses</div><div class="val" id="c-out">-</div></div></div>
-          <div class="card stat s-bal hl"><div class="ico bal">৳</div><div><div class="lbl">Current balance</div><div class="val" id="c-bal">-</div></div></div>
-          <div class="card stat s-stu" id="card-stu" hidden><div class="ico stu">★</div><div><div class="lbl">Active members</div><div class="val" id="c-stu">-</div></div></div>
+          <div class="card stat"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>
+          <div class="card stat"><div class="ico out">↑</div><div><div class="lbl">Total expenses</div><div class="val" id="c-out">-</div></div></div>
+          <div class="card stat hl"><div class="ico bal">৳</div><div><div class="lbl">Current balance</div><div class="val" id="c-bal">-</div></div></div>
+          <div class="card stat" id="card-stu" hidden><div class="ico stu">★</div><div><div class="lbl">Active members</div><div class="val" id="c-stu">-</div></div></div>
         </div>
         <div class="card">
           <h2>Live payments <span class="live">LIVE</span></h2>
           <div id="feed"></div>
         </div>
-        <div class="graphs">
-          <div class="card">
-            <h2>Weekly contributions</h2>
-            <div class="bars" id="chart"></div>
-            <div class="chart-total" id="chart-total">Total collected: -</div>
-          </div>
-          <div class="card">
-            <h2>Monthly contributions</h2>
-            <div class="bars" id="chart-month"></div>
-            <div class="chart-total" id="chart-month-total">Total collected: -</div>
-          </div>
+        <div class="card">
+          <h2>Weekly contributions</h2>
+          <div class="bars" id="chart"></div>
         </div>
       </section>
 
@@ -362,37 +298,27 @@
             <div><div class="lbl">Registration no</div><div class="pv" id="p-reg">-</div></div>
             <div><div class="lbl">Joined</div><div class="pv" id="p-joined">-</div></div>
             <div><div class="lbl">Account type</div><div class="pv">Student</div></div>
-            <div><div class="lbl">Total paid (approved)</div><div class="pv" id="p-total">-</div></div>
           </div>
-          <div class="sec">Details</div>
+          <div class="sec">Edit details</div>
           <div class="formgrid">
-            <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll" disabled></div>
-            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX" disabled></div>
+            <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll"></div>
+            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX"></div>
           </div>
           <p class="hint">Your name and registration number can only be changed by the admin.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn ghost" id="p-edit">Edit</button>
-            <button class="btn" id="p-save" hidden>Save changes</button>
-            <button class="btn ghost" id="p-cancel" hidden>Cancel</button>
-          </div>
+          <button class="btn" id="p-save">Save changes</button>
           <p id="p-msg"></p>
         </div>
       </section>
 
       <section id="page-settings" hidden>
         <div class="card">
-          <h2>Account</h2>
-          <details class="set-item" id="pw-details">
-            <summary><span>🔒 Change password</span><span class="arrow">▾</span></summary>
-            <div class="set-body">
-              <div class="formgrid">
-                <div><label for="s-pw">New password</label><input id="s-pw" type="password" placeholder="Min 8 characters" autocomplete="new-password"></div>
-                <div><label for="s-pw2">Confirm new password</label><input id="s-pw2" type="password" placeholder="Repeat password" autocomplete="new-password"></div>
-              </div>
-              <button class="btn" id="s-pw-save">Change password</button>
-              <p id="s-pw-msg"></p>
-            </div>
-          </details>
+          <h2>Change password</h2>
+          <div class="formgrid">
+            <div><label for="s-pw">New password</label><input id="s-pw" type="password" placeholder="Min 8 characters" autocomplete="new-password"></div>
+            <div><label for="s-pw2">Confirm new password</label><input id="s-pw2" type="password" placeholder="Repeat password" autocomplete="new-password"></div>
+          </div>
+          <button class="btn" id="s-pw-save">Change password</button>
+          <p id="s-pw-msg"></p>
         </div>
         <div id="settings-extra"></div>
       </section>

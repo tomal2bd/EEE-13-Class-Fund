@@ -324,21 +324,90 @@
     drawBars('chart-month', 'chart-month-total', months, byMonth, monthShortYear, monthName, BLUE);
   }
 
-  /* ---------- fund report ---------- */
+  /* ---------- public ledger ---------- */
+  const R_LIMIT = 10;
+  let rMonth = 'all';
+  let rInOpen = false;
+  let rOutOpen = false;
+
   function setRTab(t) {
     $('r-in-wrap').hidden = t !== 'in';
     $('r-out-wrap').hidden = t !== 'out';
     $('r-tab-in').classList.toggle('on', t === 'in');
     $('r-tab-out').classList.toggle('on', t === 'out');
   }
-  function renderReport() {
-    const q = $('r-search').value.trim().toLowerCase();
-    const groups = groupPayments(S.contribs).filter(g => (g.name || '').toLowerCase().includes(q));
-    fill($('t-rin'), groups, [g => g.name, g => weeksText(g.weeks), g => money(g.amount), g => fmtDate(g.date), () => pill('Approved', 'ok')], 'No approved payments yet');
-    fill($('t-rout'), S.expenses, [r => fmtDate(r.expense_date), r => r.reason, r => r.category || '-', r => money(r.amount), r => receiptCell(r.receipt_url)], 'No expenses yet');
 
+  // Month dropdown. Options are rebuilt only when the list of months changes,
+  // so the dropdown does not close by itself during the 20 second refresh.
+  function syncMonthSelect(keys) {
+    const sel = $('r-month');
+    if (!sel) return;
+    const sig = keys.join(',');
+    if (sel.dataset.sig !== sig) {
+      sel.innerHTML = '';
+      const all = el('option', '', 'All months'); all.value = 'all';
+      sel.appendChild(all);
+      keys.forEach(k => {
+        const o = el('option', '', monthName(k)); o.value = k;
+        sel.appendChild(o);
+      });
+      sel.dataset.sig = sig;
+    }
+    if (rMonth !== 'all' && keys.indexOf(rMonth) === -1) rMonth = 'all';
+    sel.value = rMonth;
+  }
+
+  function moreButton(id, total, open) {
+    const b = $(id);
+    if (!b) return;
+    b.hidden = total <= R_LIMIT;
+    b.textContent = open ? 'Show less' : 'Show more (' + (total - R_LIMIT) + ')';
+  }
+
+  function renderReport() {
+    const sumBy = (list, f) => list.reduce((a, x) => a + Number(f(x) || 0), 0);
+
+    // all months that have any money in or money out
+    const monthSet = new Set();
+    S.contribs.forEach(r => monthSet.add(String(r.payment_date).slice(0, 7)));
+    S.expenses.forEach(r => monthSet.add(String(r.expense_date).slice(0, 7)));
+    const monthKeys = Array.from(monthSet).filter(k => /^\d{4}-\d{2}$/.test(k)).sort().reverse();
+    syncMonthSelect(monthKeys);
+
+    const inMonth = d => rMonth === 'all' || String(d).slice(0, 7) === rMonth;
+    const contribsM = S.contribs.filter(r => inMonth(r.payment_date));
+    const expensesM = S.expenses.filter(r => inMonth(r.expense_date));
+
+    // summary cards
+    let totIn, totOut;
+    if (rMonth === 'all' && S.summary) {
+      totIn = Number(S.summary.total_contributions || 0);
+      totOut = Number(S.summary.total_expenses || 0);
+    } else {
+      totIn = sumBy(contribsM, r => r.amount);
+      totOut = sumBy(expensesM, r => r.amount);
+    }
+    $('r-c-in').textContent = money(totIn);
+    $('r-c-out').textContent = money(totOut);
+    $('r-c-bal').textContent = money(totIn - totOut);
+    $('r-l-bal').textContent = rMonth === 'all' ? 'Current balance' : 'Net this month';
+    $('r-period').textContent = rMonth === 'all' ? 'Showing: all months' : 'Showing: ' + monthName(rMonth);
+
+    // money in
+    const q = $('r-search').value.trim().toLowerCase();
+    const groups = groupPayments(contribsM).filter(g => (g.name || '').toLowerCase().includes(q));
+    const inShown = rInOpen ? groups : groups.slice(0, R_LIMIT);
+    fill($('t-rin'), inShown, [g => g.name, g => weeksText(g.weeks), g => money(g.amount), g => fmtDate(g.date), () => pill('Approved', 'ok')], 'No approved payments yet');
+    moreButton('r-in-more', groups.length, rInOpen);
+
+    // money out
+    const outShown = rOutOpen ? expensesM : expensesM.slice(0, R_LIMIT);
+    fill($('t-rout'), outShown, [r => fmtDate(r.expense_date), r => r.reason, r => r.category || '-', r => money(r.amount), r => receiptCell(r.receipt_url)], 'No expenses yet');
+    moreButton('r-out-more', expensesM.length, rOutOpen);
+
+    // top contributors (follows the month filter)
     const totals = {};
-    S.contribs.forEach(r => { totals[r.student_name] = (totals[r.student_name] || 0) + Number(r.amount); });
+    contribsM.forEach(r => { totals[r.student_name] = (totals[r.student_name] || 0) + Number(r.amount); });
     const top = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const tb = $('r-top'); tb.innerHTML = '';
     if (!top.length) tb.appendChild(el('p', 'empty', 'No contributions yet.'));
@@ -350,10 +419,22 @@
       tb.appendChild(row);
     });
 
-    const months = {};
-    S.contribs.forEach(r => { const k = String(r.payment_date).slice(0, 7); months[k] = (months[k] || 0) + Number(r.amount); });
-    const mlist = Object.keys(months).sort().reverse().map(k => ({ k, v: months[k] }));
-    fill($('t-month'), mlist, [m => monthName(m.k), m => money(m.v)], 'No data yet');
+    // monthly summary: collected, spent, net (always all months)
+    const inBy = {}, outBy = {};
+    S.contribs.forEach(r => { const k = String(r.payment_date).slice(0, 7); inBy[k] = (inBy[k] || 0) + Number(r.amount); });
+    S.expenses.forEach(r => { const k = String(r.expense_date).slice(0, 7); outBy[k] = (outBy[k] || 0) + Number(r.amount); });
+    const mlist = monthKeys.map(k => ({ k, i: inBy[k] || 0, o: outBy[k] || 0 }));
+    fill($('t-month'), mlist, [
+      m => monthName(m.k),
+      m => money(m.i),
+      m => money(m.o),
+      m => {
+        const net = m.i - m.o;
+        const s = el('b', '', (net < 0 ? '-' : '') + money(Math.abs(net)));
+        s.style.color = net < 0 ? '#dc2626' : '#047857';
+        return s;
+      }
+    ], 'No data yet');
   }
 
   /* ---------- load public data ---------- */
@@ -626,7 +707,10 @@
   $('scrim').addEventListener('click', closeMenu);
   $('r-tab-in').addEventListener('click', () => setRTab('in'));
   $('r-tab-out').addEventListener('click', () => setRTab('out'));
-  $('r-search').addEventListener('input', renderReport);
+  $('r-search').addEventListener('input', () => { rInOpen = false; renderReport(); });
+  $('r-month').addEventListener('change', e => { rMonth = e.target.value; rInOpen = false; rOutOpen = false; renderReport(); });
+  $('r-in-more').addEventListener('click', () => { rInOpen = !rInOpen; renderReport(); });
+  $('r-out-more').addEventListener('click', () => { rOutOpen = !rOutOpen; renderReport(); });
   $('m-search').addEventListener('input', renderMembers);
   $('p-save').addEventListener('click', saveProfile);
   $('s-pw-save').addEventListener('click', savePassword);

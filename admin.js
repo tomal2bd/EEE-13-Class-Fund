@@ -8,6 +8,7 @@
   const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
   const pad = n => String(n).padStart(2, '0');
   const dim = (y, m) => new Date(y, m, 0).getDate();
+  const isAdmin = () => EEE.state.role === 'admin';
   function today() {
     const p = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' }).split('-').map(Number);
     return { y: p[0], m: p[1], d: p[2] };
@@ -18,19 +19,40 @@
     w.appendChild(input);
     grid.appendChild(w);
   }
-  const isAdmin = () => EEE.state.role === 'admin';
+
+  /* ---------- payment method helpers ---------- */
+  const METHODS = {
+    bkash: { label: 'bKash', color: '#e2136e' },
+    nagad: { label: 'Nagad', color: '#f6921e' },
+    cash: { label: 'Cash', color: '#059669' }
+  };
+  function mInfo(m) {
+    const k = String(m || '').toLowerCase();
+    return METHODS[k] || { label: m || '-', color: '#64748b' };
+  }
+  function mBadge(m) {
+    const i = mInfo(m);
+    const b = el('span', '', i.label);
+    b.style.cssText = 'display:inline-block;padding:3px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff;background:' + i.color + ';';
+    return b;
+  }
+  function statusPill(s) {
+    if (s === 'approved') return EEE.pill('Approved', 'ok');
+    if (s === 'rejected') return EEE.pill('Rejected', 'no');
+    return EEE.pill('Pending', 'wait');
+  }
 
   /* ---------- sidebar order (admin) ---------- */
   function orderNav() {
     const nav = $('nav');
     if (!nav || !isAdmin()) return;
-    ['overview', 'review', 'manual', 'dues', 'expenses', 'students', 'report', 'settings'].forEach(id => {
+    ['overview', 'review', 'paylog', 'manual', 'dues', 'expenses', 'students', 'report', 'adminprofile', 'settings'].forEach(id => {
       const b = nav.querySelector('.nav[data-page="' + id + '"]');
       if (b) nav.appendChild(b);
     });
   }
 
-  /* ============ 1) Settings: fund + contact + categories ============ */
+  /* ============ 1) Settings (locked until Edit is pressed) ============ */
   let sBuilt = false;
   const FUND = [
     ['weekly_amount', 'Weekly amount (৳)', 'number'],
@@ -44,7 +66,6 @@
   ];
 
   function settingsCard(title, defs, hintText) {
-    const st = EEE.state.settings || {};
     const card = el('div', 'card');
     card.appendChild(el('h2', '', title));
     const grid = el('div', 'formgrid');
@@ -52,16 +73,37 @@
     defs.forEach(([key, label, type]) => {
       const i = el('input'); i.type = type;
       if (type === 'number') { i.min = '1'; i.step = '1'; }
-      i.value = st[key] == null ? '' : st[key];
       inputs[key] = i;
       addField(grid, label, i);
     });
     card.appendChild(grid);
     if (hintText) card.appendChild(el('p', 'hint', hintText));
-    const btn = el('button', 'btn', 'Save');
+
+    const row = el('div'); row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+    const edit = el('button', 'btn', 'Edit');
+    const save = el('button', 'btn', 'Save changes');
+    const cancel = el('button', 'btn ghost', 'Cancel');
+    row.appendChild(edit); row.appendChild(save); row.appendChild(cancel);
+    card.appendChild(row);
     const msg = el('p', '');
-    card.appendChild(btn); card.appendChild(msg);
-    btn.addEventListener('click', async () => {
+    card.appendChild(msg);
+
+    function restore() {
+      const s = EEE.state.settings || {};
+      defs.forEach(([k]) => { inputs[k].value = s[k] == null ? '' : s[k]; });
+    }
+    function setEdit(on) {
+      Object.keys(inputs).forEach(k => {
+        inputs[k].disabled = !on;
+        inputs[k].style.background = on ? '#fff' : '#f1f5f9';
+      });
+      edit.hidden = on; save.hidden = !on; cancel.hidden = !on;
+    }
+    restore(); setEdit(false);
+
+    edit.addEventListener('click', () => { msg.textContent = ''; setEdit(true); inputs[defs[0][0]].focus(); });
+    cancel.addEventListener('click', () => { restore(); setEdit(false); msg.textContent = ''; });
+    save.addEventListener('click', async () => {
       msg.className = 'err'; msg.textContent = '';
       const payload = {};
       for (const [key, label, type] of defs) {
@@ -78,11 +120,12 @@
           msg.textContent = label + ' is not a valid email.'; return;
         } else payload[key] = v || null;
       }
-      btn.disabled = true;
+      save.disabled = true;
       const r = await db.from('fund_settings').update(payload).eq('id', 1);
-      btn.disabled = false;
+      save.disabled = false;
       if (r.error) { msg.textContent = 'Could not save: ' + r.error.message; return; }
       EEE.state.settings = Object.assign({}, EEE.state.settings, payload);
+      setEdit(false);
       msg.className = 'ok'; msg.textContent = 'Saved. Contact info in the sidebar updates on next login.';
     });
     return card;
@@ -149,7 +192,6 @@
     box.appendChild(settingsCard('Contact information', CONTACT, ''));
     box.appendChild(categoriesCard());
   }
-  EEE.refreshHooks.push(async () => { if (isAdmin()) { buildSettings(); orderNav(); } });
 
   /* ============ 2) Manual payment entry (cash) ============ */
   let mBuilt = false;
@@ -298,4 +340,353 @@
     ], 'No active members');
   }
   EEE.addPage('dues', { title: 'Dues', label: 'Dues', icon: 'users', roles: ['admin'], onShow: renderDues });
+
+  /* ============ 4) Payment Log (shows the payment method) ============ */
+  const L_LIMIT = 20;
+  let lBuilt = false, lRows = [], lOpen = false, lUI = {};
+
+  async function lLoad() {
+    if (!isAdmin()) return;
+    const r = await db.from('payments')
+      .select('id, amount, method, transaction_id, sender_number, status, submitted_at, students(full_name, roll_no), payment_weeks(week_start)')
+      .order('submitted_at', { ascending: false })
+      .limit(1000);
+    if (r.error) { toast('Could not load payment log: ' + r.error.message); return; }
+    lRows = r.data || [];
+    if (lBuilt) lRender();
+  }
+
+  function lRender() {
+    const approved = lRows.filter(p => p.status === 'approved');
+    lUI.cards.innerHTML = '';
+    ['bkash', 'nagad', 'cash'].forEach(k => {
+      const list = approved.filter(p => String(p.method).toLowerCase() === k);
+      const sum = list.reduce((a, p) => a + Number(p.amount || 0), 0);
+      const c = el('div', 'card stat');
+      c.style.cssText = 'background:' + METHODS[k].color + ';color:#fff;border:0;';
+      const w = el('div');
+      const l = el('div', 'lbl', METHODS[k].label + ' (approved · ' + list.length + ')');
+      l.style.color = 'rgba(255,255,255,.92)';
+      w.appendChild(l);
+      w.appendChild(el('div', 'val', money(sum)));
+      c.appendChild(w);
+      lUI.cards.appendChild(c);
+    });
+
+    const mf = lUI.method.value, sf = lUI.status.value, q = lUI.q.value.trim().toLowerCase();
+    const list = lRows.filter(p => {
+      if (mf !== 'all' && String(p.method).toLowerCase() !== mf) return false;
+      if (sf !== 'all' && p.status !== sf) return false;
+      if (q) {
+        const hay = [(p.students && p.students.full_name) || '', p.transaction_id || '', p.sender_number || ''].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    const shown = lOpen ? list : list.slice(0, L_LIMIT);
+    EEE.fill(lUI.tbody, shown, [
+      p => EEE.fmtTime(p.submitted_at),
+      p => (p.students && p.students.full_name) || '-',
+      p => mBadge(p.method),
+      p => money(p.amount),
+      p => EEE.weeksText((p.payment_weeks || []).map(w => w.week_start).sort()) || '-',
+      p => p.transaction_id || '-',
+      p => p.sender_number || '-',
+      p => statusPill(p.status)
+    ], 'No payments found');
+    lUI.count.textContent = 'Showing ' + shown.length + ' of ' + list.length + ' payments';
+    lUI.more.hidden = list.length <= L_LIMIT;
+    lUI.more.textContent = lOpen ? 'Show less' : 'Show more (' + (list.length - L_LIMIT) + ')';
+  }
+
+  function lBuild() {
+    const page = $('page-paylog');
+    if (!page || lBuilt) return;
+    page.innerHTML = '';
+    const cards = el('div', 'cards');
+    page.appendChild(cards);
+
+    const card = el('div', 'card');
+    card.appendChild(el('h2', '', 'All payments by method'));
+    const tools = el('div', 'tools');
+    const q = el('input'); q.placeholder = 'Search name, TrxID or sender number';
+    const method = el('select');
+    [['all', 'All methods'], ['bkash', 'bKash'], ['nagad', 'Nagad'], ['cash', 'Cash']].forEach(([v, t]) => {
+      const o = el('option', '', t); o.value = v; method.appendChild(o);
+    });
+    const status = el('select');
+    [['all', 'All status'], ['approved', 'Approved'], ['pending', 'Pending'], ['rejected', 'Rejected']].forEach(([v, t]) => {
+      const o = el('option', '', t); o.value = v; status.appendChild(o);
+    });
+    method.style.cssText = status.style.cssText = 'width:auto;min-width:140px;margin:0;';
+    tools.appendChild(q); tools.appendChild(method); tools.appendChild(status);
+    card.appendChild(tools);
+    const count = el('div', 'help', '');
+    card.appendChild(count);
+    const wrap = el('div', 'scroll');
+    const table = el('table');
+    table.innerHTML = '<thead><tr><th>Submitted</th><th>Student</th><th>Method</th><th>Amount</th><th>Weeks</th><th>TrxID</th><th>Sender</th><th>Status</th></tr></thead>';
+    const tbody = el('tbody');
+    table.appendChild(tbody); wrap.appendChild(table); card.appendChild(wrap);
+    const more = el('button', 'btn ghost full', 'Show more');
+    more.style.marginTop = '12px'; more.hidden = true;
+    card.appendChild(more);
+    page.appendChild(card);
+
+    lUI = { cards, q, method, status, count, tbody, more };
+    q.addEventListener('input', () => { lOpen = false; lRender(); });
+    method.addEventListener('change', () => { lOpen = false; lRender(); });
+    status.addEventListener('change', () => { lOpen = false; lRender(); });
+    more.addEventListener('click', () => { lOpen = !lOpen; lRender(); });
+    lBuilt = true;
+    lRender();
+  }
+
+  EEE.addPage('paylog', {
+    title: 'Payment Log', label: 'Payment Log', icon: 'chart', roles: ['admin'],
+    onShow: async function () { lBuild(); await lLoad(); }
+  });
+
+  /* ============ 5) New admin profile (replaces the old one) ============ */
+  let pBuilt = false, pEditing = false;
+  let pData = { full_name: '', phone: '', designation: '' };
+  let pUI = {};
+
+  function pName() { return (pData.full_name || '').trim() || 'Admin'; }
+
+  function pHeader() {
+    const name = pName();
+    const avn = $('av-name'); if (avn) avn.textContent = name;
+    if (!pBuilt) return;
+    pUI.avatar.textContent = name.charAt(0).toUpperCase();
+    pUI.name.textContent = name;
+    pUI.desig.textContent = pData.designation || 'Class Fund Admin';
+    pUI.mail.textContent = '✉  ' + (EEE.state.email || '-');
+    pUI.phone.textContent = pData.phone ? '☎  ' + pData.phone : '☎  Phone not added';
+  }
+  function pFill() {
+    if (!pBuilt) return;
+    pUI.nameIn.value = pData.full_name || '';
+    pUI.phoneIn.value = pData.phone || '';
+    pUI.desigIn.value = pData.designation || '';
+    pUI.mailIn.value = EEE.state.email || '';
+  }
+  function pSetEditing(on) {
+    pEditing = on;
+    if (!pBuilt) return;
+    [pUI.nameIn, pUI.phoneIn, pUI.desigIn].forEach(i => { i.disabled = !on; i.style.background = on ? '#fff' : '#f1f5f9'; });
+    pUI.mailIn.disabled = true; pUI.mailIn.style.background = '#f1f5f9';
+    pUI.edit.hidden = on; pUI.save.hidden = !on; pUI.cancel.hidden = !on;
+  }
+  async function pLoad() {
+    if (!isAdmin() || !EEE.state.user) return;
+    const r = await db.from('profiles').select('full_name, phone, designation').eq('id', EEE.state.user.id).maybeSingle();
+    if (r.error) { toast('Could not load profile: ' + r.error.message); return; }
+    pData = r.data || pData;
+    pHeader();
+    if (!pEditing) pFill();
+  }
+  async function pSave() {
+    const msg = pUI.msg;
+    msg.className = 'err'; msg.textContent = '';
+    const name = pUI.nameIn.value.trim();
+    const phone = pUI.phoneIn.value.trim();
+    const desig = pUI.desigIn.value.trim();
+    if (!name) { msg.textContent = 'Name is required.'; return; }
+    if (phone && !/^01[0-9]{9}$/.test(phone)) { msg.textContent = 'Phone must be 11 digits and start with 01.'; return; }
+    pUI.save.disabled = true;
+    const r = await db.rpc('update_admin_profile', { new_name: name, new_phone: phone, new_designation: desig });
+    pUI.save.disabled = false;
+    if (r.error) { msg.textContent = 'Could not save: ' + r.error.message; return; }
+    pData = { full_name: name, phone: phone, designation: desig };
+    pHeader(); pFill(); pSetEditing(false);
+    msg.className = 'ok'; msg.textContent = 'Profile updated.';
+  }
+
+  function pStatCard(label, value, bg) {
+    const c = el('div', 'pcard');
+    c.style.cssText = 'background:' + bg + ';border:0;color:#fff;box-shadow:0 6px 16px rgba(15,23,42,.18);';
+    const l = el('div', 'pl', label); l.style.color = 'rgba(255,255,255,.88)';
+    const v = el('div', 'pval', value); v.style.color = '#fff'; v.style.fontSize = '22px'; v.style.fontWeight = '800';
+    c.appendChild(l); c.appendChild(v);
+    return c;
+  }
+
+  async function pStats() {
+    if (!pBuilt || !isAdmin()) return;
+    const sum = EEE.state.summary || {};
+    const active = (EEE.getMembers ? EEE.getMembers() : []).filter(m => m.is_active).length;
+    const r = await db.from('payments')
+      .select('amount, method, status, submitted_at, students(full_name)')
+      .order('submitted_at', { ascending: false })
+      .limit(500);
+    const rows = r.error ? [] : (r.data || []);
+    const pending = rows.filter(p => p.status === 'pending').length;
+
+    pUI.stats.innerHTML = '';
+    pUI.stats.appendChild(pStatCard('Active members', String(active), 'linear-gradient(135deg,#f59e0b,#fbbf24)'));
+    pUI.stats.appendChild(pStatCard('Pending payments', String(pending), 'linear-gradient(135deg,#ef4444,#f97316)'));
+    pUI.stats.appendChild(pStatCard('Total money in', money(sum.total_contributions), 'linear-gradient(135deg,#059669,#34d399)'));
+    pUI.stats.appendChild(pStatCard('Total money out', money(sum.total_expenses), 'linear-gradient(135deg,#dc2626,#f97316)'));
+    pUI.stats.appendChild(pStatCard('Current balance', money(sum.current_balance), 'linear-gradient(135deg,#2563eb,#7c3aed)'));
+
+    // collection by method
+    const approved = rows.filter(p => p.status === 'approved');
+    const totals = {};
+    approved.forEach(p => { const k = String(p.method || '').toLowerCase(); totals[k] = (totals[k] || 0) + Number(p.amount || 0); });
+    const all = Object.keys(totals).reduce((a, k) => a + totals[k], 0);
+    pUI.methods.innerHTML = '';
+    if (!all) pUI.methods.appendChild(el('p', 'empty', 'No approved payments yet.'));
+    ['bkash', 'nagad', 'cash'].forEach(k => {
+      if (!totals[k]) return;
+      const pct = Math.round((totals[k] / all) * 100);
+      const row = el('div'); row.style.marginBottom = '14px';
+      const top = el('div'); top.style.cssText = 'display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:6px;';
+      top.appendChild(el('span', '', METHODS[k].label));
+      top.appendChild(el('span', '', money(totals[k]) + ' · ' + pct + '%'));
+      const track = el('div'); track.style.cssText = 'height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden;';
+      const fillBar = el('div'); fillBar.style.cssText = 'height:100%;border-radius:999px;width:' + pct + '%;background:' + METHODS[k].color + ';';
+      track.appendChild(fillBar);
+      row.appendChild(top); row.appendChild(track);
+      pUI.methods.appendChild(row);
+    });
+
+    // recent activity
+    pUI.recent.innerHTML = '';
+    const recent = rows.slice(0, 6);
+    if (!recent.length) pUI.recent.appendChild(el('p', 'empty', 'No activity yet.'));
+    recent.forEach(p => {
+      const it = el('div', 'feed-item');
+      it.appendChild(el('div', 'fav', ((p.students && p.students.full_name) || '?').charAt(0).toUpperCase()));
+      const main = el('div', 'fmain');
+      main.appendChild(el('div', 'fname', (p.students && p.students.full_name) || 'Unknown'));
+      main.appendChild(el('div', 'fsub', mInfo(p.method).label + ' · ' + EEE.fmtTime(p.submitted_at)));
+      it.appendChild(main);
+      const right = el('div'); right.style.cssText = 'text-align:right;';
+      right.appendChild(el('div', 'famt', money(p.amount)));
+      right.appendChild(statusPill(p.status));
+      it.appendChild(right);
+      pUI.recent.appendChild(it);
+    });
+  }
+
+  function pBuild() {
+    const page = $('page-adminprofile');
+    if (!page || pBuilt) return;
+    page.innerHTML = '';
+
+    // hero card: cover + avatar
+    const hero = el('div', 'card');
+    hero.style.cssText = 'padding:0;overflow:hidden;border-radius:20px;box-shadow:0 10px 28px rgba(30,27,75,.18);';
+    const cover = el('div');
+    cover.style.cssText = 'position:relative;height:130px;background:linear-gradient(135deg,#0f172a,#1e1b4b 50%,#6d28d9);overflow:hidden;';
+    cover.innerHTML = '<div style="position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(251,191,36,.18)"></div>' +
+      '<div style="position:absolute;right:120px;bottom:-70px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.08)"></div>' +
+      '<div style="position:absolute;left:-30px;bottom:-50px;width:140px;height:140px;border-radius:50%;background:rgba(16,185,129,.18)"></div>';
+    hero.appendChild(cover);
+
+    const body = el('div');
+    body.style.cssText = 'display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;padding:0 24px 24px;margin-top:-48px;position:relative;';
+    const avatar = el('div', '', 'A');
+    avatar.style.cssText = 'width:104px;height:104px;border-radius:50%;display:grid;place-items:center;font-size:44px;font-weight:800;color:#fde68a;background:linear-gradient(135deg,#312e81,#6d28d9);border:5px solid #fff;box-shadow:0 8px 20px rgba(15,23,42,.25);flex-shrink:0;';
+    body.appendChild(avatar);
+    const info = el('div'); info.style.cssText = 'flex:1;min-width:200px;padding-top:54px;';
+    const nameRow = el('div'); nameRow.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+    const nameEl = el('div', '', 'Admin'); nameEl.style.cssText = 'font-size:26px;font-weight:800;color:#0f172a;';
+    const badge = el('span', '', 'ADMIN');
+    badge.style.cssText = 'background:#fbbf24;color:#1e1b4b;font-size:11px;font-weight:800;letter-spacing:1.5px;padding:4px 10px;border-radius:999px;';
+    nameRow.appendChild(nameEl); nameRow.appendChild(badge);
+    const desigEl = el('div', '', 'Class Fund Admin'); desigEl.style.cssText = 'font-size:15px;font-weight:700;color:#6d28d9;margin-top:2px;';
+    const chips = el('div'); chips.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;';
+    function chip() {
+      const c = el('span', '', '-');
+      c.style.cssText = 'background:#f1f5f9;color:#334155;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;word-break:break-all;';
+      chips.appendChild(c); return c;
+    }
+    const mailEl = chip(), phoneEl = chip();
+    info.appendChild(nameRow); info.appendChild(desigEl); info.appendChild(chips);
+    body.appendChild(info);
+    hero.appendChild(body);
+    page.appendChild(hero);
+
+    // stats
+    const stats = el('div', 'pcards');
+    page.appendChild(stats);
+
+    // two columns: methods + recent
+    const two = el('div'); two.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:20px;';
+    const mCard = el('div', 'card'); mCard.style.marginBottom = '0';
+    mCard.appendChild(el('h2', '', 'Collection by method'));
+    const methods = el('div'); mCard.appendChild(methods);
+    const rCard = el('div', 'card'); rCard.style.marginBottom = '0';
+    rCard.appendChild(el('h2', '', 'Recent activity'));
+    const recent = el('div'); rCard.appendChild(recent);
+    two.appendChild(mCard); two.appendChild(rCard);
+    page.appendChild(two);
+
+    // quick actions
+    const act = el('div', 'card');
+    act.appendChild(el('h2', '', 'Quick actions'));
+    const arow = el('div'); arow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+    [['Review payments', 'review'], ['Payment log', 'paylog'], ['Add payment', 'manual'], ['Dues', 'dues'], ['Add expense', 'expenses'], ['Members', 'students'], ['Settings', 'settings']].forEach(([label, pg]) => {
+      const b = el('button', 'btn ghost', label);
+      b.addEventListener('click', () => EEE.showPage(pg));
+      arow.appendChild(b);
+    });
+    act.appendChild(arow);
+    page.appendChild(act);
+
+    // edit details
+    const ecard = el('div', 'card');
+    ecard.style.border = '2px dashed #7c3aed';
+    ecard.appendChild(el('h2', '', 'Your details'));
+    const grid = el('div', 'formgrid');
+    const nameIn = el('input'); nameIn.placeholder = 'Your full name';
+    const phoneIn = el('input'); phoneIn.type = 'tel'; phoneIn.placeholder = '01XXXXXXXXX';
+    const desigIn = el('input'); desigIn.placeholder = 'e.g. CR, Cashier';
+    const mailIn = el('input'); mailIn.type = 'email';
+    addField(grid, 'Full name', nameIn);
+    addField(grid, 'Phone number', phoneIn);
+    addField(grid, 'Designation', desigIn);
+    addField(grid, 'Email (locked)', mailIn);
+    ecard.appendChild(grid);
+    ecard.appendChild(el('p', 'hint', 'You can edit your name, phone and designation. Email can only be changed from Supabase.'));
+    const btns = el('div'); btns.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+    const editBtn = el('button', 'btn', 'Edit');
+    const saveBtn = el('button', 'btn', 'Save changes');
+    const cancelBtn = el('button', 'btn ghost', 'Cancel');
+    btns.appendChild(editBtn); btns.appendChild(saveBtn); btns.appendChild(cancelBtn);
+    ecard.appendChild(btns);
+    const msg = el('p', '');
+    ecard.appendChild(msg);
+    page.appendChild(ecard);
+
+    const out = el('button', 'btn danger', 'Logout');
+    out.addEventListener('click', () => { const b = $('av-logout'); if (b) b.click(); });
+    page.appendChild(out);
+
+    pUI = { avatar, name: nameEl, desig: desigEl, mail: mailEl, phone: phoneEl, stats, methods, recent, nameIn, phoneIn, desigIn, mailIn, edit: editBtn, save: saveBtn, cancel: cancelBtn, msg };
+    editBtn.addEventListener('click', () => { msg.textContent = ''; pSetEditing(true); nameIn.focus(); });
+    saveBtn.addEventListener('click', pSave);
+    cancelBtn.addEventListener('click', () => { pFill(); pSetEditing(false); msg.textContent = ''; });
+
+    pBuilt = true;
+    pHeader(); pFill(); pSetEditing(false);
+  }
+
+  // Replaces the older adminprofile page from admin.js, and shows it in the sidebar
+  EEE.addPage('adminprofile', {
+    title: 'My Profile', label: 'My Profile', icon: 'user', roles: ['admin'],
+    onShow: async function () { pBuild(); await pLoad(); await pStats(); }
+  });
+
+  /* ---------- refresh hooks ---------- */
+  EEE.refreshHooks.push(async () => {
+    if (!isAdmin()) return;
+    buildSettings();
+    orderNav();
+    if (!pBuilt) await pLoad();
+    if (pBuilt) await pStats();
+    if (lBuilt) await lLoad();
+  });
 })();

@@ -19,21 +19,26 @@
     return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
   }
   function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+  function brandOf(method) { return String(method).toLowerCase() === 'nagad' ? '#f6921e' : '#e2136e'; }
+
+  function weekInfoFromIso(iso) {
+    const y = Number(iso.slice(0, 4)), m = Number(iso.slice(5, 7)), day = Number(iso.slice(8, 10));
+    const idx = START_DAYS.indexOf(day);
+    const endDay = idx === 4 ? daysInMonth(y, m) : day + 6;
+    return {
+      iso,
+      name: (ORD[idx] || '') + ' week',
+      range: day + ' - ' + endDay,
+      month: monthLabel(iso.slice(0, 7))
+    };
+  }
 
   // Only the current calendar week: 1-7 = 1st, 8-14 = 2nd, 15-21 = 3rd, 22-28 = 4th, 29-end = 5th
   function currentWeek() {
     const t = todayDhaka();
     let idx = 0;
     START_DAYS.forEach((day, i) => { if (day <= t.d) idx = i; });
-    const startDay = START_DAYS[idx];
-    const endDay = idx === 4 ? daysInMonth(t.y, t.m) : startDay + 6;
-    const key = monthKey(t.y, t.m);
-    return {
-      iso: key + '-' + pad(startDay),
-      name: ORD[idx] + ' week',
-      range: startDay + ' - ' + endDay,
-      month: monthLabel(key)
-    };
+    return weekInfoFromIso(monthKey(t.y, t.m) + '-' + pad(START_DAYS[idx]));
   }
 
   async function takenWeeks() {
@@ -57,19 +62,20 @@
     return 'Could not submit payment: ' + msg;
   }
 
-  function copyNumber(number, btn) {
+  function copyText(text, btn, label) {
     const done = () => {
       btn.textContent = 'Copied ✓';
-      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      setTimeout(() => { btn.textContent = label; }, 2000);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(number).then(done, () => toast('Could not copy.'));
+      navigator.clipboard.writeText(text).then(done, () => toast('Could not copy.'));
     } else {
       toast('Copy is not supported on this browser.');
     }
   }
 
-  async function openPay(method) {
+  // weekIso is optional. If given, the form is for that week. Otherwise it is the current week.
+  async function openPay(method, weekIso) {
     const st = EEE.state.settings || {};
     const number = method === 'bKash' ? st.bkash_number : st.nagad_number;
     if (!number || !st.start_date) {
@@ -77,11 +83,11 @@
       return;
     }
     const weekly = Number(st.weekly_amount || 30);
-    const cw = currentWeek();
+    const cw = weekIso ? weekInfoFromIso(weekIso) : currentWeek();
     const taken = await takenWeeks();
     const alreadyTaken = taken.has(cw.iso);
     const typed = { sender: '', trx: '' };
-    const brand = method === 'bKash' ? '#e2136e' : '#f6921e';
+    const brand = brandOf(method);
 
     const back = el('div', 'modal-back');
     back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
@@ -104,7 +110,6 @@
       title.style.cssText = 'font-size:26px;font-weight:800;margin:0 0 16px;color:' + brand + ';';
       box.appendChild(title);
 
-      // Number box: big number + small Copy button
       const intro = el('div', '', 'Use "Send Money" and send to this ' + method + ' number:');
       intro.style.cssText = 'font-size:16px;font-weight:700;color:#0f172a;margin-bottom:10px;line-height:1.4;';
       box.appendChild(intro);
@@ -116,11 +121,10 @@
       numBox.appendChild(num);
       const copy = el('button', 'btn sm', 'Copy');
       copy.style.cssText = 'flex-shrink:0;background:' + brand + ';font-size:14px;padding:9px 16px;';
-      copy.addEventListener('click', () => copyNumber(number, copy));
+      copy.addEventListener('click', () => copyText(number, copy, 'Copy'));
       numBox.appendChild(copy);
       box.appendChild(numBox);
 
-      // Week + amount
       box.appendChild(bigLabel('Payment for'));
       const weekInfo = el('div', '', cw.name + ' of ' + cw.month);
       weekInfo.style.cssText = 'font-size:22px;font-weight:800;color:#064e3b;';
@@ -199,30 +203,98 @@
   }
 
   /* ---------- Student: My Payments page ---------- */
-  function statCard(cls, icon, label, value) {
-    const c = el('div', 'card stat ' + cls);
-    c.appendChild(el('div', 'ico', icon));
+  let myMonth = null;
+
+  function badge(text, bg, fg) {
+    const b = el('span', '', text);
+    b.style.cssText = 'display:inline-block;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;background:' + bg + ';color:' + fg + ';';
+    return b;
+  }
+  function statusBadge(status) {
+    if (status === 'approved') return badge('Approved', '#d1fae5', '#047857');
+    if (status === 'rejected') return badge('Rejected', '#fee2e2', '#b91c1c');
+    return badge('Pending', '#fef3c7', '#92400e');
+  }
+
+  function colorCard(grad, icon, label, value) {
+    const c = el('div', 'card stat');
+    c.style.cssText = 'background:' + grad + ';color:#fff;border:0;';
+    const ic = el('div', 'ico', icon);
+    ic.style.cssText = 'background:rgba(255,255,255,.25);color:#fff;';
+    c.appendChild(ic);
     const wrap = el('div');
-    wrap.appendChild(el('div', 'lbl', label));
-    wrap.appendChild(el('div', 'val', value));
+    const l = el('div', 'lbl', label);
+    l.style.color = 'rgba(255,255,255,.92)';
+    const v = el('div', 'val', value);
+    v.style.textShadow = '0 1px 2px rgba(0,0,0,.15)';
+    wrap.appendChild(l);
+    wrap.appendChild(v);
     c.appendChild(wrap);
     return c;
   }
 
-  function statusCell(p) {
-    const wrap = el('span');
-    if (p.status === 'approved') wrap.appendChild(EEE.pill('Approved', 'ok'));
-    else if (p.status === 'rejected') wrap.appendChild(EEE.pill('Rejected', 'no'));
-    else {
-      const pe = EEE.pill('Pending', '');
-      pe.style.cssText = 'background:#fef3c7;color:#92400e;';
-      wrap.appendChild(pe);
+  function payNowBtn(method, iso) {
+    const b = el('button', '', method);
+    b.style.cssText = 'border:0;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;background:' + brandOf(method) + ';';
+    b.addEventListener('click', () => openPay(method, iso));
+    return b;
+  }
+
+  function historyCard(p) {
+    const brand = brandOf(p.method);
+    const card = el('div', '');
+    card.style.cssText = 'border:1px solid #e2e8f0;border-left:6px solid ' + brand + ';border-radius:14px;padding:14px 16px;margin-bottom:12px;background:#fff;';
+
+    const top = el('div', '');
+    top.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;';
+    const left = el('div', '');
+    const amt = el('div', '', money(p.amount));
+    amt.style.cssText = 'font-size:22px;font-weight:800;color:#0f172a;';
+    const m = el('div', '', p.method || '-');
+    m.style.cssText = 'font-size:13px;font-weight:700;color:' + brand + ';';
+    left.appendChild(amt);
+    left.appendChild(m);
+    top.appendChild(left);
+    top.appendChild(statusBadge(p.status));
+    card.appendChild(top);
+
+    const wk = (p.payment_weeks || []).map(w => w.week_start).sort();
+    const weeksTxt = EEE.weeksText(wk);
+    if (weeksTxt) {
+      const w = el('div', '', weeksTxt);
+      w.style.cssText = 'margin-top:8px;font-size:15px;font-weight:600;color:#334155;';
+      card.appendChild(w);
     }
-    if (p.status === 'rejected' && p.review_note) {
-      const n = el('div', 'help', 'Reason: ' + p.review_note);
-      wrap.appendChild(n);
+
+    const sub = el('div', '');
+    sub.style.cssText = 'margin-top:6px;font-size:12px;color:#64748b;display:flex;align-items:center;gap:8px;flex-wrap:wrap;word-break:break-all;';
+    sub.appendChild(el('span', '', 'TrxID: ' + (p.transaction_id || '-')));
+    if (p.transaction_id) {
+      const cb = el('button', '', 'Copy');
+      cb.style.cssText = 'border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;color:#334155;';
+      cb.addEventListener('click', () => copyText(p.transaction_id, cb, 'Copy'));
+      sub.appendChild(cb);
     }
-    return wrap;
+    sub.appendChild(el('span', '', '· ' + EEE.fmtTime(p.submitted_at)));
+    card.appendChild(sub);
+
+    if (p.status === 'pending') {
+      const w = el('div', '', 'Waiting for admin approval. It will be marked Paid after the admin checks it.');
+      w.style.cssText = 'margin-top:10px;padding:10px 12px;background:#fef3c7;color:#92400e;border-radius:10px;font-size:13px;font-weight:600;';
+      card.appendChild(w);
+    }
+    if (p.status === 'rejected') {
+      const r = el('div', '', 'Reason: ' + (p.review_note || 'Not given'));
+      r.style.cssText = 'margin-top:10px;padding:10px 12px;background:#fee2e2;color:#991b1b;border-radius:10px;font-size:14px;font-weight:600;';
+      card.appendChild(r);
+      if (wk.length) {
+        const again = el('button', 'btn sm', 'Pay again');
+        again.style.cssText = 'margin-top:10px;background:' + brand + ';';
+        again.addEventListener('click', () => openPay(p.method, wk[0]));
+        card.appendChild(again);
+      }
+    }
+    return card;
   }
 
   async function renderMy() {
@@ -239,86 +311,118 @@
       return;
     }
     const list = r.data || [];
+    const st = EEE.state.settings || {};
     const t = todayDhaka();
-    const mk = monthKey(t.y, t.m);
-    const weekly = Number((EEE.state.settings || {}).weekly_amount || 30);
+    const nowKey = monthKey(t.y, t.m);
+    const weekly = Number(st.weekly_amount || 30);
 
-    let totalPaid = 0, monthPaid = 0, pendingAmt = 0;
+    // months from fund start to this month
+    const months = [];
+    if (st.start_date) {
+      const sp = st.start_date.split('-').map(Number);
+      let y = sp[0], m = sp[1];
+      while (y < t.y || (y === t.y && m <= t.m)) {
+        months.push(monthKey(y, m));
+        m++; if (m > 12) { m = 1; y++; }
+      }
+    }
+    if (!months.length) months.push(nowKey);
+    if (!myMonth || months.indexOf(myMonth) === -1) myMonth = nowKey;
+
+    let totalPaid = 0, pendingAmt = 0;
     const wstat = {};
     list.forEach(p => {
       const ws = p.payment_weeks || [];
-      if (p.status === 'approved') {
-        totalPaid += Number(p.amount);
-        ws.forEach(w => { if (String(w.week_start).slice(0, 7) === mk) monthPaid += Number(w.amount); });
-      }
+      if (p.status === 'approved') totalPaid += Number(p.amount);
       if (p.status === 'pending') pendingAmt += Number(p.amount);
       if (p.status === 'approved' || p.status === 'pending') {
-        ws.forEach(w => {
-          if (wstat[w.week_start] !== 'approved') wstat[w.week_start] = p.status;
-        });
+        ws.forEach(w => { if (wstat[w.week_start] !== 'approved') wstat[w.week_start] = p.status; });
       }
     });
 
-    // This month's weeks up to the current week
-    const weeks = [];
-    START_DAYS.forEach((day, i) => {
-      if (day > daysInMonth(t.y, t.m) || day > t.d) return;
-      const endDay = i === 4 ? daysInMonth(t.y, t.m) : day + 6;
-      const iso = mk + '-' + pad(day);
-      const isCurrent = t.d >= day && t.d <= endDay;
-      weeks.push({ iso, name: ORD[i] + ' week (' + day + ' - ' + endDay + ')', isCurrent, status: wstat[iso] || 'due' });
+    function weeksFor(key) {
+      const y = Number(key.slice(0, 4)), m = Number(key.slice(5, 7));
+      const out = [];
+      START_DAYS.forEach((day, i) => {
+        if (day > daysInMonth(y, m)) return;
+        if (y === t.y && m === t.m && day > t.d) return;
+        const endDay = i === 4 ? daysInMonth(y, m) : day + 6;
+        const iso = key + '-' + pad(day);
+        out.push({
+          iso, name: ORD[i] + ' week', range: day + ' - ' + endDay,
+          isCurrent: key === nowKey && t.d >= day && t.d <= endDay,
+          status: wstat[iso] || 'due'
+        });
+      });
+      return out;
+    }
+
+    // overall due (all months)
+    let dueTotal = 0;
+    const oldDueMonths = [];
+    months.forEach(k => {
+      const d = weeksFor(k).filter(w => w.status === 'due').length;
+      dueTotal += d;
+      if (k !== nowKey && d) oldDueMonths.push(monthLabel(k) + ' (' + d + ')');
     });
-    const dueCount = weeks.filter(w => w.status === 'due').length;
 
     const cards = el('div', 'cards');
-    cards.appendChild(statCard('s-in', '↓', 'Total paid (approved)', money(totalPaid)));
-    cards.appendChild(statCard('s-bal', '৳', 'Paid this month', money(monthPaid)));
-    cards.appendChild(statCard('s-stu', '⏳', 'Waiting for approval', money(pendingAmt)));
-    cards.appendChild(statCard('s-out', '!', 'Due this month', money(dueCount * weekly)));
+    cards.appendChild(colorCard('linear-gradient(135deg,#059669,#34d399)', '✓', 'Total paid', money(totalPaid)));
+    cards.appendChild(colorCard('linear-gradient(135deg,#f59e0b,#fbbf24)', '⏳', 'Waiting for approval', money(pendingAmt)));
+    cards.appendChild(colorCard('linear-gradient(135deg,#ef4444,#f97316)', '!', 'Total due', money(dueTotal * weekly)));
     sec.appendChild(cards);
 
-    // This month weeks
+    if (oldDueMonths.length) {
+      const warn = el('div', '', 'Unpaid weeks in earlier months: ' + oldDueMonths.join(', ') + '. Please choose the month below and pay.');
+      warn.style.cssText = 'margin-bottom:20px;padding:14px 16px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:14px;font-size:14px;font-weight:700;';
+      sec.appendChild(warn);
+    }
+
     const wcard = el('div', 'card');
-    wcard.appendChild(el('h2', '', 'This month: ' + monthLabel(mk)));
-    weeks.forEach(w => {
+    const head = el('div', '');
+    head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;';
+    head.appendChild(el('h2', '', 'Weekly status'));
+    const sel = el('select');
+    sel.style.cssText = 'width:auto;margin:0;padding:8px 12px;';
+    months.forEach(k => {
+      const o = el('option', '', monthLabel(k)); o.value = k; if (k === myMonth) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', () => { myMonth = sel.value; renderMy(); });
+    head.appendChild(sel);
+    wcard.appendChild(head);
+
+    const wl = weeksFor(myMonth);
+    wl.forEach(w => {
       const row = el('div', 'feed-item');
       const main = el('div', 'fmain');
       main.appendChild(el('div', 'fname', w.name + (w.isCurrent ? ' · This week' : '')));
+      main.appendChild(el('div', 'fsub', 'Days ' + w.range));
       row.appendChild(main);
-      let p;
-      if (w.status === 'approved') p = EEE.pill('Paid', 'ok');
-      else if (w.status === 'pending') { p = EEE.pill('Pending', ''); p.style.cssText = 'background:#fef3c7;color:#92400e;'; }
-      else p = EEE.pill('Due', 'no');
-      row.appendChild(p);
+      if (w.status === 'approved') row.appendChild(badge('Paid', '#d1fae5', '#047857'));
+      else if (w.status === 'pending') row.appendChild(badge('Pending', '#fef3c7', '#92400e'));
+      else {
+        const box = el('div', '');
+        box.style.cssText = 'display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;';
+        box.appendChild(badge('Due', '#fee2e2', '#b91c1c'));
+        box.appendChild(payNowBtn('bKash', w.iso));
+        box.appendChild(payNowBtn('Nagad', w.iso));
+        row.appendChild(box);
+      }
       wcard.appendChild(row);
     });
-    wcard.appendChild(el('div', 'chart-total', dueCount ? ('Weeks still due this month: ' + dueCount) : 'You are all paid up for this month.'));
+    const dueHere = wl.filter(w => w.status === 'due').length;
+    const note = el('div', 'help', dueHere ? ('You have ' + dueHere + ' unpaid week(s) in this month. Tap bKash or Nagad next to a week to pay.') : 'All weeks of this month are paid or waiting for approval.');
+    note.style.marginTop = '12px';
+    note.style.marginBottom = '0';
+    wcard.appendChild(note);
     sec.appendChild(wcard);
 
-    // History
     const hcard = el('div', 'card');
     hcard.appendChild(el('h2', '', 'My payment history'));
-    const scroll = el('div', 'scroll');
-    const table = el('table');
-    const thead = el('thead');
-    const hr = el('tr');
-    ['Date', 'Method', 'TrxID', 'Weeks', 'Amount', 'Status'].forEach(h => hr.appendChild(el('th', '', h)));
-    thead.appendChild(hr);
-    table.appendChild(thead);
-    const tbody = el('tbody');
-    table.appendChild(tbody);
-    scroll.appendChild(table);
-    hcard.appendChild(scroll);
+    if (!list.length) hcard.appendChild(el('p', 'empty', 'You have not made any payment yet.'));
+    list.forEach(p => hcard.appendChild(historyCard(p)));
     sec.appendChild(hcard);
-
-    EEE.fill(tbody, list, [
-      p => EEE.fmtTime(p.submitted_at),
-      p => p.method || '-',
-      p => p.transaction_id || '-',
-      p => EEE.weeksText((p.payment_weeks || []).map(w => w.week_start).sort()),
-      p => money(p.amount),
-      p => statusCell(p)
-    ], 'You have not made any payment yet');
   }
 
   EEE.addPage('mypayments', { title: 'My Payments', label: 'My Payments', icon: 'card', roles: ['student'], onShow: renderMy });
@@ -347,10 +451,10 @@
   }
 
   function setBell(n) {
-    const badge = $('bell-badge');
-    if (!badge) return;
-    badge.textContent = n > 99 ? '99+' : String(n);
-    badge.hidden = !n;
+    const b = $('bell-badge');
+    if (!b) return;
+    b.textContent = n > 99 ? '99+' : String(n);
+    b.hidden = !n;
   }
 
   async function updateNotifBadge() {

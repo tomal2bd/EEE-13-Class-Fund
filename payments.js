@@ -19,7 +19,12 @@
     return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
   }
   function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
-  function brandOf(method) { return String(method).toLowerCase() === 'nagad' ? '#f6921e' : '#e2136e'; }
+  function brandOf(method) {
+    const k = String(method).toLowerCase();
+    if (k === 'nagad') return '#f6921e';
+    if (k === 'cash') return '#059669';
+    return '#e2136e';
+  }
 
   function weekInfoFromIso(iso) {
     const y = Number(iso.slice(0, 4)), m = Number(iso.slice(5, 7)), day = Number(iso.slice(8, 10));
@@ -536,4 +541,202 @@
   EEE.openPay = openPay;
   const bar = $('paybar');
   if (bar && EEE.state.role === 'student') bar.hidden = false;
+})();
+
+
+/* =====================================================
+   Student profile: new design + payment summary
+   ===================================================== */
+(function () {
+  'use strict';
+  const EEE = window.EEE;
+  if (!EEE) return;
+  const { db, $, el, money } = EEE;
+
+  const START = [1, 8, 15, 22, 29];
+  const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
+  const pad = n => String(n).padStart(2, '0');
+  const dim = (y, m) => new Date(y, m, 0).getDate();
+  function today() {
+    const p = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' }).split('-').map(Number);
+    return { y: p[0], m: p[1], d: p[2] };
+  }
+
+  /* ---------- styles ---------- */
+  const css = `
+#page-profile .pbanner{position:relative;overflow:hidden;gap:22px;padding:36px 28px;border-radius:24px;background:linear-gradient(135deg,#022c22,#047857 55%,#10b981);box-shadow:0 14px 34px rgba(4,120,87,.30)}
+#page-profile .pbanner::before{content:"";position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.10)}
+#page-profile .pbanner::after{content:"";position:absolute;left:30%;bottom:-100px;width:220px;height:220px;border-radius:50%;background:rgba(251,191,36,.14)}
+#page-profile .pbanner>*{position:relative;z-index:1}
+#page-profile .pbav{width:104px;height:104px;font-size:44px;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.12));border:4px solid #fff;box-shadow:0 8px 22px rgba(0,0,0,.28)}
+#page-profile .pbname{font-size:30px;line-height:1.15}
+#page-profile .pbmail{font-size:14px;margin-top:4px}
+.sp-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sp-chip{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px}
+.sp-chip.badge{background:#fbbf24;border-color:#fbbf24;color:#064e3b;font-weight:800;letter-spacing:1.5px;font-size:11px}
+#page-profile .pcard{position:relative;border-radius:16px;padding:18px 16px 16px;transition:transform .15s ease,box-shadow .15s ease}
+#page-profile .pcard:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(15,23,42,.10)}
+#page-profile .pcard.paid:hover{box-shadow:0 14px 28px rgba(37,99,235,.35)}
+.sp-ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:18px;background:#d1fae5;margin-bottom:10px}
+#page-profile .pcard.paid .sp-ico{background:rgba(255,255,255,.22)}
+#page-profile .editcard{border-radius:18px;border-width:2px}
+.sp-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.sp-card h2{margin:0 0 14px;font-size:16px}
+.sp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+.sp-stat{border-radius:14px;padding:14px;color:#fff}
+.sp-stat .l{font-size:12px;opacity:.92}
+.sp-stat .v{font-size:22px;font-weight:800;margin-top:2px}
+.sp-track{height:12px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin:8px 0 6px}
+.sp-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#34d399,#047857)}
+.sp-weeks{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.sp-week{flex:1;min-width:110px;border-radius:14px;padding:12px;border:1px solid #e2e8f0;text-align:center}
+.sp-week b{display:block;font-size:14px}
+.sp-week span{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.sp-week.ok{background:#ecfdf5;border-color:#a7f3d0}.sp-week.ok span{background:#d1fae5;color:#047857}
+.sp-week.wait{background:#fffbeb;border-color:#fde68a}.sp-week.wait span{background:#fef3c7;color:#92400e}
+.sp-week.due{background:#fef2f2;border-color:#fecaca}.sp-week.due span{background:#fee2e2;color:#b91c1c}
+`;
+  const style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+
+  /* ---------- icons on the info cards ---------- */
+  function addIcons() {
+    const icons = ['💰', '🆔', '🎓', '😊', '📞', '📅', '👤'];
+    document.querySelectorAll('#page-profile .pcards .pcard').forEach((c, i) => {
+      if (c.querySelector('.sp-ico')) return;
+      c.insertBefore(el('div', 'sp-ico', icons[i] || '•'), c.firstChild);
+    });
+  }
+
+  /* ---------- chips in the banner ---------- */
+  function refreshChips() {
+    const nameEl = $('p-name');
+    if (!nameEl) return;
+    const host = nameEl.parentElement;
+    let box = $('sp-chips');
+    if (!box) { box = el('div', 'sp-chips'); box.id = 'sp-chips'; host.appendChild(box); }
+    const s = EEE.state.student || {};
+    box.innerHTML = '';
+    box.appendChild(el('span', 'sp-chip badge', 'STUDENT'));
+    if (s.roll_no) box.appendChild(el('span', 'sp-chip', 'Roll ' + s.roll_no));
+    if (s.registration_no) box.appendChild(el('span', 'sp-chip', 'Reg ' + s.registration_no));
+  }
+
+  /* ---------- payment summary card ---------- */
+  function statBox(label, value, bg) {
+    const d = el('div', 'sp-stat');
+    d.style.background = bg;
+    d.appendChild(el('div', 'l', label));
+    d.appendChild(el('div', 'v', value));
+    return d;
+  }
+
+  async function loadExtras() {
+    const s = EEE.state.student;
+    const page = $('page-profile');
+    if (!s || !page) return;
+
+    let card = $('sp-extra');
+    if (!card) {
+      card = el('div', 'sp-card');
+      card.id = 'sp-extra';
+      const anchor = page.querySelector('.editcard');
+      if (anchor) page.insertBefore(card, anchor); else page.appendChild(card);
+    }
+
+    const r = await db.from('payments')
+      .select('amount, status, payment_weeks(week_start)')
+      .eq('student_id', s.id);
+    if (r.error) { card.innerHTML = ''; card.appendChild(el('p', 'err', 'Could not load payment summary: ' + r.error.message)); return; }
+
+    const list = r.data || [];
+    const st = EEE.state.settings || {};
+    const weekly = Number(st.weekly_amount || 30);
+    const t = today();
+
+    let paid = 0, pending = 0;
+    const wstat = {};
+    list.forEach(p => {
+      if (p.status === 'approved') paid += Number(p.amount || 0);
+      if (p.status === 'pending') pending += Number(p.amount || 0);
+      if (p.status === 'approved' || p.status === 'pending') {
+        (p.payment_weeks || []).forEach(w => { if (wstat[w.week_start] !== 'approved') wstat[w.week_start] = p.status; });
+      }
+    });
+
+    const need = [];
+    if (st.start_date) {
+      let [y, m] = st.start_date.split('-').map(Number);
+      while (y < t.y || (y === t.y && m <= t.m)) {
+        START.forEach(day => {
+          if (day > dim(y, m)) return;
+          if (y === t.y && m === t.m && day > t.d) return;
+          need.push(y + '-' + pad(m) + '-' + pad(day));
+        });
+        m++; if (m > 12) { m = 1; y++; }
+      }
+    }
+    const approvedWeeks = need.filter(w => wstat[w] === 'approved').length;
+    const dueWeeks = need.filter(w => !wstat[w]).length;
+    const pct = need.length ? Math.round((approvedWeeks / need.length) * 100) : 0;
+
+    card.innerHTML = '';
+    card.appendChild(el('h2', '', 'Payment summary'));
+
+    const stats = el('div', 'sp-stats');
+    stats.appendChild(statBox('Total paid', money(paid), 'linear-gradient(135deg,#059669,#34d399)'));
+    stats.appendChild(statBox('Waiting approval', money(pending), 'linear-gradient(135deg,#f59e0b,#fbbf24)'));
+    stats.appendChild(statBox('Due weeks', String(dueWeeks), 'linear-gradient(135deg,#ef4444,#f97316)'));
+    stats.appendChild(statBox('Due amount', money(dueWeeks * weekly), 'linear-gradient(135deg,#2563eb,#7c3aed)'));
+    card.appendChild(stats);
+
+    const lab = el('div');
+    lab.style.cssText = 'display:flex;justify-content:space-between;font-size:14px;font-weight:700;';
+    lab.appendChild(el('span', '', 'Payment progress'));
+    lab.appendChild(el('span', '', approvedWeeks + ' of ' + need.length + ' weeks · ' + pct + '%'));
+    card.appendChild(lab);
+    const track = el('div', 'sp-track');
+    const fillBar = el('div', 'sp-fill');
+    fillBar.style.width = pct + '%';
+    track.appendChild(fillBar);
+    card.appendChild(track);
+
+    const mon = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', month: 'long', year: 'numeric' });
+    const mh = el('div', '', 'This month · ' + mon);
+    mh.style.cssText = 'margin-top:16px;font-size:13px;font-weight:700;color:#047857;';
+    card.appendChild(mh);
+    const row = el('div', 'sp-weeks');
+    START.forEach((day, i) => {
+      if (day > dim(t.y, t.m) || day > t.d) return;
+      const iso = t.y + '-' + pad(t.m) + '-' + pad(day);
+      const status = wstat[iso];
+      const cls = status === 'approved' ? 'ok' : status === 'pending' ? 'wait' : 'due';
+      const txt = status === 'approved' ? 'Paid' : status === 'pending' ? 'Pending' : 'Due';
+      const w = el('div', 'sp-week ' + cls);
+      w.appendChild(el('b', '', ORD[i] + ' week'));
+      w.appendChild(el('span', '', txt));
+      row.appendChild(w);
+    });
+    card.appendChild(row);
+
+    const tot = $('p-total');
+    if (tot) tot.textContent = money(paid);
+  }
+
+  function enhance() {
+    addIcons();
+    refreshChips();
+    loadExtras();
+  }
+
+  EEE.addPage('profile', {
+    title: 'My Profile', label: 'My Profile', icon: 'user', roles: ['student'], nav: false,
+    onShow: enhance
+  });
+
+  ['p-roll', 'p-nick'].forEach(id => {
+    const n = $(id);
+    if (n) new MutationObserver(refreshChips).observe(n, { childList: true, characterData: true, subtree: true });
+  });
 })();

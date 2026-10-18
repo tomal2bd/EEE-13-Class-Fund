@@ -31,8 +31,21 @@
 .avmenu button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;background:none;border:0;border-radius:8px;font-size:14px;color:#0f172a;cursor:pointer;text-align:left}
 .avmenu button:hover{background:#f1f5f9}
 .avmenu button.out{color:#dc2626}
+/* PROFILE2: profile banner, info cards, edit card */
+.pbanner{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:26px 24px;margin-bottom:18px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#022c22,#047857 60%,#10b981);box-shadow:0 8px 22px rgba(4,120,87,.25)}
+.pbav{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font-size:36px;font-weight:800;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.7);flex-shrink:0}
+.pbname{font-size:24px;font-weight:800}
+.pbmail{font-size:14px;opacity:.9;margin-top:2px;word-break:break-all}
+.pcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:18px}
+.pcard{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
+.pcard .pl{font-size:13px;color:#64748b}
+.pcard .pval{font-size:17px;font-weight:700;margin-top:4px;color:#0f172a;word-break:break-word}
+.pcard.paid{grid-column:1/-1;background:linear-gradient(135deg,#2563eb,#7c3aed);border:0;color:#fff;box-shadow:0 8px 22px rgba(37,99,235,.25)}
+.pcard.paid .pl{color:rgba(255,255,255,.9)}
+.pcard.paid .pval{color:#fff;font-size:32px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.editcard{border:2px dashed #10b981}
 @media(max-width:700px){.chartrow{grid-template-columns:1fr}}
-@media(max-width:600px){.hello-t{text-align:left}.hello-g{font-size:20px}#hello-time{font-size:24px}}
+@media(max-width:600px){.hello-t{text-align:left}.hello-g{font-size:20px}#hello-time{font-size:24px}.pbname{font-size:20px}}
 </style>
 </head>
 <body>
@@ -349,22 +362,29 @@
       </section>
 
       <section id="page-profile" hidden>
-        <div class="card">
-          <div class="prof">
-            <div class="bigav" id="p-avatar">?</div>
-            <div><div class="pname" id="p-name">-</div><div class="lbl" id="p-email">-</div></div>
+        <!-- PROFILE2 -->
+        <div class="pbanner">
+          <div class="pbav" id="p-avatar">?</div>
+          <div>
+            <div class="pbname" id="p-name">-</div>
+            <div class="pbmail" id="p-email">-</div>
           </div>
-          <div class="grid2">
-            <div><div class="lbl">Registration no</div><div class="pv" id="p-reg">-</div></div>
-            <div><div class="lbl">Joined</div><div class="pv" id="p-joined">-</div></div>
-            <div><div class="lbl">Account type</div><div class="pv">Student</div></div>
-            <div><div class="lbl">Total paid (approved)</div><div class="pv" id="p-total">-</div></div>
-          </div>
-          <div class="sec">My details</div>
+        </div>
+        <div class="pcards">
+          <div class="pcard paid"><div class="pl">Total paid (approved)</div><div class="pval" id="p-total">-</div></div>
+          <div class="pcard"><div class="pl">Registration no</div><div class="pval" id="p-reg">-</div></div>
+          <div class="pcard"><div class="pl">Class roll</div><div class="pval" id="p-roll">-</div></div>
+          <div class="pcard"><div class="pl">Nickname</div><div class="pval" id="p-nick">-</div></div>
+          <div class="pcard"><div class="pl">Phone</div><div class="pval" id="p-phone">-</div></div>
+          <div class="pcard"><div class="pl">Joined</div><div class="pval" id="p-joined">-</div></div>
+          <div class="pcard"><div class="pl">Account type</div><div class="pval">Student</div></div>
+        </div>
+        <div class="card editcard">
+          <h2>Edit your details</h2>
           <div class="formgrid">
             <div><label for="p-nick-in">Nickname</label><input id="p-nick-in" placeholder="Your nickname" disabled></div>
             <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll" disabled></div>
-            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX" disabled></div>
+            <div><label for="p-phone-in">Phone number (locked)</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX" disabled></div>
           </div>
           <p class="hint">Only your nickname and class roll can be edited. Your name, registration number and phone can only be changed by the admin.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap">

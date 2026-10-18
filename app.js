@@ -29,7 +29,7 @@
     overview: { title: 'Dashboard', label: 'Dashboard', icon: 'grid', roles: ['admin', 'student'] },
     students: { title: 'Members', label: 'Members', icon: 'users', roles: ['admin'] },
     report: { title: 'Public Ledger', label: 'Public Ledger', icon: 'chart', roles: ['admin', 'student'] },
-    // AVMENU: profile has no sidebar button (nav: false). It opens from the avatar menu.
+    // profile has no sidebar button (nav: false). It opens from the profile menu at the top right.
     profile: { title: 'My Profile', label: 'My Profile', icon: 'user', roles: ['student'], nav: false },
     settings: { title: 'Settings', label: 'Settings', icon: 'sliders', roles: ['admin', 'student'] }
   };
@@ -177,7 +177,7 @@
   }
   EEE.showPage = showPage;
 
-  /* ---------- AVMENU: avatar dropdown menu ---------- */
+  /* ---------- profile menu (top right) ---------- */
   function closeAvMenu() { const m = $('avmenu'); if (m) m.hidden = true; }
   function toggleAvMenu() {
     const m = $('avmenu');
@@ -528,10 +528,11 @@
     const st = await db.from('fund_settings').select('*').eq('id', 1).maybeSingle();
     S.settings = st.data || null;
 
-    const nameForAvatar = (S.student && S.student.full_name) || S.email || '?';
     $('role').textContent = role;
     $('who').textContent = S.email;
-    $('avatar').textContent = nameForAvatar.charAt(0).toUpperCase();
+    // AVMENU2: the round button keeps its person icon. The menu shows the name and email.
+    $('av-name').textContent = (S.student && S.student.full_name) || (role === 'admin' ? 'Admin' : 'Student');
+    $('av-email').textContent = S.email || '';
     $('card-stu').hidden = role !== 'admin';
     $('paybar').hidden = !(role === 'student' && typeof EEE.openPay === 'function');
 
@@ -630,7 +631,7 @@
   $('p-save').addEventListener('click', saveProfile);
   $('s-pw-save').addEventListener('click', savePassword);
 
-  // AVMENU: avatar button opens the small menu
+  // profile button opens the small menu
   $('avatar').addEventListener('click', e => { e.stopPropagation(); toggleAvMenu(); });
   $('av-profile').addEventListener('click', () => { closeAvMenu(); showPage('profile'); });
   $('av-logout').addEventListener('click', () => { closeAvMenu(); doLogout(); });

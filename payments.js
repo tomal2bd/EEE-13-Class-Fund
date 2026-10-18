@@ -577,8 +577,6 @@
 #page-profile .pcard{position:relative;border-radius:16px;padding:18px 16px 16px;transition:transform .15s ease,box-shadow .15s ease}
 #page-profile .pcard:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(15,23,42,.10)}
 #page-profile .pcard.paid:hover{box-shadow:0 14px 28px rgba(37,99,235,.35)}
-.sp-ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:18px;background:#d1fae5;margin-bottom:10px}
-#page-profile .pcard.paid .sp-ico{background:rgba(255,255,255,.22)}
 #page-profile .editcard{border-radius:18px;border-width:2px}
 .sp-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .sp-card h2{margin:0 0 14px;font-size:16px}
@@ -599,15 +597,6 @@
   const style = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
-
-  /* ---------- icons on the info cards ---------- */
-  function addIcons() {
-    const icons = ['💰', '🆔', '🎓', '😊', '📞', '📅', '👤'];
-    document.querySelectorAll('#page-profile .pcards .pcard').forEach((c, i) => {
-      if (c.querySelector('.sp-ico')) return;
-      c.insertBefore(el('div', 'sp-ico', icons[i] || '•'), c.firstChild);
-    });
-  }
 
   /* ---------- chips in the banner ---------- */
   function refreshChips() {
@@ -725,7 +714,6 @@
   }
 
   function enhance() {
-    addIcons();
     refreshChips();
     loadExtras();
   }

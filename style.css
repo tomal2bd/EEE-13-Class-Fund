@@ -69,11 +69,13 @@ input:focus,select:focus{border-color:var(--g4);box-shadow:0 0 0 3px rgba(16,185
 .nav:hover{background:rgba(255,255,255,.09)}
 .nav.on{background:#fff;color:var(--g3);font-weight:600}
 .badge{margin-left:auto;background:var(--red);color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:1px 8px}
-.contact{margin-top:auto;padding:14px 10px 4px;border-top:1px solid rgba(255,255,255,.15);font-size:12px;color:#a7f3d0}
-.contact h4{margin:0 0 8px;font-size:12px;color:#fff;letter-spacing:.5px;text-transform:uppercase}
-.contact .cp{margin-bottom:10px;line-height:1.5}
-.contact b{display:block;color:#fff;font-size:13px}
-.contact a{color:#a7f3d0;text-decoration:none;word-break:break-all}
+/* CONTACT2: sidebar Contact Us, tighter spacing and bigger text */
+.contact{margin-top:auto;padding:14px 10px 4px;border-top:1px solid rgba(255,255,255,.15);font-size:13px;color:#a7f3d0}
+.contact h4{margin:0 0 10px;font-size:13px;color:#fff;letter-spacing:.5px;text-transform:uppercase}
+.contact .cp{margin-bottom:12px;line-height:1.35}
+.contact .cp br{display:none}
+.contact b{display:block;color:#fff;font-size:15px;margin-bottom:2px}
+.contact a{display:block;color:#a7f3d0;text-decoration:none;word-break:break-all;font-size:14px;line-height:1.4}
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
 .top{display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--b);padding:14px 24px;position:sticky;top:0;z-index:20;gap:12px}
 .tl{display:flex;align-items:center;gap:12px;min-width:0}
@@ -86,8 +88,9 @@ input:focus,select:focus{border-color:var(--g4);box-shadow:0 0 0 3px rgba(16,185
 .scrim{position:fixed;inset:0;background:rgba(2,44,34,.5);z-index:25;display:none}
 .scrim.show{display:block}
 .pad{padding:24px;flex:1}
-.foot{text-align:center;padding:18px 16px;color:var(--m);font-size:13px;border-top:1px solid var(--b);background:#fff}
-.foot b{color:var(--g3)}
+/* CONTACT2: footer, bigger text */
+.foot{text-align:center;padding:20px 16px;color:var(--m);font-size:15px;line-height:1.8;border-top:1px solid var(--b);background:#fff}
+.foot b{color:var(--g3);font-size:16px}
 
 /* ---------- Cards, stats, tables ---------- */
 .card{background:#fff;border:1px solid var(--b);border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(15,23,42,.04);margin-bottom:20px}

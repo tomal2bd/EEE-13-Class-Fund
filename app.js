@@ -29,7 +29,8 @@
     overview: { title: 'Dashboard', label: 'Dashboard', icon: 'grid', roles: ['admin', 'student'] },
     students: { title: 'Members', label: 'Members', icon: 'users', roles: ['admin'] },
     report: { title: 'Public Ledger', label: 'Public Ledger', icon: 'chart', roles: ['admin', 'student'] },
-    profile: { title: 'My Profile', label: 'My Profile', icon: 'user', roles: ['student'] },
+    // AVMENU: profile has no sidebar button (nav: false). It opens from the avatar menu.
+    profile: { title: 'My Profile', label: 'My Profile', icon: 'user', roles: ['student'], nav: false },
     settings: { title: 'Settings', label: 'Settings', icon: 'sliders', roles: ['admin', 'student'] }
   };
   const ORDER = ['overview', 'review', 'mypayments', 'history', 'students', 'report', 'profile', 'settings'];
@@ -153,7 +154,7 @@
 
   function buildNav(role) {
     const nav = $('nav'); nav.innerHTML = '';
-    Object.keys(PAGE_DEFS).filter(id => PAGE_DEFS[id].roles.includes(role)).sort((a, b) => rank(a) - rank(b)).forEach(id => {
+    Object.keys(PAGE_DEFS).filter(id => PAGE_DEFS[id].roles.includes(role) && PAGE_DEFS[id].nav !== false).sort((a, b) => rank(a) - rank(b)).forEach(id => {
       const def = PAGE_DEFS[id];
       const b = el('button', 'nav'); b.dataset.page = id;
       b.innerHTML = '<svg viewBox="0 0 24 24">' + (ICON[def.icon] || ICON.grid) + '</svg><span></span><span class="badge" hidden>0</span>';
@@ -170,10 +171,20 @@
     document.querySelectorAll('.nav').forEach(b => b.classList.toggle('on', b.dataset.page === name));
     $('title').textContent = def.title;
     closeMenu();
+    closeAvMenu();
     if (def.onShow) def.onShow($('page-' + name));
     window.scrollTo(0, 0);
   }
   EEE.showPage = showPage;
+
+  /* ---------- AVMENU: avatar dropdown menu ---------- */
+  function closeAvMenu() { const m = $('avmenu'); if (m) m.hidden = true; }
+  function toggleAvMenu() {
+    const m = $('avmenu');
+    if (!m) return;
+    $('av-profile').hidden = S.role !== 'student';
+    m.hidden = !m.hidden;
+  }
 
   /* ---------- contact & footer ---------- */
   function renderContactFooter() {
@@ -586,6 +597,7 @@
     $('app-view').hidden = true;
     $('login-view').hidden = false;
     closeMenu();
+    closeAvMenu();
     setTab('in');
   }
 
@@ -613,6 +625,13 @@
   $('m-search').addEventListener('input', renderMembers);
   $('p-save').addEventListener('click', saveProfile);
   $('s-pw-save').addEventListener('click', savePassword);
+
+  // AVMENU: avatar button opens the small menu
+  $('avatar').addEventListener('click', e => { e.stopPropagation(); toggleAvMenu(); });
+  $('av-profile').addEventListener('click', () => { closeAvMenu(); showPage('profile'); });
+  $('av-logout').addEventListener('click', () => { closeAvMenu(); doLogout(); });
+  document.addEventListener('click', e => { if (!e.target.closest('.avwrap')) closeAvMenu(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAvMenu(); });
 
   // Profile Edit / Cancel buttons (delegated so they always work)
   document.addEventListener('click', e => {

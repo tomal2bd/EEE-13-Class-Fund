@@ -204,6 +204,7 @@
 
   /* ---------- Student: My Payments page ---------- */
   let myMonth = null;
+  let histOpen = false;
 
   function badge(text, bg, fg) {
     const b = el('span', '', text);
@@ -316,7 +317,7 @@
     const nowKey = monthKey(t.y, t.m);
     const weekly = Number(st.weekly_amount || 30);
 
-    // months from fund start to this month
+    // months from fund start to this month (used for the Total due calculation)
     const months = [];
     if (st.start_date) {
       const sp = st.start_date.split('-').map(Number);
@@ -327,7 +328,9 @@
       }
     }
     if (!months.length) months.push(nowKey);
-    if (!myMonth || months.indexOf(myMonth) === -1) myMonth = nowKey;
+
+    // Weekly status always shows only the current month. A new month starts fresh.
+    myMonth = nowKey;
 
     let totalPaid = 0, pendingAmt = 0;
     const wstat = {};
@@ -373,7 +376,7 @@
     sec.appendChild(cards);
 
     if (oldDueMonths.length) {
-      const warn = el('div', '', 'Unpaid weeks in earlier months: ' + oldDueMonths.join(', ') + '. Please choose the month below and pay.');
+      const warn = el('div', '', 'Unpaid weeks in earlier months: ' + oldDueMonths.join(', ') + '. Please contact the admin.');
       warn.style.cssText = 'margin-bottom:20px;padding:14px 16px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:14px;font-size:14px;font-weight:700;';
       sec.appendChild(warn);
     }
@@ -382,14 +385,9 @@
     const head = el('div', '');
     head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;';
     head.appendChild(el('h2', '', 'Weekly status'));
-    const sel = el('select');
-    sel.style.cssText = 'width:auto;margin:0;padding:8px 12px;';
-    months.forEach(k => {
-      const o = el('option', '', monthLabel(k)); o.value = k; if (k === myMonth) o.selected = true;
-      sel.appendChild(o);
-    });
-    sel.addEventListener('change', () => { myMonth = sel.value; renderMy(); });
-    head.appendChild(sel);
+    const mlab = el('span', '', monthLabel(nowKey));
+    mlab.style.cssText = 'font-size:14px;font-weight:700;color:#047857;background:#d1fae5;padding:6px 14px;border-radius:999px;';
+    head.appendChild(mlab);
     wcard.appendChild(head);
 
     const wl = weeksFor(myMonth);
@@ -421,7 +419,13 @@
     const hcard = el('div', 'card');
     hcard.appendChild(el('h2', '', 'My payment history'));
     if (!list.length) hcard.appendChild(el('p', 'empty', 'You have not made any payment yet.'));
-    list.forEach(p => hcard.appendChild(historyCard(p)));
+    (histOpen ? list : list.slice(0, 5)).forEach(p => hcard.appendChild(historyCard(p)));
+    if (list.length > 5) {
+      const more = el('button', 'btn ghost full', histOpen ? 'Show less' : 'Show more (' + (list.length - 5) + ')');
+      more.style.marginTop = '4px';
+      more.addEventListener('click', () => { histOpen = !histOpen; renderMy(); });
+      hcard.appendChild(more);
+    }
     sec.appendChild(hcard);
   }
 

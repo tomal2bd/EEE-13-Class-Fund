@@ -360,8 +360,9 @@
     S.student = r.data || null;
     return r;
   }
-  // Only the class roll can be edited. The phone number is always locked.
+  // Nickname and class roll can be edited. The phone number is always locked.
   function setProfileEditing(on) {
+    $('p-nick-in').disabled = !on;
     $('p-roll-in').disabled = !on;
     $('p-phone-in').disabled = true;
     $('p-edit').hidden = on;
@@ -382,6 +383,7 @@
     $('p-email').textContent = S.email;
     $('p-reg').textContent = s.registration_no || '-';
     $('p-joined').textContent = fmtDate(s.created_at);
+    $('p-nick-in').value = s.nickname || '';
     $('p-roll-in').value = s.roll_no || '';
     $('p-phone-in').value = s.phone || '';
     setProfileEditing(false);
@@ -389,15 +391,17 @@
   }
   async function saveProfile() {
     const msg = $('p-msg'); msg.className = ''; msg.textContent = '';
+    const nick = $('p-nick-in').value.trim();
     const roll = $('p-roll-in').value.trim();
     const phone = (S.student && S.student.phone) || '';
+    if (!nick) { msg.className = 'err'; msg.textContent = 'Nickname is required.'; return; }
     if (!roll) { msg.className = 'err'; msg.textContent = 'Class roll is required.'; return; }
     const btn = $('p-save'); btn.disabled = true;
-    const r = await db.rpc('update_my_profile', { new_roll: roll, new_phone: phone });
+    const r = await db.rpc('update_my_profile', { new_roll: roll, new_phone: phone, new_nick: nick });
     btn.disabled = false;
     if (r.error) { msg.className = 'err'; msg.textContent = 'Could not save: ' + r.error.message; return; }
     await loadStudentRow(); renderProfile();
-    msg.className = 'ok'; msg.textContent = 'Roll updated.';
+    msg.className = 'ok'; msg.textContent = 'Profile updated.';
   }
 
   /* ---------- settings: change password ---------- */
@@ -503,6 +507,7 @@
 
   async function doSignup() {
     const name = $('u-name').value.trim();
+    const nick = $('u-nick').value.trim();
     const roll = $('u-roll').value.trim();
     const reg = $('u-reg').value.trim();
     const phone = $('u-phone').value.trim();
@@ -510,7 +515,7 @@
     const pw = $('u-pass').value;
     const pw2 = $('u-pass2').value;
     setMsg('');
-    if (!name || !roll || !reg || !phone || !email || !pw) { setMsg('Please fill in all fields.'); return; }
+    if (!name || !nick || !roll || !reg || !phone || !email || !pw) { setMsg('Please fill in all fields.'); return; }
     if (!/^01[0-9]{9}$/.test(phone)) { setMsg('Phone must be 11 digits and start with 01.'); return; }
     if (pw.length < 8) { setMsg('Password must be at least 8 characters.'); return; }
     if (pw !== pw2) { setMsg('Passwords do not match.'); return; }
@@ -518,7 +523,7 @@
     btn.disabled = true; btn.textContent = 'Creating account...';
     const r = await db.auth.signUp({
       email, password: pw,
-      options: { data: { full_name: name, class_roll: roll, registration_no: reg, phone } }
+      options: { data: { full_name: name, nickname: nick, class_roll: roll, registration_no: reg, phone } }
     });
     btn.disabled = false; btn.textContent = 'Create Account';
     if (r.error) {
@@ -574,7 +579,7 @@
 
   // Profile Edit / Cancel buttons (delegated so they always work)
   document.addEventListener('click', e => {
-    if (e.target.closest('#p-edit')) { setProfileEditing(true); $('p-roll-in').focus(); }
+    if (e.target.closest('#p-edit')) { setProfileEditing(true); $('p-nick-in').focus(); }
     if (e.target.closest('#p-cancel')) { renderProfile(); $('p-msg').textContent = ''; }
   });
 

@@ -530,7 +530,6 @@
     pUI.stats.appendChild(pStatCard('Total money out', money(sum.total_expenses), 'linear-gradient(135deg,#dc2626,#f97316)'));
     pUI.stats.appendChild(pStatCard('Current balance', money(sum.current_balance), 'linear-gradient(135deg,#2563eb,#7c3aed)'));
 
-    // collection by method
     const approved = rows.filter(p => p.status === 'approved');
     const totals = {};
     approved.forEach(p => { const k = String(p.method || '').toLowerCase(); totals[k] = (totals[k] || 0) + Number(p.amount || 0); });
@@ -551,7 +550,6 @@
       pUI.methods.appendChild(row);
     });
 
-    // recent activity
     pUI.recent.innerHTML = '';
     const recent = rows.slice(0, 6);
     if (!recent.length) pUI.recent.appendChild(el('p', 'empty', 'No activity yet.'));
@@ -575,7 +573,6 @@
     if (!page || pBuilt) return;
     page.innerHTML = '';
 
-    // hero card: cover + avatar
     const hero = el('div', 'card');
     hero.style.cssText = 'padding:0;overflow:hidden;border-radius:20px;box-shadow:0 10px 28px rgba(30,27,75,.18);';
     const cover = el('div');
@@ -609,11 +606,9 @@
     hero.appendChild(body);
     page.appendChild(hero);
 
-    // stats
     const stats = el('div', 'pcards');
     page.appendChild(stats);
 
-    // two columns: methods + recent
     const two = el('div'); two.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:20px;';
     const mCard = el('div', 'card'); mCard.style.marginBottom = '0';
     mCard.appendChild(el('h2', '', 'Collection by method'));
@@ -624,7 +619,6 @@
     two.appendChild(mCard); two.appendChild(rCard);
     page.appendChild(two);
 
-    // quick actions
     const act = el('div', 'card');
     act.appendChild(el('h2', '', 'Quick actions'));
     const arow = el('div'); arow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
@@ -636,7 +630,6 @@
     act.appendChild(arow);
     page.appendChild(act);
 
-    // edit details
     const ecard = el('div', 'card');
     ecard.style.border = '2px dashed #7c3aed';
     ecard.appendChild(el('h2', '', 'Your details'));
@@ -674,17 +667,34 @@
     pHeader(); pFill(); pSetEditing(false);
   }
 
-  // nav:false = no sidebar button. It opens only from the top-right Profile icon, like the student profile.
+  // nav:false = no sidebar button. Opens only from the top-right Profile icon.
   EEE.addPage('adminprofile', {
     title: 'My Profile', label: 'My Profile', icon: 'user', roles: ['admin'], nav: false,
     onShow: async function () { pBuild(); await pLoad(); await pStats(); }
   });
+
+  /* ============ 6) Profile menu fix: show "My Profile" for the admin ============ */
+  function showProfileBtn() {
+    const b = $('av-profile');
+    if (b && isAdmin() && b.hidden) b.hidden = false;
+  }
+  const avBtnEl = $('avatar');
+  if (avBtnEl) avBtnEl.addEventListener('click', () => { showProfileBtn(); setTimeout(showProfileBtn, 0); });
+  const profBtnEl = $('av-profile');
+  if (profBtnEl) new MutationObserver(showProfileBtn).observe(profBtnEl, { attributes: true, attributeFilter: ['hidden'] });
+  document.addEventListener('click', e => {
+    if (!isAdmin() || !e.target.closest('#av-profile')) return;
+    e.stopPropagation();
+    const m = $('avmenu'); if (m) m.hidden = true;
+    EEE.showPage('adminprofile');
+  }, true);
 
   /* ---------- refresh hooks ---------- */
   EEE.refreshHooks.push(async () => {
     if (!isAdmin()) return;
     buildSettings();
     orderNav();
+    showProfileBtn();
     if (!pBuilt) await pLoad();
     if (pBuilt) await pStats();
     if (lBuilt) await lLoad();

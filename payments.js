@@ -81,46 +81,57 @@
     const taken = await takenWeeks();
     const alreadyTaken = taken.has(cw.iso);
     const typed = { sender: '', trx: '' };
+    const brand = method === 'bKash' ? '#e2136e' : '#f6921e';
 
     const back = el('div', 'modal-back');
     back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
     const box = el('div', 'card');
-    box.style.cssText = 'width:100%;max-width:420px;max-height:90vh;overflow:auto;margin:0;padding:22px;';
+    box.style.cssText = 'width:100%;max-width:440px;max-height:92vh;overflow:auto;margin:0;padding:24px;border-top:6px solid ' + brand + ';';
     back.appendChild(box);
 
     function close() { back.remove(); }
 
+    function bigLabel(text) {
+      const l = el('label', '', text);
+      l.style.cssText = 'font-size:16px;font-weight:700;color:#0f172a;margin:0 0 8px;';
+      return l;
+    }
+
     function draw() {
       box.innerHTML = '';
-      box.appendChild(el('h2', '', 'Pay with ' + method));
+
+      const title = el('h2', '', 'Pay with ' + method);
+      title.style.cssText = 'font-size:26px;font-weight:800;margin:0 0 16px;color:' + brand + ';';
+      box.appendChild(title);
 
       // Number box: big number + small Copy button
-      const intro = el('div', 'lbl', 'Use "Send Money" and send to this ' + method + ' number:');
-      intro.style.marginBottom = '8px';
+      const intro = el('div', '', 'Use "Send Money" and send to this ' + method + ' number:');
+      intro.style.cssText = 'font-size:16px;font-weight:700;color:#0f172a;margin-bottom:10px;line-height:1.4;';
       box.appendChild(intro);
 
       const numBox = el('div', 'sendbox');
-      numBox.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px;';
-      numBox.appendChild(el('div', 'numbig', number));
+      numBox.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 20px;padding:16px;border:2px dashed ' + brand + ';background:#fff;border-radius:14px;';
+      const num = el('div', 'numbig', number);
+      num.style.cssText = 'font-size:32px;font-weight:800;letter-spacing:2px;color:#0f172a;';
+      numBox.appendChild(num);
       const copy = el('button', 'btn sm', 'Copy');
-      copy.style.flexShrink = '0';
+      copy.style.cssText = 'flex-shrink:0;background:' + brand + ';font-size:14px;padding:9px 16px;';
       copy.addEventListener('click', () => copyNumber(number, copy));
       numBox.appendChild(copy);
       box.appendChild(numBox);
 
       // Week + amount
-      const wl = el('div', 'lbl', 'Payment for');
-      wl.style.marginBottom = '4px';
-      box.appendChild(wl);
-      const weekInfo = el('div', 'pname', cw.name + ' of ' + cw.month);
-      weekInfo.style.fontSize = '17px';
+      box.appendChild(bigLabel('Payment for'));
+      const weekInfo = el('div', '', cw.name + ' of ' + cw.month);
+      weekInfo.style.cssText = 'font-size:22px;font-weight:800;color:#064e3b;';
       box.appendChild(weekInfo);
-      const rangeInfo = el('div', 'lbl', 'Days ' + cw.range);
-      rangeInfo.style.marginBottom = '14px';
+      const rangeInfo = el('div', '', 'Days ' + cw.range);
+      rangeInfo.style.cssText = 'font-size:16px;font-weight:600;color:#334155;margin:2px 0 18px;';
       box.appendChild(rangeInfo);
 
       if (alreadyTaken) {
         const note = el('p', 'help', 'This week is already paid or waiting for approval. There is nothing to pay right now.');
+        note.style.fontSize = '15px';
         box.appendChild(note);
         const closeBtn = el('button', 'btn ghost full', 'Close');
         closeBtn.addEventListener('click', close);
@@ -129,18 +140,25 @@
       }
 
       const totalBox = el('div', 'totalbox');
-      totalBox.appendChild(el('span', '', 'Amount to send'));
-      totalBox.appendChild(el('span', '', money(weekly)));
+      totalBox.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:#d1fae5;border:2px solid #10b981;border-radius:14px;padding:14px 16px;margin-bottom:20px;';
+      const tl = el('span', '', 'Amount to send');
+      tl.style.cssText = 'font-size:17px;font-weight:700;color:#064e3b;';
+      const tv = el('span', '', money(weekly));
+      tv.style.cssText = 'font-size:28px;font-weight:800;color:#047857;';
+      totalBox.appendChild(tl);
+      totalBox.appendChild(tv);
       box.appendChild(totalBox);
 
-      box.appendChild(el('label', '', 'Sender number (the number you sent from)'));
+      box.appendChild(bigLabel('Sender number (the number you sent from)'));
       const sender = el('input'); sender.type = 'tel'; sender.placeholder = '01XXXXXXXXX'; sender.id = 'pay-sender';
+      sender.style.cssText = 'font-size:17px;padding:13px 14px;margin-bottom:18px;';
       sender.value = typed.sender;
       sender.addEventListener('input', () => { typed.sender = sender.value; });
       box.appendChild(sender);
 
-      box.appendChild(el('label', '', 'TrxID (required)'));
+      box.appendChild(bigLabel('TrxID (required)'));
       const trx = el('input'); trx.placeholder = 'e.g. 9H7ABC1234'; trx.id = 'pay-trx';
+      trx.style.cssText = 'font-size:17px;padding:13px 14px;margin-bottom:14px;';
       trx.value = typed.trx;
       trx.addEventListener('input', () => { typed.trx = trx.value; });
       box.appendChild(trx);
@@ -150,6 +168,7 @@
       box.appendChild(msg);
 
       const submit = el('button', 'btn full', 'Submit payment');
+      submit.style.cssText = 'font-size:16px;padding:14px;background:' + brand + ';';
       submit.addEventListener('click', async () => {
         msg.className = 'err'; msg.textContent = '';
         const s = sender.value.trim(), t = trx.value.trim().toUpperCase();
@@ -169,7 +188,7 @@
       box.appendChild(submit);
 
       const cancel = el('button', 'btn ghost full', 'Cancel');
-      cancel.style.marginTop = '8px';
+      cancel.style.cssText = 'margin-top:8px;font-size:15px;padding:12px;';
       cancel.addEventListener('click', close);
       box.appendChild(cancel);
     }

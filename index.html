@@ -52,6 +52,10 @@
 .pcard.paid .pl{color:rgba(255,255,255,.9)}
 .pcard.paid .pval{color:#fff;font-size:32px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.15)}
 .editcard{border:2px dashed #10b981}
+/* LEDGER2: month filter row */
+.lfilter{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.lfilter select{width:auto;min-width:180px;margin:0;padding:9px 12px}
+.lfilter .lper{font-size:13px;font-weight:600;color:#047857}
 @media(max-width:700px){.chartrow{grid-template-columns:1fr}}
 @media(max-width:600px){.hello-t{text-align:left}.hello-g{font-size:20px}#hello-time{font-size:24px}.pbname{font-size:20px}}
 </style>
@@ -350,6 +354,16 @@
       </section>
 
       <section id="page-report" hidden>
+        <!-- LEDGER2: summary cards + month filter -->
+        <div class="cards">
+          <div class="card stat k-in"><div class="ico in">↓</div><div><div class="lbl">Total money in</div><div class="val" id="r-c-in">-</div></div></div>
+          <div class="card stat k-out"><div class="ico out">↑</div><div><div class="lbl">Total money out</div><div class="val" id="r-c-out">-</div></div></div>
+          <div class="card stat k-bal"><div class="ico bal">৳</div><div><div class="lbl" id="r-l-bal">Current balance</div><div class="val" id="r-c-bal">-</div></div></div>
+        </div>
+        <div class="lfilter">
+          <select id="r-month" aria-label="Filter by month"></select>
+          <span class="lper" id="r-period">Showing: all months</span>
+        </div>
         <div class="card">
           <div class="tabs">
             <button class="tab on" id="r-tab-in">Money in</button>
@@ -359,10 +373,12 @@
             <div class="help">Every payment here was checked and approved by the admin.</div>
             <div class="tools"><input id="r-search" placeholder="Search by student name"></div>
             <div class="scroll"><table><thead><tr><th>Student</th><th>Weeks</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody id="t-rin"></tbody></table></div>
+            <button class="btn ghost full" id="r-in-more" style="margin-top:12px" hidden>Show more</button>
           </div>
           <div id="r-out-wrap" hidden>
             <div class="help">Every expense of the class fund, with its reason and receipt.</div>
             <div class="scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-rout"></tbody></table></div>
+            <button class="btn ghost full" id="r-out-more" style="margin-top:12px" hidden>Show more</button>
           </div>
         </div>
         <div class="card">
@@ -371,7 +387,7 @@
         </div>
         <div class="card">
           <h2>Monthly summary</h2>
-          <div class="scroll"><table><thead><tr><th>Month</th><th>Collected</th></tr></thead><tbody id="t-month"></tbody></table></div>
+          <div class="scroll"><table><thead><tr><th>Month</th><th>Collected</th><th>Spent</th><th>Net</th></tr></thead><tbody id="t-month"></tbody></table></div>
         </div>
       </section>
 

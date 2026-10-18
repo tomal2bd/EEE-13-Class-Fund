@@ -251,7 +251,8 @@
     }
   }
 
-  function drawBars(boxId, totalId, keys, byKey, labelFn, titleFn) {
+  // CHART2: thick bars, amount above each bar, bigger dark labels, custom colors
+  function drawBars(boxId, totalId, keys, byKey, labelFn, titleFn, gradient) {
     const box = $(boxId); box.innerHTML = '';
     const totalBox = $(totalId);
     if (!keys.length) {
@@ -261,22 +262,41 @@
       return;
     }
     box.style.display = 'flex';
+    box.style.gap = '12px';
+    box.style.height = '210px';
     const max = Math.max(...keys.map(k => byKey[k]));
     let total = 0;
     keys.forEach(k => {
       total += byKey[k];
       const col = el('div', 'bar');
-      const bar = el('div'); bar.style.height = Math.max(3, (byKey[k] / max) * 85) + '%'; bar.title = titleFn(k) + ': ' + money(byKey[k]);
-      col.appendChild(bar); col.appendChild(el('span', '', labelFn(k)));
+
+      const val = el('span', '', money(byKey[k]));
+      val.style.cssText = 'margin:0 0 4px;font-size:13px;font-weight:800;color:#0f172a;white-space:nowrap;';
+      col.appendChild(val);
+
+      const bar = el('div');
+      bar.style.height = Math.max(3, (byKey[k] / max) * 68) + '%';
+      bar.style.maxWidth = '60px';
+      bar.style.background = gradient;
+      bar.title = titleFn(k) + ': ' + money(byKey[k]);
+      col.appendChild(bar);
+
+      const lab = el('span', '', labelFn(k));
+      lab.style.cssText = 'margin-top:8px;font-size:13px;font-weight:700;color:#334155;white-space:nowrap;';
+      col.appendChild(lab);
+
       box.appendChild(col);
     });
     if (totalBox) totalBox.textContent = 'Total collected: ' + money(total);
   }
   function renderChart() {
+    const GREEN = 'linear-gradient(180deg,#34d399,#047857)';
+    const BLUE = 'linear-gradient(180deg,#60a5fa,#1d4ed8)';
+
     const byWeek = {};
     S.contribs.forEach(r => { byWeek[r.week_start] = (byWeek[r.week_start] || 0) + Number(r.amount); });
     const weeks = Object.keys(byWeek).sort().slice(-8);
-    drawBars('chart', 'chart-total', weeks, byWeek, weekShort, w => weeksText([w]));
+    drawBars('chart', 'chart-total', weeks, byWeek, weekShort, w => weeksText([w]), GREEN);
 
     const byMonth = {};
     S.contribs.forEach(r => {
@@ -284,7 +304,7 @@
       byMonth[k] = (byMonth[k] || 0) + Number(r.amount);
     });
     const months = Object.keys(byMonth).sort().slice(-6);
-    drawBars('chart-month', 'chart-month-total', months, byMonth, monthShortYear, monthName);
+    drawBars('chart-month', 'chart-month-total', months, byMonth, monthShortYear, monthName, BLUE);
   }
 
   /* ---------- fund report ---------- */

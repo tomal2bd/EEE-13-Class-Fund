@@ -457,21 +457,58 @@
     if (r.error) { $('m-msg').textContent = 'Could not load members: ' + r.error.message; return; }
     $('m-msg').textContent = '';
     members = r.data || [];
-    $('c-stu').textContent = members.filter(m => m.is_active).length;
+    $('c-stu').textContent = members.filter(m => m.is_active && m.approved).length;
+    EEE.setBadge('students', members.filter(m => m.is_active && !m.approved).length);
     renderMembers();
   }
   function renderMembers() {
     const q = $('m-search').value.trim().toLowerCase();
     const list = members.filter(m => [m.full_name, m.roll_no, m.registration_no, m.email, m.phone].join(' ').toLowerCase().includes(q));
+    // people waiting for approval are shown first
+    list.sort((a, b) => {
+      const pa = a.is_active && !a.approved ? 0 : 1;
+      const pb = b.is_active && !b.approved ? 0 : 1;
+      return pa - pb;
+    });
     fill($('t-members'), list, [
       m => m.full_name || '-', m => m.roll_no || '-', m => m.registration_no || '-', m => m.phone || '-', m => m.email || '-',
-      m => fmtDate(m.created_at), m => pill(m.is_active ? 'Active' : 'Removed', m.is_active ? 'ok' : 'no'),
+      m => fmtDate(m.created_at),
       m => {
-        const b = el('button', 'btn sm ' + (m.is_active ? 'danger' : 'ghost'), m.is_active ? 'Remove' : 'Restore');
-        b.addEventListener('click', () => toggleMember(m));
-        return b;
+        if (!m.is_active) return pill('Removed', 'no');
+        if (!m.approved) return pill('Pending approval', 'wait');
+        return pill('Active', 'ok');
+      },
+      m => {
+        const box = el('div');
+        box.style.cssText = 'display:flex;gap:6px;';
+        if (m.is_active && !m.approved) {
+          const a = el('button', 'btn sm', 'Approve');
+          a.addEventListener('click', () => approveMember(m));
+          const r = el('button', 'btn sm danger', 'Reject');
+          r.addEventListener('click', () => rejectMember(m));
+          box.appendChild(a); box.appendChild(r);
+        } else {
+          const b = el('button', 'btn sm ' + (m.is_active ? 'danger' : 'ghost'), m.is_active ? 'Remove' : 'Restore');
+          b.addEventListener('click', () => toggleMember(m));
+          box.appendChild(b);
+        }
+        return box;
       }
     ], 'No members have signed up yet');
+  }
+  async function approveMember(m) {
+    if (!confirm('Approve ' + (m.full_name || 'this member') + '? They will be able to sign in.')) return;
+    const r = await db.from('students').update({ approved: true }).eq('id', m.id);
+    if (r.error) { toast('Could not approve: ' + r.error.message); return; }
+    toast('Member approved.');
+    await loadMembers();
+  }
+  async function rejectMember(m) {
+    if (!confirm('Reject ' + (m.full_name || 'this member') + '? They will not be able to sign in.')) return;
+    const r = await db.from('students').update({ is_active: false }).eq('id', m.id);
+    if (r.error) { toast('Could not reject: ' + r.error.message); return; }
+    toast('Member rejected.');
+    await loadMembers();
   }
   async function toggleMember(m) {
     const verb = m.is_active ? 'remove' : 'restore';
@@ -481,7 +518,8 @@
     toast('Member ' + (m.is_active ? 'removed' : 'restored') + '.');
     await loadMembers();
   }
-  EEE.getMembers = () => members;
+  // other admin pages (Dues, Add Payment) only see approved members
+  EEE.getMembers = () => members.filter(m => m.approved);
 
   /* ---------- profile (student) ---------- */
   async function loadStudentRow() {
@@ -605,6 +643,11 @@
         setMsg('Your account has been removed. Please contact the admin.');
         return;
       }
+      if (!S.student.approved) {
+        await db.auth.signOut();
+        setMsg('Your account is waiting for admin approval. Please contact the admin.');
+        return;
+      }
     }
     const st = await db.from('fund_settings').select('*').eq('id', 1).maybeSingle();
     S.settings = st.data || null;
@@ -672,7 +715,11 @@
       setMsg('Account created, but Supabase still requires email confirmation. The "Confirm email" setting must be turned off.');
       return;
     }
-    await enter(r.data.user, 'student');
+    // The new account must be approved by the admin before the student can sign in.
+    await db.auth.signOut();
+    ['u-name', 'u-nick', 'u-roll', 'u-reg', 'u-phone', 'u-email', 'u-pass', 'u-pass2'].forEach(id => { $(id).value = ''; });
+    setTab('in');
+    setMsg('Account created. Please wait for the admin to approve your account. You can sign in after that.', true);
   }
 
   async function doLogout() {

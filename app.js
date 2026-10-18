@@ -423,6 +423,7 @@
     const total = (r.data || []).reduce((a, p) => a + Number(p.amount || 0), 0);
     $('p-total').textContent = money(total);
   }
+  // PROFILE2: info cards on top show all details; the edit card below changes nickname and class roll
   function renderProfile() {
     const s = S.student;
     if (!s) return;
@@ -430,6 +431,9 @@
     $('p-avatar').textContent = (s.full_name || '?').charAt(0).toUpperCase();
     $('p-email').textContent = S.email;
     $('p-reg').textContent = s.registration_no || '-';
+    $('p-roll').textContent = s.roll_no || '-';
+    $('p-nick').textContent = s.nickname || '-';
+    $('p-phone').textContent = s.phone || '-';
     $('p-joined').textContent = fmtDate(s.created_at);
     $('p-nick-in').value = s.nickname || '';
     $('p-roll-in').value = s.roll_no || '';

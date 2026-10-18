@@ -7,6 +7,22 @@
 <title>EEE-13 · Class Fund</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="circuit.css">
+<style>
+.hello{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 24px;margin-bottom:20px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#022c22,#047857 60%,#10b981);box-shadow:0 8px 22px rgba(4,120,87,.25)}
+.hello-g{font-size:24px;font-weight:800}
+.hello-n{font-size:15px;opacity:.9;margin-top:2px}
+.hello-t{text-align:right}
+#hello-time{font-size:28px;font-weight:800;letter-spacing:1px;font-variant-numeric:tabular-nums}
+#hello-date{font-size:13px;opacity:.9;margin-top:2px}
+.cards .stat.k-in{background:linear-gradient(135deg,#059669,#34d399);color:#fff;border:0}
+.cards .stat.k-out{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:0}
+.cards .stat.k-bal{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:0}
+.cards .stat.k-stu{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;border:0}
+.cards .stat.k-in .lbl,.cards .stat.k-out .lbl,.cards .stat.k-bal .lbl,.cards .stat.k-stu .lbl{color:rgba(255,255,255,.9)}
+.cards .stat.k-in .ico,.cards .stat.k-out .ico,.cards .stat.k-bal .ico,.cards .stat.k-stu .ico{background:rgba(255,255,255,.25);color:#fff}
+.cards .stat .val{text-shadow:0 1px 2px rgba(0,0,0,.15)}
+@media(max-width:600px){.hello-t{text-align:left}.hello-g{font-size:20px}#hello-time{font-size:24px}}
+</style>
 </head>
 <body>
 
@@ -240,15 +256,25 @@
     <div class="pad" id="pages">
 
       <section id="page-overview">
+        <div class="hello" id="hello">
+          <div>
+            <div class="hello-g" id="hello-g">Hello</div>
+            <div class="hello-n" id="hello-n"></div>
+          </div>
+          <div class="hello-t">
+            <div id="hello-time">--:--:--</div>
+            <div id="hello-date"></div>
+          </div>
+        </div>
         <div class="paybar" id="paybar" hidden>
           <button class="paybtn bkash" data-pay="bKash" aria-label="Pay with bKash"><small>Pay your weekly fund</small></button>
           <button class="paybtn nagad" data-pay="Nagad" aria-label="Pay with Nagad"><small>Pay your weekly fund</small></button>
         </div>
         <div class="cards" id="stats">
-          <div class="card stat"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>
-          <div class="card stat"><div class="ico out">↑</div><div><div class="lbl">Total expenses</div><div class="val" id="c-out">-</div></div></div>
-          <div class="card stat hl"><div class="ico bal">৳</div><div><div class="lbl">Current balance</div><div class="val" id="c-bal">-</div></div></div>
-          <div class="card stat" id="card-stu" hidden><div class="ico stu">★</div><div><div class="lbl">Active members</div><div class="val" id="c-stu">-</div></div></div>
+          <div class="card stat k-in"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>
+          <div class="card stat k-out"><div class="ico out">↑</div><div><div class="lbl">Total expenses</div><div class="val" id="c-out">-</div></div></div>
+          <div class="card stat k-bal"><div class="ico bal">৳</div><div><div class="lbl">Current balance</div><div class="val" id="c-bal">-</div></div></div>
+          <div class="card stat k-stu" id="card-stu" hidden><div class="ico stu">★</div><div><div class="lbl">Active members</div><div class="val" id="c-stu">-</div></div></div>
         </div>
         <div class="card">
           <h2>Live payments <span class="live">LIVE</span></h2>
@@ -351,5 +377,32 @@
 <script src="app.js"></script>
 <script src="payments.js"></script>
 <script src="admin.js"></script>
+<script>
+(function () {
+  var TZ = 'Asia/Dhaka';
+  function tick() {
+    var g = document.getElementById('hello-g');
+    var n = document.getElementById('hello-n');
+    var t = document.getElementById('hello-time');
+    var d = document.getElementById('hello-date');
+    if (!g || !t) return;
+    var now = new Date();
+    var hr = parseInt(now.toLocaleString('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }), 10) % 24;
+    var greet = hr >= 5 && hr < 12 ? 'Good morning' : hr >= 12 && hr < 17 ? 'Good afternoon' : hr >= 17 && hr < 21 ? 'Good evening' : 'Good night';
+    var name = '';
+    try {
+      var S = window.EEE && window.EEE.state;
+      if (S && S.student && S.student.full_name) name = S.student.full_name;
+      else if (S && S.role === 'admin') name = 'Admin';
+    } catch (e) {}
+    g.textContent = greet + (name ? ', ' + name.split(' ')[0] : '');
+    if (n) n.textContent = 'Welcome to EEE-13 · Class Fund';
+    t.textContent = now.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+    if (d) d.textContent = now.toLocaleDateString('en-GB', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
 </body>
 </html>

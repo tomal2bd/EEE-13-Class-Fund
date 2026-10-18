@@ -652,6 +652,9 @@
     const st = await db.from('fund_settings').select('*').eq('id', 1).maybeSingle();
     S.settings = st.data || null;
 
+    // FIX: a student must never see admin settings cards left over from an earlier admin login
+    if (role !== 'admin') { const x = $('settings-extra'); if (x) x.innerHTML = ''; }
+
     $('role').textContent = role;
     $('who').textContent = S.email;
     // AVMENU2: the round button keeps its person icon. The menu shows the name and email.
@@ -725,8 +728,10 @@
   async function doLogout() {
     stopLive();
     await db.auth.signOut();
-    S.user = null; S.student = null; S.role = null;
+    S.user = null; S.student = null; S.role = null; S.settings = null;
     ['in-password', 'u-pass', 'u-pass2'].forEach(id => { $(id).value = ''; });
+    // FIX: remove the admin settings cards so the next person who logs in cannot see them
+    const extra = $('settings-extra'); if (extra) extra.innerHTML = '';
     $('app-view').hidden = true;
     $('login-view').hidden = false;
     closeMenu();

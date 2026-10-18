@@ -46,7 +46,7 @@
   function orderNav() {
     const nav = $('nav');
     if (!nav || !isAdmin()) return;
-    ['overview', 'review', 'paylog', 'manual', 'dues', 'expenses', 'students', 'report', 'adminprofile', 'settings'].forEach(id => {
+    ['overview', 'review', 'paylog', 'manual', 'dues', 'expenses', 'students', 'report', 'settings'].forEach(id => {
       const b = nav.querySelector('.nav[data-page="' + id + '"]');
       if (b) nav.appendChild(b);
     });
@@ -447,7 +447,7 @@
     onShow: async function () { lBuild(); await lLoad(); }
   });
 
-  /* ============ 5) New admin profile (replaces the old one) ============ */
+  /* ============ 5) Admin profile (opens from the top-right Profile icon) ============ */
   let pBuilt = false, pEditing = false;
   let pData = { full_name: '', phone: '', designation: '' };
   let pUI = {};
@@ -674,9 +674,9 @@
     pHeader(); pFill(); pSetEditing(false);
   }
 
-  // Replaces the older adminprofile page from admin.js, and shows it in the sidebar
+  // nav:false = no sidebar button. It opens only from the top-right Profile icon, like the student profile.
   EEE.addPage('adminprofile', {
-    title: 'My Profile', label: 'My Profile', icon: 'user', roles: ['admin'],
+    title: 'My Profile', label: 'My Profile', icon: 'user', roles: ['admin'], nav: false,
     onShow: async function () { pBuild(); await pLoad(); await pStats(); }
   });
 

@@ -251,14 +251,20 @@
     }
   }
 
-  // CHART2: thick bars, amount above each bar, bigger dark labels, custom colors
-  function drawBars(boxId, totalId, keys, byKey, labelFn, titleFn, gradient) {
+  // CHART3: thick bars, amount above each bar, bigger dark labels, highlighted total box
+  function styleTotal(totalBox, text, theme) {
+    if (!totalBox) return;
+    totalBox.textContent = text;
+    totalBox.style.cssText = 'margin-top:14px;padding:12px 16px;border-radius:12px;font-size:18px;font-weight:800;text-align:center;' +
+      'background:' + theme.bg + ';color:' + theme.fg + ';border:2px solid ' + theme.border + ';';
+  }
+  function drawBars(boxId, totalId, keys, byKey, labelFn, titleFn, theme) {
     const box = $(boxId); box.innerHTML = '';
     const totalBox = $(totalId);
     if (!keys.length) {
       box.style.display = 'block';
       box.appendChild(el('p', 'empty', 'No approved contributions yet.'));
-      if (totalBox) totalBox.textContent = 'Total collected: ' + money(0);
+      styleTotal(totalBox, 'Total collected: ' + money(0), theme);
       return;
     }
     box.style.display = 'flex';
@@ -277,7 +283,7 @@
       const bar = el('div');
       bar.style.height = Math.max(3, (byKey[k] / max) * 68) + '%';
       bar.style.maxWidth = '60px';
-      bar.style.background = gradient;
+      bar.style.background = theme.gradient;
       bar.title = titleFn(k) + ': ' + money(byKey[k]);
       col.appendChild(bar);
 
@@ -287,11 +293,11 @@
 
       box.appendChild(col);
     });
-    if (totalBox) totalBox.textContent = 'Total collected: ' + money(total);
+    styleTotal(totalBox, 'Total collected: ' + money(total), theme);
   }
   function renderChart() {
-    const GREEN = 'linear-gradient(180deg,#34d399,#047857)';
-    const BLUE = 'linear-gradient(180deg,#60a5fa,#1d4ed8)';
+    const GREEN = { gradient: 'linear-gradient(180deg,#34d399,#047857)', bg: '#d1fae5', fg: '#064e3b', border: '#10b981' };
+    const BLUE = { gradient: 'linear-gradient(180deg,#60a5fa,#1d4ed8)', bg: '#dbeafe', fg: '#1e3a8a', border: '#3b82f6' };
 
     const byWeek = {};
     S.contribs.forEach(r => { byWeek[r.week_start] = (byWeek[r.week_start] || 0) + Number(r.amount); });

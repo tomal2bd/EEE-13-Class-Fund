@@ -57,6 +57,18 @@
     return 'Could not submit payment: ' + msg;
   }
 
+  function copyNumber(number, btn) {
+    const done = () => {
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(number).then(done, () => toast('Could not copy.'));
+    } else {
+      toast('Copy is not supported on this browser.');
+    }
+  }
+
   async function openPay(method) {
     const st = EEE.state.settings || {};
     const number = method === 'bKash' ? st.bkash_number : st.nagad_number;
@@ -73,7 +85,7 @@
     const back = el('div', 'modal-back');
     back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
     const box = el('div', 'card');
-    box.style.cssText = 'width:100%;max-width:420px;max-height:90vh;overflow:auto;';
+    box.style.cssText = 'width:100%;max-width:420px;max-height:90vh;overflow:auto;margin:0;padding:22px;';
     back.appendChild(box);
 
     function close() { back.remove(); }
@@ -82,32 +94,44 @@
       box.innerHTML = '';
       box.appendChild(el('h2', '', 'Pay with ' + method));
 
-      const info = el('div', 'help');
-      info.appendChild(document.createTextNode('Send money (Send Money option) to this ' + method + ' number: '));
-      info.appendChild(el('b', '', number));
-      box.appendChild(info);
+      // Number box: big number + small Copy button
+      const intro = el('div', 'lbl', 'Use "Send Money" and send to this ' + method + ' number:');
+      intro.style.marginBottom = '8px';
+      box.appendChild(intro);
 
-      const copy = el('button', 'btn ghost sm', 'Copy number');
-      copy.addEventListener('click', () => {
-        if (navigator.clipboard) navigator.clipboard.writeText(number).then(() => toast('Number copied.'), () => toast('Could not copy.'));
-      });
-      box.appendChild(copy);
+      const numBox = el('div', 'sendbox');
+      numBox.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px;';
+      numBox.appendChild(el('div', 'numbig', number));
+      const copy = el('button', 'btn sm', 'Copy');
+      copy.style.flexShrink = '0';
+      copy.addEventListener('click', () => copyNumber(number, copy));
+      numBox.appendChild(copy);
+      box.appendChild(numBox);
 
-      box.appendChild(el('label', '', 'Payment for'));
-      const weekInfo = el('div', 'pname', cw.name + ' of ' + cw.month + ' (' + cw.range + ')');
+      // Week + amount
+      const wl = el('div', 'lbl', 'Payment for');
+      wl.style.marginBottom = '4px';
+      box.appendChild(wl);
+      const weekInfo = el('div', 'pname', cw.name + ' of ' + cw.month);
+      weekInfo.style.fontSize = '17px';
       box.appendChild(weekInfo);
+      const rangeInfo = el('div', 'lbl', 'Days ' + cw.range);
+      rangeInfo.style.marginBottom = '14px';
+      box.appendChild(rangeInfo);
 
       if (alreadyTaken) {
         const note = el('p', 'help', 'This week is already paid or waiting for approval. There is nothing to pay right now.');
         box.appendChild(note);
         const closeBtn = el('button', 'btn ghost full', 'Close');
-        closeBtn.style.marginTop = '8px';
         closeBtn.addEventListener('click', close);
         box.appendChild(closeBtn);
         return;
       }
 
-      box.appendChild(el('div', 'pname', 'Amount: ' + money(weekly)));
+      const totalBox = el('div', 'totalbox');
+      totalBox.appendChild(el('span', '', 'Amount to send'));
+      totalBox.appendChild(el('span', '', money(weekly)));
+      box.appendChild(totalBox);
 
       box.appendChild(el('label', '', 'Sender number (the number you sent from)'));
       const sender = el('input'); sender.type = 'tel'; sender.placeholder = '01XXXXXXXXX'; sender.id = 'pay-sender';
@@ -122,6 +146,7 @@
       box.appendChild(trx);
 
       const msg = el('p', 'err');
+      msg.style.margin = '0 0 10px';
       box.appendChild(msg);
 
       const submit = el('button', 'btn full', 'Submit payment');

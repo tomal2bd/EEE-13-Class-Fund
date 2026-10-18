@@ -21,6 +21,9 @@
 .cards .stat.k-in .lbl,.cards .stat.k-out .lbl,.cards .stat.k-bal .lbl,.cards .stat.k-stu .lbl{color:rgba(255,255,255,.9)}
 .cards .stat.k-in .ico,.cards .stat.k-out .ico,.cards .stat.k-bal .ico,.cards .stat.k-stu .ico{background:rgba(255,255,255,.25);color:#fff}
 .cards .stat .val{text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.chartrow{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.chartrow .card{margin-bottom:0;min-width:0}
+@media(max-width:700px){.chartrow{grid-template-columns:1fr}}
 @media(max-width:600px){.hello-t{text-align:left}.hello-g{font-size:20px}#hello-time{font-size:24px}}
 </style>
 </head>
@@ -282,15 +285,17 @@
           <h2>Live payments <span class="live">LIVE</span></h2>
           <div id="feed"></div>
         </div>
-        <div class="card">
-          <h2>Weekly contributions</h2>
-          <div class="bars" id="chart"></div>
-          <div class="lbl" id="chart-total" style="margin-top:10px">Total collected: ৳0</div>
-        </div>
-        <div class="card">
-          <h2>Monthly contributions</h2>
-          <div class="bars" id="chart-month"></div>
-          <div class="lbl" id="chart-month-total" style="margin-top:10px">Total collected: ৳0</div>
+        <div class="chartrow">
+          <div class="card">
+            <h2>Weekly contributions</h2>
+            <div class="bars" id="chart"></div>
+            <div class="lbl" id="chart-total" style="margin-top:10px">Total collected: ৳0</div>
+          </div>
+          <div class="card">
+            <h2>Monthly contributions</h2>
+            <div class="bars" id="chart-month"></div>
+            <div class="lbl" id="chart-month-total" style="margin-top:10px">Total collected: ৳0</div>
+          </div>
         </div>
       </section>
 

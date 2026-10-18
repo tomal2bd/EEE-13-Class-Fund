@@ -225,11 +225,15 @@
     $('c-out').textContent = money(s.total_expenses);
     $('c-bal').textContent = money(s.current_balance);
   }
+
+  // FEED5: Live payments shows the latest 5. "Show more" reveals the rest (up to 30).
+  let feedOpen = false;
   function renderFeed() {
     const box = $('feed'); box.innerHTML = '';
-    const groups = groupPayments(S.contribs).slice(0, 12);
+    const groups = groupPayments(S.contribs).slice(0, 30);
     if (!groups.length) { box.appendChild(el('p', 'empty', 'No approved payments yet.')); return; }
-    groups.forEach(g => {
+    const shown = feedOpen ? groups : groups.slice(0, 5);
+    shown.forEach(g => {
       const row = el('div', 'feed-item');
       row.appendChild(el('div', 'fav', (g.name || '?').charAt(0).toUpperCase()));
       const main = el('div', 'fmain');
@@ -239,7 +243,14 @@
       row.appendChild(el('div', 'famt', money(g.amount)));
       box.appendChild(row);
     });
+    if (groups.length > 5) {
+      const more = el('button', 'btn ghost full', feedOpen ? 'Show less' : 'Show more (' + (groups.length - 5) + ')');
+      more.style.marginTop = '12px';
+      more.addEventListener('click', () => { feedOpen = !feedOpen; renderFeed(); });
+      box.appendChild(more);
+    }
   }
+
   function drawBars(boxId, totalId, keys, byKey, labelFn, titleFn) {
     const box = $(boxId); box.innerHTML = '';
     const totalBox = $(totalId);

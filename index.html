@@ -11,6 +11,9 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="circuit.css">
 <style>
+/* ---------- Sign-in page logo (replaces the old "13" box) ---------- */
+.ahead .logo13img{width:60px;height:60px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+
 /* ---------- Greeting banner: the sky changes with the time of day ---------- */
 .hello{--os:64px;--oy:50%;--or:230px;position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;min-height:150px;padding:26px 28px;margin-bottom:20px;border-radius:20px;color:#fff;background:linear-gradient(120deg,#0369a1,#0ea5e9 55%,#fcd34d);box-shadow:0 10px 26px rgba(15,23,42,.22)}
 .hello[data-phase="morning"]{--oy:66%;background:linear-gradient(120deg,#0369a1,#0ea5e9 55%,#fcd34d)}
@@ -230,7 +233,7 @@
 <circle class="node" cx="150" cy="650" r="5" style="animation-delay:-1.6s"/>
 </svg>
   <header class="ahead">
-    <div class="logo13">13</div>
+    <img class="logo13img" src="icon-192.png" alt="EEE-13 Class Fund logo">
     <div>
       <div class="atitle">EEE-13 · Class Fund</div>
       <div class="asub">Transparent by design</div>

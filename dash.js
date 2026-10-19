@@ -55,6 +55,14 @@
 .dx-todo.hot{background:#fef3c7;border-color:#fde68a;color:#92400e}
 .dx-todo.zero{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
 .dx-todo b{font-size:20px}
+.dx-notice{grid-column:1/-1;border:2px solid #fbbf24;background:#fffbeb}
+.dx-notice h2{color:#92400e}
+.dx-nitem{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #fde68a}
+.dx-nitem:last-of-type{border-bottom:0}
+.dx-nmsg{font-size:16px;font-weight:700;color:#0f172a;word-break:break-word}
+.dx-ntime{font-size:12px;color:#92400e;margin-top:2px}
+.dx-nform{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.dx-nform input{flex:1;min-width:200px;margin:0}
 `;
   const style = document.createElement('style');
   style.textContent = css;
@@ -78,6 +86,74 @@
     let m = $('hello-m');
     if (!m) { m = el('div', 'hello-m'); m.id = 'hello-m'; n.parentNode.insertBefore(m, n.nextSibling); }
     m.textContent = text || '';
+  }
+
+  /* ---------- notice board ---------- */
+  async function noticesCard(isAdmin) {
+    const r = await db.from('notices')
+      .select('id, message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (r.error) {
+      if (!isAdmin) return null;
+      const c = card('Notice board');
+      c.classList.add('dx-notice');
+      c.appendChild(el('p', 'err', 'Could not load notices: ' + r.error.message));
+      return c;
+    }
+    const list = r.data || [];
+    // students see the card only when there is a notice
+    if (!isAdmin && !list.length) return null;
+
+    const c = card('Notice board');
+    c.classList.add('dx-notice');
+
+    if (!list.length) c.appendChild(el('p', 'empty', 'No notices yet.'));
+    list.forEach(n => {
+      const row = el('div', 'dx-nitem');
+      const left = el('div');
+      left.appendChild(el('div', 'dx-nmsg', n.message));
+      left.appendChild(el('div', 'dx-ntime', EEE.fmtTime(n.created_at)));
+      row.appendChild(left);
+      if (isAdmin) {
+        const del = el('button', 'btn danger sm', 'Delete');
+        del.addEventListener('click', async () => {
+          if (!confirm('Delete this notice?')) return;
+          del.disabled = true;
+          const d = await db.from('notices').delete().eq('id', n.id);
+          if (d.error) { del.disabled = false; EEE.toast('Could not delete: ' + d.error.message); return; }
+          EEE.toast('Notice deleted.');
+          render();
+        });
+        row.appendChild(del);
+      }
+      c.appendChild(row);
+    });
+
+    if (isAdmin) {
+      const form = el('div', 'dx-nform');
+      const inp = el('input');
+      inp.id = 'dx-notice-in';
+      inp.maxLength = 300;
+      inp.placeholder = 'Write a notice for everyone (max 300 letters)';
+      const post = el('button', 'btn', 'Post notice');
+      post.addEventListener('click', async () => {
+        const msg = inp.value.trim();
+        if (!msg) { EEE.toast('Write the notice first.'); return; }
+        post.disabled = true;
+        const ins = await db.from('notices').insert({ message: msg });
+        post.disabled = false;
+        if (ins.error) { EEE.toast('Could not post: ' + ins.error.message); return; }
+        inp.value = '';
+        EEE.toast('Notice posted.');
+        render();
+      });
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') post.click(); });
+      form.appendChild(inp);
+      form.appendChild(post);
+      c.appendChild(form);
+    }
+    return c;
   }
 
   /* ---------- shared: recent expenses card ---------- */
@@ -110,7 +186,10 @@
   /* ---------- student ---------- */
   async function studentView() {
     const S = EEE.state;
-    const r = await db.from('payments').select('status, amount, payment_weeks(week_start)');
+    const [r, notice] = await Promise.all([
+      db.from('payments').select('status, amount, payment_weeks(week_start)'),
+      noticesCard(false)
+    ]);
     if (r.error) return [el('p', 'err', 'Could not load your status: ' + r.error.message)];
     const wstat = {};
     (r.data || []).forEach(p => {
@@ -130,6 +209,7 @@
     else setBannerMsg('All your payments are done ✓');
 
     const grid = el('div', 'dx-grid');
+    if (notice) grid.appendChild(notice);
 
     const c1 = card('This week · ' + cw.name);
     const bd = el('span', 'dx-badge ' + (status === 'approved' ? 'dx-ok' : status === 'pending' ? 'dx-wait' : 'dx-due'),
@@ -166,10 +246,11 @@
   /* ---------- admin ---------- */
   async function adminView() {
     const S = EEE.state;
-    const [p, m, pw] = await Promise.all([
+    const [p, m, pw, notice] = await Promise.all([
       db.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       db.from('students').select('id').eq('is_active', true).eq('approved', false),
-      db.from('payment_weeks').select('week_start, payments(student_id, status)')
+      db.from('payment_weeks').select('week_start, payments(student_id, status)'),
+      noticesCard(true)
     ]);
     const pendPay = p.count || 0;
     const pendMem = (m.data || []).length;
@@ -179,6 +260,7 @@
       : 'Nothing is waiting. All clear ✓');
 
     const grid = el('div', 'dx-grid');
+    if (notice) grid.appendChild(notice);
 
     // waiting card
     const c1 = card('Waiting for you');
@@ -251,6 +333,9 @@
     const S = EEE.state;
     const stats = $('stats');
     if (!stats || !S.role) return;
+    // do not rebuild the cards while the admin is typing a notice
+    const typing = $('dx-notice-in');
+    if (typing && document.activeElement === typing) return;
     const my = ++seq;
     let nodes;
     try { nodes = S.role === 'admin' ? await adminView() : await studentView(); }

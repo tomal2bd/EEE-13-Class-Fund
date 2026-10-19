@@ -4,8 +4,9 @@
   if (!EEE) return;
   const { db, $, el, money, toast } = EEE;
 
-  const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
-  const START_DAYS = [1, 8, 15, 22, 29];
+  // Weeks: 1-7, 8-14, 15-21, 22-end of month (4 weeks only)
+  const ORD = ['1st', '2nd', '3rd', '4th'];
+  const START_DAYS = [1, 8, 15, 22];
 
   function pad(n) { return String(n).padStart(2, '0'); }
   function todayDhaka() {
@@ -29,7 +30,7 @@
   function weekInfoFromIso(iso) {
     const y = Number(iso.slice(0, 4)), m = Number(iso.slice(5, 7)), day = Number(iso.slice(8, 10));
     const idx = START_DAYS.indexOf(day);
-    const endDay = idx === 4 ? daysInMonth(y, m) : day + 6;
+    const endDay = idx === 3 ? daysInMonth(y, m) : day + 6;
     return {
       iso,
       name: (ORD[idx] || '') + ' week',
@@ -38,7 +39,7 @@
     };
   }
 
-  // Only the current calendar week: 1-7 = 1st, 8-14 = 2nd, 15-21 = 3rd, 22-28 = 4th, 29-end = 5th
+  // Only the current calendar week: 1-7 = 1st, 8-14 = 2nd, 15-21 = 3rd, 22-end of month = 4th
   function currentWeek() {
     const t = todayDhaka();
     let idx = 0;
@@ -407,7 +408,7 @@
       START_DAYS.forEach((day, i) => {
         if (day > daysInMonth(y, m)) return;
         if (y === t.y && m === t.m && day > t.d) return;
-        const endDay = i === 4 ? daysInMonth(y, m) : day + 6;
+        const endDay = i === 3 ? daysInMonth(y, m) : day + 6;
         const iso = key + '-' + pad(day);
         out.push({
           iso, name: ORD[i] + ' week', range: day + ' - ' + endDay,
@@ -626,7 +627,7 @@
     sub.style.cssText = 'font-size:14px;color:#475569;margin-bottom:16px;';
     box.appendChild(sub);
 
-    box.appendChild(welcomeLine('1.  Every week you pay ' + money(weekly) + '. The weeks start on the 1st, 8th, 15th, 22nd and 29th of the month.'));
+    box.appendChild(welcomeLine('1.  Every week you pay ' + money(weekly) + '. The weeks are the 1st to 7th, 8th to 14th, 15th to 21st, and 22nd to the end of the month.'));
     box.appendChild(welcomeLine('2.  On the Dashboard, tap bKash or Nagad, send the money to the number shown, then enter your sender number and TrxID.'));
     box.appendChild(welcomeLine('3.  The admin checks your payment. You will see it under My Payments, and the bell at the top tells you when it is approved or rejected.'));
     box.appendChild(welcomeLine('4.  After approval you can open a receipt from My Payments.'));
@@ -657,8 +658,9 @@
   if (!EEE) return;
   const { db, $, el, money } = EEE;
 
-  const START = [1, 8, 15, 22, 29];
-  const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
+  // Weeks: 1-7, 8-14, 15-21, 22-end of month (4 weeks only)
+  const START = [1, 8, 15, 22];
+  const ORD = ['1st', '2nd', '3rd', '4th'];
   const pad = n => String(n).padStart(2, '0');
   const dim = (y, m) => new Date(y, m, 0).getDate();
   function today() {

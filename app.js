@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  // Password reset link detection. This must run before the Supabase client is created.
+  const RECOVERY_LINK = /type=recovery/.test(window.location.hash);
+  const LINK_ERROR = /error_code=|error=access_denied/.test(window.location.hash);
+
   const db = window.supabase.createClient(
     'https://odrehouprwotoveklwnq.supabase.co',
     'sb_publishable_6diM-UcWc9yIE0FMU9mPsA_4cvpG_JB'
@@ -610,12 +614,101 @@
     const m = $('message'); m.className = good ? 'ok' : 'err'; m.textContent = text || '';
   }
   function setTab(t) {
+    closeAuthPanel();
     $('form-in').hidden = t !== 'in';
     $('form-up').hidden = t !== 'up';
     $('tab-in').classList.toggle('on', t === 'in');
     $('tab-up').classList.toggle('on', t === 'up');
     $('auth-sub').textContent = t === 'in' ? 'Sign in to your account' : 'Create your student account';
     setMsg('');
+  }
+
+  /* ---------- forgot password / reset password ---------- */
+  function closeAuthPanel() {
+    const p = $('auth-panel'); if (p) p.remove();
+    const tabs = document.querySelector('#login-view .tabs'); if (tabs) tabs.hidden = false;
+  }
+  function openAuthPanel(sub) {
+    closeAuthPanel();
+    const tabs = document.querySelector('#login-view .tabs'); if (tabs) tabs.hidden = true;
+    $('form-in').hidden = true;
+    $('form-up').hidden = true;
+    $('auth-sub').textContent = sub;
+    const box = el('div'); box.id = 'auth-panel';
+    $('message').parentNode.insertBefore(box, $('message'));
+    setMsg('');
+    return box;
+  }
+  function backLink() {
+    const a = el('a', 'forgot', 'Back to sign in');
+    a.href = '#';
+    a.addEventListener('click', e => { e.preventDefault(); setTab('in'); });
+    return a;
+  }
+
+  // Step 1: the user types the email and we send the reset link
+  function showForgot() {
+    const box = openAuthPanel('Reset your password');
+    box.appendChild(el('label', '', 'Email address'));
+    const inp = el('input'); inp.type = 'email'; inp.placeholder = 'you@example.com'; inp.autocomplete = 'email';
+    inp.value = $('in-email').value.trim();
+    box.appendChild(inp);
+    const btn = el('button', 'btn full', 'Send reset link');
+    box.appendChild(btn);
+    box.appendChild(backLink());
+
+    async function send() {
+      const email = inp.value.trim();
+      if (!/^[^\s@]+@[^\s@]+$/.test(email)) { setMsg('Please enter a valid email address.'); return; }
+      setMsg('');
+      btn.disabled = true; btn.textContent = 'Sending...';
+      const r = await db.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+      btn.disabled = false; btn.textContent = 'Send reset link';
+      if (r.error) {
+        const m = r.error.message || '';
+        if (/rate limit|security purposes/i.test(m)) setMsg('Too many requests. Please wait a few minutes and try again.');
+        else setMsg('Could not send the email: ' + m);
+        return;
+      }
+      setMsg('If this email has an account, a reset link has been sent. Please check your inbox and your spam folder.', true);
+    }
+    btn.addEventListener('click', send);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+    inp.focus();
+  }
+
+  // Step 2: the user opened the link from the email and chooses a new password
+  function showReset() {
+    $('login-view').hidden = false;
+    $('app-view').hidden = true;
+    const box = openAuthPanel('Choose a new password');
+    box.appendChild(el('label', '', 'New password'));
+    const p1 = el('input'); p1.type = 'password'; p1.placeholder = 'Min 8 characters'; p1.autocomplete = 'new-password';
+    box.appendChild(p1);
+    box.appendChild(el('label', '', 'Confirm new password'));
+    const p2 = el('input'); p2.type = 'password'; p2.placeholder = 'Repeat password'; p2.autocomplete = 'new-password';
+    box.appendChild(p2);
+    const btn = el('button', 'btn full', 'Set new password');
+    box.appendChild(btn);
+
+    async function save() {
+      if (p1.value.length < 8) { setMsg('Password must be at least 8 characters.'); return; }
+      if (p1.value !== p2.value) { setMsg('Passwords do not match.'); return; }
+      setMsg('');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      const r = await db.auth.updateUser({ password: p1.value });
+      btn.disabled = false; btn.textContent = 'Set new password';
+      if (r.error) { setMsg('Could not change password: ' + r.error.message); return; }
+      await db.auth.signOut();
+      try { window.history.replaceState(null, '', window.location.pathname); } catch (e) { /* ignore */ }
+      setTab('in');
+      setMsg('Password changed. Please sign in with your new password.', true);
+    }
+    btn.addEventListener('click', save);
+    p2.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
+    p1.focus();
   }
 
   async function enter(user, expected) {
@@ -752,7 +845,7 @@
   $('u-pass2').addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
   $('forgot').addEventListener('click', e => {
     e.preventDefault();
-    setMsg('Password reset by email is coming soon. For now, please contact your CR.');
+    showForgot();
   });
   $('logout-btn').addEventListener('click', doLogout);
   $('menu-btn').addEventListener('click', () => ($('side').classList.contains('open') ? closeMenu() : openMenu()));
@@ -785,5 +878,11 @@
     else toast('Payments will be enabled in the next update.');
   }));
 
-  db.auth.getSession().then(({ data }) => { if (data.session) enter(data.session.user, null); });
+  // The reset link opens the site with a temporary session. Show the new-password form, not the dashboard.
+  db.auth.onAuthStateChange(event => { if (event === 'PASSWORD_RECOVERY') showReset(); });
+  if (LINK_ERROR) setMsg('This reset link is invalid or has expired. Please request a new one.');
+  db.auth.getSession().then(({ data }) => {
+    if (RECOVERY_LINK) { showReset(); return; }
+    if (data.session) enter(data.session.user, null);
+  });
 })();

@@ -832,3 +832,118 @@
     if (n) new MutationObserver(refreshChips).observe(n, { childList: true, characterData: true, subtree: true });
   });
 })();
+
+/* =====================================================
+   Forgot password (paste at the very end of payments.js)
+   ===================================================== */
+(function () {
+  'use strict';
+  const EEE = window.EEE;
+  if (!EEE) return;
+  const { db, $, el, toast } = EEE;
+
+  // Remember if this page was opened from a reset link
+  const openedFromReset = /type=recovery/.test(window.location.hash);
+
+  function msg(text, good) {
+    const m = $('message');
+    if (!m) return;
+    m.className = good ? 'ok' : 'err';
+    m.textContent = text || '';
+  }
+
+  /* ---------- 1) Send the reset email ---------- */
+  let sending = false;
+  document.addEventListener('click', async e => {
+    if (!e.target.closest('#forgot')) return;
+    e.preventDefault();
+    e.stopImmediatePropagation(); // stops the old "coming soon" message
+    if (sending) return;
+
+    const email = ($('in-email').value || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg('Please write your email address above first, then press "Forgot password?" again.');
+      $('in-email').focus();
+      return;
+    }
+
+    sending = true;
+    msg('Sending...', true);
+    const r = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    sending = false;
+
+    if (r.error) {
+      if (/rate limit|too many|security purposes/i.test(r.error.message || '')) {
+        msg('Too many requests. Please wait a few minutes and try again.');
+      } else {
+        msg('Could not send the email: ' + r.error.message);
+      }
+      return;
+    }
+    // Same message whether or not the email exists, so nobody can check who has an account
+    msg('If this email has an account, a password reset link has been sent. Please check your inbox and spam folder.', true);
+  }, true);
+
+  /* ---------- 2) New password form (opens from the email link) ---------- */
+  function openResetForm() {
+    if ($('reset-back')) return;
+
+    const back = el('div', 'modal-back');
+    back.id = 'reset-back';
+    back.style.cssText = 'position:fixed;inset:0;background:rgba(2,44,34,.65);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = el('div', 'card');
+    box.style.cssText = 'width:100%;max-width:420px;margin:0;padding:26px;border-top:6px solid #10b981;';
+    back.appendChild(box);
+
+    const title = el('h2', '', 'Set a new password');
+    title.style.cssText = 'font-size:22px;margin:0 0 6px;';
+    box.appendChild(title);
+    const sub = el('p', 'hint', 'Choose a new password for your account (at least 8 characters).');
+    sub.style.margin = '0 0 16px';
+    box.appendChild(sub);
+
+    box.appendChild(el('label', '', 'New password'));
+    const p1 = el('input'); p1.type = 'password'; p1.placeholder = 'Min 8 characters'; p1.autocomplete = 'new-password';
+    box.appendChild(p1);
+    box.appendChild(el('label', '', 'Confirm new password'));
+    const p2 = el('input'); p2.type = 'password'; p2.placeholder = 'Repeat password'; p2.autocomplete = 'new-password';
+    box.appendChild(p2);
+
+    const note = el('p', '');
+    note.style.margin = '0 0 10px';
+    box.appendChild(note);
+
+    const save = el('button', 'btn full', 'Save new password');
+    box.appendChild(save);
+
+    async function submit() {
+      note.className = 'err'; note.textContent = '';
+      if (p1.value.length < 8) { note.textContent = 'Password must be at least 8 characters.'; return; }
+      if (p1.value !== p2.value) { note.textContent = 'Passwords do not match.'; return; }
+      save.disabled = true; save.textContent = 'Saving...';
+      const r = await db.auth.updateUser({ password: p1.value });
+      if (r.error) {
+        save.disabled = false; save.textContent = 'Save new password';
+        note.textContent = 'Could not save: ' + r.error.message;
+        return;
+      }
+      note.className = 'ok';
+      note.textContent = 'Password changed. Opening your account...';
+      history.replaceState(null, '', window.location.pathname);
+      setTimeout(() => window.location.reload(), 1500);
+    }
+    save.addEventListener('click', submit);
+    p2.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+
+    document.body.appendChild(back);
+    p1.focus();
+  }
+
+  // Supabase fires this event when the person arrives from the email link
+  db.auth.onAuthStateChange(event => {
+    if (event === 'PASSWORD_RECOVERY') openResetForm();
+  });
+  if (openedFromReset) setTimeout(() => { if (!$('reset-back')) openResetForm(); }, 1200);
+})();

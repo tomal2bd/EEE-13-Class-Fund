@@ -449,6 +449,108 @@
     page.appendChild(c);
   }
 
+  /* ---------- admin notification bell (top bar) ---------- */
+  let bellWired = false;
+
+  function setAdminBadge(n) {
+    const b = $('bell-badge');
+    if (!b) return;
+    b.textContent = n > 99 ? '99+' : String(n);
+    b.hidden = !n;
+    b.style.display = n ? 'grid' : 'none';
+  }
+
+  async function updateAdminBell() {
+    const bell = $('bell-btn');
+    if (!bell || EEE.state.role !== 'admin') return;
+    bell.hidden = false;
+    const [p, m] = await Promise.all([
+      db.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      db.from('students').select('id', { count: 'exact', head: true }).eq('is_active', true).eq('approved', false)
+    ]);
+    if (p.error || m.error) return;
+    setAdminBadge((p.count || 0) + (m.count || 0));
+  }
+
+  async function openAdminPanel() {
+    const old = $('admin-bell-back');
+    if (old) { old.remove(); return; }
+
+    const back = el('div', 'modal-back');
+    back.id = 'admin-bell-back';
+    back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9999;';
+    const box = el('div', 'card');
+    box.style.cssText = 'position:absolute;top:64px;right:12px;width:min(400px,calc(100% - 24px));max-height:75vh;overflow:auto;margin:0;';
+    back.appendChild(box);
+    back.addEventListener('click', e => { if (e.target === back) back.remove(); });
+    document.body.appendChild(back);
+
+    box.appendChild(el('h2', '', 'Waiting for you'));
+    box.appendChild(el('p', 'help', 'Loading...'));
+
+    const [p, m] = await Promise.all([
+      db.from('payments')
+        .select('id, amount, method, submitted_at, students(full_name), payment_weeks(week_start)')
+        .eq('status', 'pending')
+        .order('submitted_at', { ascending: false })
+        .limit(8),
+      db.from('students').select('id', { count: 'exact', head: true }).eq('is_active', true).eq('approved', false)
+    ]);
+    box.innerHTML = '';
+    box.appendChild(el('h2', '', 'Waiting for you'));
+    if (p.error) {
+      box.appendChild(el('p', 'err', 'Could not load: ' + p.error.message));
+      return;
+    }
+    const list = p.data || [];
+    const memN = m.count || 0;
+
+    if (!list.length && !memN) box.appendChild(el('p', 'empty', 'Nothing is waiting. All clear.'));
+
+    list.forEach(x => {
+      const weeks = EEE.weeksText((x.payment_weeks || []).map(w => w.week_start).sort());
+      const row = el('div', 'feed-item');
+      row.appendChild(el('div', 'fav', ((x.students && x.students.full_name) || '?').charAt(0).toUpperCase()));
+      const main = el('div', 'fmain');
+      main.appendChild(el('div', 'fname', ((x.students && x.students.full_name) || 'Unknown') + ' · ' + (x.method || '')));
+      main.appendChild(el('div', 'fsub', (weeks ? weeks + ' · ' : '') + EEE.fmtTime(x.submitted_at)));
+      row.appendChild(main);
+      row.appendChild(el('div', 'famt', money(x.amount)));
+      box.appendChild(row);
+    });
+
+    if (memN) {
+      const mb = el('button', 'dx-todo hot');
+      mb.style.marginTop = '10px';
+      mb.appendChild(el('span', '', 'Members to approve'));
+      mb.appendChild(el('b', '', String(memN)));
+      mb.addEventListener('click', () => { back.remove(); EEE.showPage('students'); });
+      box.appendChild(mb);
+    }
+
+    if (list.length) {
+      const go = el('button', 'btn full', 'Open payment review');
+      go.style.marginTop = '10px';
+      go.addEventListener('click', () => { back.remove(); EEE.showPage('review'); });
+      box.appendChild(go);
+    }
+    const closeBtn = el('button', 'btn ghost full', 'Close');
+    closeBtn.style.marginTop = '8px';
+    closeBtn.addEventListener('click', () => back.remove());
+    box.appendChild(closeBtn);
+  }
+
+  function wireAdminBell() {
+    const bell = $('bell-btn');
+    if (!bell || bellWired) return;
+    bellWired = true;
+    bell.addEventListener('click', () => {
+      if (EEE.state.role === 'admin') openAdminPanel();
+    });
+  }
+
+  wireAdminBell();
   EEE.refreshHooks.push(render);
   EEE.refreshHooks.push(backupCard);
+  EEE.refreshHooks.push(updateAdminBell);
 })();

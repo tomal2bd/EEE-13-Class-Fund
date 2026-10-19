@@ -192,3 +192,9 @@ th{background:#f8fafc;color:var(--m);font-size:12px;text-transform:uppercase;let
 .paybar{gap:10px}
 .paybtn{min-height:120px}
 }
+
+/* ---------- NO PLACEHOLDERS: hide the grey sample text inside every input box ---------- */
+input::placeholder,textarea::placeholder{color:transparent!important;opacity:0!important}
+input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:transparent!important}
+input::-moz-placeholder,textarea::-moz-placeholder{color:transparent!important;opacity:0!important}
+input:-ms-input-placeholder,textarea:-ms-input-placeholder{color:transparent!important}

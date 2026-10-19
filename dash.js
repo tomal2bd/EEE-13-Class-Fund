@@ -347,5 +347,108 @@
     nodes.forEach(n => b.appendChild(n));
   }
 
+  /* ---------- admin backup: download CSV files (shown in Settings) ---------- */
+  function csvCell(v) {
+    if (v === null || v === undefined) return '';
+    let s = String(v);
+    // stop spreadsheet formulas from running
+    if (/^[=+@]/.test(s) || /^-(?![0-9.])/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  function downloadCsv(name, header, rows) {
+    const lines = [header.map(csvCell).join(',')].concat(rows.map(r => r.map(csvCell).join(',')));
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+  async function fetchAll(build) {
+    let all = [];
+    let from = 0;
+    for (;;) {
+      const r = await build().range(from, from + 999);
+      if (r.error) return { error: r.error };
+      const rows = r.data || [];
+      all = all.concat(rows);
+      if (rows.length < 1000) break;
+      from += 1000;
+    }
+    return { data: all };
+  }
+  function stamp() {
+    const t = today();
+    return t.y + '-' + pad(t.m) + '-' + pad(t.d);
+  }
+
+  const EXPORTS = {
+    payments: {
+      label: 'Download payments',
+      file: 'eee13-payments-',
+      query: () => db.from('payments')
+        .select('id, amount, method, transaction_id, sender_number, status, submitted_at, reviewed_at, review_note, students(full_name, roll_no), payment_weeks(week_start)')
+        .order('submitted_at', { ascending: false }).order('id'),
+      header: ['Submitted', 'Student', 'Roll', 'Method', 'Amount', 'Weeks', 'TrxID', 'Sender', 'Status', 'Reviewed', 'Review note'],
+      row: p => [
+        p.submitted_at, p.students && p.students.full_name, p.students && p.students.roll_no, p.method, p.amount,
+        EEE.weeksText((p.payment_weeks || []).map(w => w.week_start).sort()),
+        p.transaction_id, p.sender_number, p.status, p.reviewed_at, p.review_note
+      ]
+    },
+    expenses: {
+      label: 'Download expenses',
+      file: 'eee13-expenses-',
+      query: () => db.from('public_expenses').select('*').order('expense_date', { ascending: false }).order('id'),
+      header: ['Date', 'Reason', 'Category', 'Amount', 'Receipt link'],
+      row: x => [x.expense_date, x.reason, x.category, x.amount, x.receipt_url]
+    },
+    members: {
+      label: 'Download members',
+      file: 'eee13-members-',
+      query: () => db.from('students').select('*').order('created_at', { ascending: false }).order('id'),
+      header: ['Name', 'Nickname', 'Roll', 'Registration no', 'Phone', 'Email', 'Active', 'Approved', 'Joined'],
+      row: s => [s.full_name, s.nickname, s.roll_no, s.registration_no, s.phone, s.email, s.is_active ? 'yes' : 'no', s.approved ? 'yes' : 'no', s.created_at]
+    }
+  };
+
+  function backupCard() {
+    const page = $('page-settings');
+    let c = $('bk-card');
+    if (EEE.state.role !== 'admin') { if (c) c.remove(); return; }
+    if (!page || c) return;
+
+    c = card('Backup (download CSV files)');
+    c.id = 'bk-card';
+    c.appendChild(el('div', 'help', 'Download your data as files you can open in Excel. Download them now and then and keep them safe.'));
+    const row = el('div', 'dx-row');
+    const msg = el('p', '');
+    Object.keys(EXPORTS).forEach(key => {
+      const ex = EXPORTS[key];
+      const b = el('button', 'btn', ex.label);
+      b.addEventListener('click', async () => {
+        msg.className = ''; msg.textContent = '';
+        b.disabled = true;
+        const old = b.textContent;
+        b.textContent = 'Preparing...';
+        const r = await fetchAll(ex.query);
+        b.disabled = false;
+        b.textContent = old;
+        if (r.error) { msg.className = 'err'; msg.textContent = 'Could not download: ' + r.error.message; return; }
+        downloadCsv(ex.file + stamp() + '.csv', ex.header, r.data.map(ex.row));
+        msg.className = 'ok';
+        msg.textContent = 'Downloaded ' + r.data.length + ' row(s).';
+      });
+      row.appendChild(b);
+    });
+    c.appendChild(row);
+    c.appendChild(msg);
+    page.appendChild(c);
+  }
+
   EEE.refreshHooks.push(render);
+  EEE.refreshHooks.push(backupCard);
 })();

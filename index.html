@@ -4,16 +4,63 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#064e3b">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>EEE-13 · Class Fund</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="circuit.css">
 <style>
-.hello{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 24px;margin-bottom:20px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#022c22,#047857 60%,#10b981);box-shadow:0 8px 22px rgba(4,120,87,.25)}
-.hello-g{font-size:24px;font-weight:800}
-.hello-n{font-size:15px;opacity:.9;margin-top:2px}
-.hello-t{text-align:right}
+/* ---------- Sign-in page logo (replaces the old "13" box) ---------- */
+.ahead .logo13img{width:60px;height:60px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+
+/* ---------- Greeting banner: the sky changes with the time of day ---------- */
+.hello{--os:64px;--oy:50%;--or:230px;position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;min-height:150px;padding:26px 28px;margin-bottom:20px;border-radius:20px;color:#fff;background:linear-gradient(120deg,#0369a1,#0ea5e9 55%,#fcd34d);box-shadow:0 10px 26px rgba(15,23,42,.22)}
+.hello[data-phase="morning"]{--oy:66%;background:linear-gradient(120deg,#0369a1,#0ea5e9 55%,#fcd34d)}
+.hello[data-phase="afternoon"]{--oy:34%;background:linear-gradient(120deg,#1d4ed8,#3b82f6 55%,#38bdf8)}
+.hello[data-phase="evening"]{--oy:70%;--os:74px;background:linear-gradient(120deg,#4c1d95,#be185d 55%,#f97316)}
+.hello[data-phase="night"]{--oy:34%;--os:58px;background:linear-gradient(120deg,#020617,#1e1b4b 55%,#312e81)}
+.hello .sky{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.hello-l,.hello-t{position:relative;z-index:2}
+.hello-g{font-size:30px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.28)}
+.hello-n{font-size:15px;opacity:.95;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.25)}
+.hello-t{text-align:right;background:rgba(2,6,23,.28);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px 18px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #hello-time{font-size:28px;font-weight:800;letter-spacing:1px;font-variant-numeric:tabular-nums}
-#hello-date{font-size:13px;opacity:.9;margin-top:2px}
+#hello-date{font-size:13px;opacity:.92;margin-top:2px}
+/* sun and moon */
+.hello .orb{position:absolute;top:var(--oy);right:var(--or);width:var(--os);height:var(--os);margin-top:calc(var(--os) / -2);border-radius:50%;z-index:1;animation:orbfloat 7s ease-in-out infinite}
+.hello[data-phase="morning"] .orb,.hello[data-phase="afternoon"] .orb{background:radial-gradient(circle at 35% 35%,#fffbeb,#fde047 55%,#f59e0b);box-shadow:0 0 30px 10px rgba(253,224,71,.55),0 0 80px 30px rgba(251,191,36,.30)}
+.hello[data-phase="evening"] .orb{background:radial-gradient(circle at 35% 35%,#ffedd5,#fb923c 55%,#ea580c);box-shadow:0 0 34px 12px rgba(251,146,60,.55),0 0 90px 36px rgba(244,63,94,.30)}
+.hello[data-phase="night"] .orb{background:transparent;box-shadow:inset calc(var(--os) * -.34) calc(var(--os) * -.1) 0 0 #fef9c3;filter:drop-shadow(0 0 12px rgba(254,249,195,.7))}
+.hello .orb::before{content:"";position:absolute;inset:calc(var(--os) * -.5);border-radius:50%;z-index:-1;display:none;animation:orbspin 60s linear infinite}
+.hello[data-phase="morning"] .orb::before,.hello[data-phase="afternoon"] .orb::before{display:block;background:repeating-conic-gradient(rgba(253,224,71,.5) 0 6deg,transparent 6deg 18deg);-webkit-mask:radial-gradient(circle,transparent 33%,#000 35%,transparent 70%);mask:radial-gradient(circle,transparent 33%,#000 35%,transparent 70%)}
+.hello[data-phase="evening"] .orb::before{display:block;background:repeating-conic-gradient(rgba(251,146,60,.5) 0 6deg,transparent 6deg 18deg);-webkit-mask:radial-gradient(circle,transparent 33%,#000 35%,transparent 70%);mask:radial-gradient(circle,transparent 33%,#000 35%,transparent 70%)}
+@keyframes orbfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes orbspin{to{transform:rotate(360deg)}}
+/* clouds */
+.hello .cloud{position:absolute;left:0;width:90px;height:26px;background:#fff;border-radius:999px;opacity:.8;animation:drift 80s linear infinite;transition:opacity .6s}
+.hello .cloud::before,.hello .cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
+.hello .cloud::before{width:38px;height:38px;left:14px;top:-18px}
+.hello .cloud::after{width:30px;height:30px;left:42px;top:-12px}
+.hello .cloud.c1{top:16%;--s:1;animation-duration:85s;animation-delay:-30s}
+.hello .cloud.c2{top:62%;--s:.7;opacity:.6;animation-duration:110s;animation-delay:-70s}
+.hello .cloud.c3{top:38%;--s:.85;opacity:.7;animation-duration:95s;animation-delay:-8s}
+.hello[data-phase="evening"] .cloud{background:#fecdd3;opacity:.45}
+.hello[data-phase="night"] .cloud{opacity:0}
+@keyframes drift{from{transform:translateX(-180px) scale(var(--s,1))}to{transform:translateX(110vw) scale(var(--s,1))}}
+/* sunset glow near the bottom */
+.hello[data-phase="evening"] .sky::after{content:"";position:absolute;left:0;right:0;bottom:0;height:50%;background:linear-gradient(to top,rgba(251,146,60,.5),transparent)}
+/* stars (night only) */
+.hello .stars{position:absolute;inset:0;opacity:0;transition:opacity .6s}
+.hello[data-phase="night"] .stars{opacity:1}
+.hello .stars i{position:absolute;border-radius:50%;background:#fff;animation:twinkle 2.6s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
+
+/* ---------- bKash / Nagad buttons: smaller on a laptop ---------- */
+#page-overview #paybar{max-width:560px;gap:14px}
+#page-overview #paybar .paybtn{min-height:104px;border-radius:16px;background-size:auto 46px;background-position:center 36%;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+#page-overview #paybar .paybtn small{padding:6px 0;font-size:12px}
+
 .cards .stat.k-in{background:linear-gradient(135deg,#059669,#34d399);color:#fff;border:0}
 .cards .stat.k-out{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:0}
 .cards .stat.k-bal{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:0}
@@ -21,17 +68,58 @@
 .cards .stat.k-in .lbl,.cards .stat.k-out .lbl,.cards .stat.k-bal .lbl,.cards .stat.k-stu .lbl{color:rgba(255,255,255,.9)}
 .cards .stat.k-in .ico,.cards .stat.k-out .ico,.cards .stat.k-bal .ico,.cards .stat.k-stu .ico{background:rgba(255,255,255,.25);color:#fff}
 .cards .stat .val{text-shadow:0 1px 2px rgba(0,0,0,.15)}
-.menu-btn{width:46px;height:46px;background:#ecfdf5;border:1px solid #a7f3d0;color:#059669;border-radius:12px;padding:0}
-.menu-btn svg{width:26px;height:26px;stroke:#059669;stroke-width:2.2;fill:none;stroke-linecap:round}
-.toplogo{display:flex;align-items:center;background:none;border:0;padding:0;cursor:pointer;flex-shrink:0}
-.toplogo img{width:40px;height:40px;border-radius:10px;object-fit:cover;display:block}
-@media(max-width:600px){.hello-t{text-align:left}.hello-g{font-size:20px}#hello-time{font-size:24px}}
+.chartrow{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.chartrow .card{margin-bottom:0;min-width:0}
+/* AVMENU2: profile icon button with label, and dropdown menu */
+.avwrap{position:relative;display:flex;flex-direction:column;align-items:center}
+.avatar-btn{width:44px;height:44px;border-radius:50%;border:0;padding:0;cursor:pointer;background:var(--g6);color:var(--g3);display:grid;place-items:center;font-weight:700;font-size:0;flex-shrink:0}
+.avatar-btn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+.avatar-btn:hover{box-shadow:0 0 0 3px rgba(16,185,129,.3)}
+.avlabel{font-size:11px;font-weight:700;color:#047857;margin-top:2px;line-height:1}
+.avmenu{position:absolute;top:66px;right:0;min-width:230px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 10px 28px rgba(15,23,42,.18);padding:8px;z-index:40}
+.avinfo{padding:10px 12px 12px;border-bottom:1px solid #e2e8f0;margin-bottom:8px}
+.avinfo .avn{font-size:15px;font-weight:800;color:#0f172a;word-break:break-word}
+.avinfo .ave{font-size:12px;color:#64748b;margin-top:2px;word-break:break-all}
+.avmenu button{display:flex;align-items:center;gap:10px;width:100%;padding:13px 12px;background:none;border:0;border-radius:10px;font-size:15px;color:#0f172a;cursor:pointer;text-align:left}
+.avmenu button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.avmenu button:hover{background:#f1f5f9}
+.avmenu .avsep{height:1px;background:#e2e8f0;margin:10px 4px}
+.avmenu button.out{color:#dc2626;background:#fef2f2;margin-top:14px}
+.avmenu button.out:hover{background:#fee2e2}
+/* PROFILE2: profile banner, info cards, edit card */
+.pbanner{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:26px 24px;margin-bottom:18px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#022c22,#047857 60%,#10b981);box-shadow:0 8px 22px rgba(4,120,87,.25)}
+.pbav{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font-size:36px;font-weight:800;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.7);flex-shrink:0}
+.pbname{font-size:24px;font-weight:800}
+.pbmail{font-size:14px;opacity:.9;margin-top:2px;word-break:break-all}
+.pcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:18px}
+.pcard{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
+.pcard .pl{font-size:13px;color:#64748b}
+.pcard .pval{font-size:17px;font-weight:700;margin-top:4px;color:#0f172a;word-break:break-word}
+.pcard.paid{grid-column:1/-1;background:linear-gradient(135deg,#2563eb,#7c3aed);border:0;color:#fff;box-shadow:0 8px 22px rgba(37,99,235,.25)}
+.pcard.paid .pl{color:rgba(255,255,255,.9)}
+.pcard.paid .pval{color:#fff;font-size:32px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.editcard{border:2px dashed #10b981}
+/* LEDGER2: month filter row */
+.lfilter{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.lfilter select{width:auto;min-width:180px;margin:0;padding:9px 12px}
+.lfilter .lper{font-size:13px;font-weight:600;color:#047857}
+@media(max-width:700px){.chartrow{grid-template-columns:1fr}}
+@media(max-width:600px){
+.hello[data-phase]{--os:46px;--oy:30px;--or:18px}
+.hello{padding:22px 20px;min-height:140px}
+.hello-t{text-align:left}
+.hello-g{font-size:22px}
+#hello-time{font-size:24px}
+.pbname{font-size:20px}
+#page-overview #paybar{max-width:none;gap:10px}
+#page-overview #paybar .paybtn{min-height:96px}
+}
 </style>
 </head>
 <body>
 
 <!-- ================= AUTH ================= -->
-<div class="auth" id="login-view">
+<div class="auth" id="login-view" hidden>
 <svg class="bgcircuit" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 <path class="trace" d="M800 450 L800 100 L600 100 L600 0 L400 0"/>
 <path class="pulse" pathLength="1000" d="M800 450 L800 100 L600 100 L600 0 L400 0" style="animation-duration:8.2s;animation-delay:-6.0s"/>
@@ -88,13 +176,6 @@
 <line class="chip-pin" x1="215" y1="640" x2="215" y2="624"/><line class="chip-pin" x1="215" y1="730" x2="215" y2="746"/>
 <line class="chip-pin" x1="240" y1="640" x2="240" y2="624"/><line class="chip-pin" x1="240" y1="730" x2="240" y2="746"/>
 <text class="chip-txt" x="190" y="695" text-anchor="middle">EEE</text>
-<rect class="chip-box" x="1330" y="140" width="140" height="90" rx="8"/>
-<line class="chip-pin" x1="1350" y1="140" x2="1350" y2="124"/><line class="chip-pin" x1="1350" y1="230" x2="1350" y2="246"/>
-<line class="chip-pin" x1="1375" y1="140" x2="1375" y2="124"/><line class="chip-pin" x1="1375" y1="230" x2="1375" y2="246"/>
-<line class="chip-pin" x1="1400" y1="140" x2="1400" y2="124"/><line class="chip-pin" x1="1400" y1="230" x2="1400" y2="246"/>
-<line class="chip-pin" x1="1425" y1="140" x2="1425" y2="124"/><line class="chip-pin" x1="1425" y1="230" x2="1425" y2="246"/>
-<line class="chip-pin" x1="1450" y1="140" x2="1450" y2="124"/><line class="chip-pin" x1="1450" y1="230" x2="1450" y2="246"/>
-<text class="chip-txt" x="1400" y="195" text-anchor="middle">13</text>
 <rect class="chip-box" x="1280" y="760" width="140" height="90" rx="8"/>
 <line class="chip-pin" x1="1300" y1="760" x2="1300" y2="744"/><line class="chip-pin" x1="1300" y1="850" x2="1300" y2="866"/>
 <line class="chip-pin" x1="1325" y1="760" x2="1325" y2="744"/><line class="chip-pin" x1="1325" y1="850" x2="1325" y2="866"/>
@@ -151,10 +232,8 @@
 <circle class="node" cx="150" cy="350" r="5" style="animation-delay:-1.6s"/>
 <circle class="node" cx="150" cy="650" r="5" style="animation-delay:-1.6s"/>
 </svg>
-  <div class="sidetxt l">E E E</div>
-  <div class="sidetxt r">1 3</div>
   <header class="ahead">
-    <div class="logo13">13</div>
+    <img class="logo13img" src="icon-192.png" alt="EEE-13 Class Fund logo">
     <div>
       <div class="atitle">EEE-13 · Class Fund</div>
       <div class="asub">Transparent by design</div>
@@ -183,7 +262,7 @@
 
   <div class="awrap">
     <div class="acard">
-      <div class="seal">⚡</div>
+      <div class="seal"><svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:#fff;stroke:none"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></div>
       <h1>Welcome to Class Fund</h1>
       <p class="sub" id="auth-sub">Sign in to your account</p>
       <div class="tabs">
@@ -207,6 +286,8 @@
       <div id="form-up" hidden>
         <label for="u-name">Full name</label>
         <input id="u-name" placeholder="Your full name" autocomplete="name">
+        <label for="u-nick">Nickname (shown in your greeting)</label>
+        <input id="u-nick" placeholder="e.g. Tomal" autocomplete="nickname">
         <div class="two">
           <div><label for="u-roll">Class roll</label><input id="u-roll" placeholder="e.g. 25"></div>
           <div><label for="u-reg">Registration no</label><input id="u-reg" placeholder="Registration number"></div>
@@ -230,7 +311,7 @@
 <!-- ================= APP ================= -->
 <div class="app" id="app-view" hidden>
   <aside class="side" id="side">
-    <div class="brand"><div class="logo">⚡</div><div>EEE-13 · Class Fund</div></div>
+    <div class="brand"><div class="logo"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#fff;stroke:none"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></div><div>EEE-13 · Class Fund</div></div>
     <nav id="nav"></nav>
     <button id="logout-btn" style="display:flex;align-items:center;gap:12px;width:100%;margin-top:14px;padding:11px 12px;background:rgba(255,255,255,.1);color:#fff;border:0;border-radius:10px;font-size:14px;cursor:pointer;text-align:left;">
       <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -243,8 +324,7 @@
   <div class="main">
     <div class="top">
       <div class="tl">
-        <button class="toplogo" id="top-logo" aria-label="Go to Dashboard"><img src="icon-512.png" alt="EEE-13"></button>
-        <button class="menu-btn" id="menu-btn" aria-label="Open menu"><svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+        <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
         <h1 id="title">Dashboard</h1>
       </div>
       <div class="user">
@@ -254,15 +334,34 @@
         </button>
         <span class="rolepill" id="role"></span>
         <span class="who" id="who"></span>
-        <div class="avatar" id="avatar"></div>
+        <div class="avwrap">
+          <button class="avatar-btn" id="avatar" aria-label="Profile and account menu"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+          <span class="avlabel">Profile</span>
+          <div class="avmenu" id="avmenu" hidden>
+            <div class="avinfo">
+              <div class="avn" id="av-name"></div>
+              <div class="ave" id="av-email"></div>
+            </div>
+            <button id="av-profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>My Profile</span></button>
+            <div class="avsep"></div>
+            <button id="av-logout" class="out"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Logout</span></button>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="pad" id="pages">
 
       <section id="page-overview">
-        <div class="hello" id="hello">
-          <div>
+        <div class="hello" id="hello" data-phase="morning">
+          <div class="sky" aria-hidden="true">
+            <div class="stars" id="hello-stars"></div>
+            <div class="cloud c1"></div>
+            <div class="cloud c2"></div>
+            <div class="cloud c3"></div>
+            <div class="orb"></div>
+          </div>
+          <div class="hello-l">
             <div class="hello-g" id="hello-g">Hello</div>
             <div class="hello-n" id="hello-n"></div>
           </div>
@@ -285,15 +384,17 @@
           <h2>Live payments <span class="live">LIVE</span></h2>
           <div id="feed"></div>
         </div>
-        <div class="card">
-          <h2>Weekly contributions</h2>
-          <div class="bars" id="chart"></div>
-          <div class="lbl" id="chart-total" style="margin-top:10px">Total collected: ৳0</div>
-        </div>
-        <div class="card">
-          <h2>Monthly contributions</h2>
-          <div class="bars" id="chart-month"></div>
-          <div class="lbl" id="chart-month-total" style="margin-top:10px">Total collected: ৳0</div>
+        <div class="chartrow">
+          <div class="card">
+            <h2>Weekly contributions</h2>
+            <div class="bars" id="chart"></div>
+            <div class="lbl" id="chart-total" style="margin-top:10px">Total collected: ৳0</div>
+          </div>
+          <div class="card">
+            <h2>Monthly contributions</h2>
+            <div class="bars" id="chart-month"></div>
+            <div class="lbl" id="chart-month-total" style="margin-top:10px">Total collected: ৳0</div>
+          </div>
         </div>
       </section>
 
@@ -307,6 +408,16 @@
       </section>
 
       <section id="page-report" hidden>
+        <!-- LEDGER2: summary cards + month filter -->
+        <div class="cards">
+          <div class="card stat k-in"><div class="ico in">↓</div><div><div class="lbl">Total money in</div><div class="val" id="r-c-in">-</div></div></div>
+          <div class="card stat k-out"><div class="ico out">↑</div><div><div class="lbl">Total money out</div><div class="val" id="r-c-out">-</div></div></div>
+          <div class="card stat k-bal"><div class="ico bal">৳</div><div><div class="lbl" id="r-l-bal">Current balance</div><div class="val" id="r-c-bal">-</div></div></div>
+        </div>
+        <div class="lfilter">
+          <select id="r-month" aria-label="Filter by month"></select>
+          <span class="lper" id="r-period">Showing: all months</span>
+        </div>
         <div class="card">
           <div class="tabs">
             <button class="tab on" id="r-tab-in">Money in</button>
@@ -316,10 +427,12 @@
             <div class="help">Every payment here was checked and approved by the admin.</div>
             <div class="tools"><input id="r-search" placeholder="Search by student name"></div>
             <div class="scroll"><table><thead><tr><th>Student</th><th>Weeks</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody id="t-rin"></tbody></table></div>
+            <button class="btn ghost full" id="r-in-more" style="margin-top:12px" hidden>Show more</button>
           </div>
           <div id="r-out-wrap" hidden>
             <div class="help">Every expense of the class fund, with its reason and receipt.</div>
             <div class="scroll"><table><thead><tr><th>Date</th><th>Reason</th><th>Category</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="t-rout"></tbody></table></div>
+            <button class="btn ghost full" id="r-out-more" style="margin-top:12px" hidden>Show more</button>
           </div>
         </div>
         <div class="card">
@@ -328,28 +441,36 @@
         </div>
         <div class="card">
           <h2>Monthly summary</h2>
-          <div class="scroll"><table><thead><tr><th>Month</th><th>Collected</th></tr></thead><tbody id="t-month"></tbody></table></div>
+          <div class="scroll"><table><thead><tr><th>Month</th><th>Collected</th><th>Spent</th><th>Net</th></tr></thead><tbody id="t-month"></tbody></table></div>
         </div>
       </section>
 
       <section id="page-profile" hidden>
-        <div class="card">
-          <div class="prof">
-            <div class="bigav" id="p-avatar">?</div>
-            <div><div class="pname" id="p-name">-</div><div class="lbl" id="p-email">-</div></div>
+        <!-- PROFILE2 -->
+        <div class="pbanner">
+          <div class="pbav" id="p-avatar">?</div>
+          <div>
+            <div class="pbname" id="p-name">-</div>
+            <div class="pbmail" id="p-email">-</div>
           </div>
-          <div class="grid2">
-            <div><div class="lbl">Registration no</div><div class="pv" id="p-reg">-</div></div>
-            <div><div class="lbl">Joined</div><div class="pv" id="p-joined">-</div></div>
-            <div><div class="lbl">Account type</div><div class="pv">Student</div></div>
-            <div><div class="lbl">Total paid (approved)</div><div class="pv" id="p-total">-</div></div>
-          </div>
-          <div class="sec">My details</div>
+        </div>
+        <div class="pcards">
+          <div class="pcard paid"><div class="pl">Total paid (approved)</div><div class="pval" id="p-total">-</div></div>
+          <div class="pcard"><div class="pl">Registration no</div><div class="pval" id="p-reg">-</div></div>
+          <div class="pcard"><div class="pl">Class roll</div><div class="pval" id="p-roll">-</div></div>
+          <div class="pcard"><div class="pl">Nickname</div><div class="pval" id="p-nick">-</div></div>
+          <div class="pcard"><div class="pl">Phone</div><div class="pval" id="p-phone">-</div></div>
+          <div class="pcard"><div class="pl">Joined</div><div class="pval" id="p-joined">-</div></div>
+          <div class="pcard"><div class="pl">Account type</div><div class="pval">Student</div></div>
+        </div>
+        <div class="card editcard">
+          <h2>Edit your details</h2>
           <div class="formgrid">
+            <div><label for="p-nick-in">Nickname</label><input id="p-nick-in" placeholder="Your nickname" disabled></div>
             <div><label for="p-roll-in">Class roll</label><input id="p-roll-in" placeholder="Your current roll" disabled></div>
-            <div><label for="p-phone-in">Phone number</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX" disabled></div>
+            <div><label for="p-phone-in">Phone number (locked)</label><input id="p-phone-in" type="tel" placeholder="01XXXXXXXXX" disabled></div>
           </div>
-          <p class="hint">Only your class roll can be edited. Your name, registration number and phone can only be changed by the admin.</p>
+          <p class="hint">Only your nickname and class roll can be edited. Your name, registration number and phone can only be changed by the admin.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn" id="p-edit">Edit</button>
             <button class="btn" id="p-save" hidden>Save changes</button>
@@ -382,36 +503,68 @@
 <script src="app.js"></script>
 <script src="payments.js"></script>
 <script src="admin.js"></script>
+<script src="admin-extra.js"></script>
+<script src="dash.js"></script>
 <script>
 (function () {
   var TZ = 'Asia/Dhaka';
-  var logo = document.getElementById('top-logo');
-  if (logo) logo.addEventListener('click', function () {
-    if (window.EEE && window.EEE.showPage) window.EEE.showPage('overview');
-  });
+  var starsDone = false;
+
+  // night stars: created once, shown only at night by the CSS
+  function makeStars() {
+    var box = document.getElementById('hello-stars');
+    if (!box || starsDone) return;
+    starsDone = true;
+    for (var i = 0; i < 34; i++) {
+      var s = document.createElement('i');
+      var size = 1.5 + Math.random() * 2.2;
+      s.style.cssText = 'left:' + (Math.random() * 100).toFixed(1) + '%;top:' + (Math.random() * 100).toFixed(1) +
+        '%;width:' + size.toFixed(1) + 'px;height:' + size.toFixed(1) +
+        'px;animation-delay:-' + (Math.random() * 3).toFixed(2) + 's;animation-duration:' + (2 + Math.random() * 2.5).toFixed(2) + 's';
+      box.appendChild(s);
+    }
+  }
+
   function tick() {
     var g = document.getElementById('hello-g');
     var n = document.getElementById('hello-n');
     var t = document.getElementById('hello-time');
     var d = document.getElementById('hello-date');
+    var hello = document.getElementById('hello');
     if (!g || !t) return;
     var now = new Date();
     var hr = parseInt(now.toLocaleString('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }), 10) % 24;
     var greet = hr >= 5 && hr < 12 ? 'Good morning' : hr >= 12 && hr < 17 ? 'Good afternoon' : hr >= 17 && hr < 21 ? 'Good evening' : 'Good night';
+
+    // the sky: morning, afternoon, sunset (evening), night
+    var phase = hr >= 5 && hr < 12 ? 'morning' : hr >= 12 && hr < 17 ? 'afternoon' : hr >= 17 && hr < 19 ? 'evening' : 'night';
+    // preview trick: add ?phase=night (or morning, afternoon, evening) to the address
+    var m = /[?&]phase=(morning|afternoon|evening|night)/.exec(window.location.search);
+    if (m) phase = m[1];
+    if (hello && hello.getAttribute('data-phase') !== phase) hello.setAttribute('data-phase', phase);
+
     var name = '';
     try {
       var S = window.EEE && window.EEE.state;
-      if (S && S.student && S.student.full_name) name = S.student.full_name;
+      if (S && S.student) name = S.student.nickname || S.student.full_name || '';
       else if (S && S.role === 'admin') name = 'Admin';
     } catch (e) {}
-    g.textContent = greet + (name ? ', ' + name.split(' ')[0] : '');
+    g.textContent = greet + (name ? ', ' + name : '');
     if (n) n.textContent = 'Welcome to EEE-13 · Class Fund';
     t.textContent = now.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
     if (d) d.textContent = now.toLocaleDateString('en-GB', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
+  makeStars();
   tick();
   setInterval(tick, 1000);
 })();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (e) { console.error(e); });
+  });
+}
 </script>
 </body>
 </html>

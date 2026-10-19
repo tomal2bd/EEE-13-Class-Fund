@@ -1,0 +1,91 @@
+/* =====================================================
+   fixes.css  -  EEE-13 Class Fund
+   (loaded AFTER style.css and circuit.css)
+   ===================================================== */
+
+/* ---------- 1. Sign-in banner: bigger "EEE-13", right side covered ---------- */
+.banner{min-height:210px}
+.bwm{
+  top:50%;bottom:auto;right:32px;
+  transform:translateY(-50%);
+  font-size:clamp(96px,14vw,160px);
+  letter-spacing:6px;
+  color:rgba(16,185,129,.34);
+}
+@media(min-width:601px){
+  .bin{max-width:min(620px,60%)}
+}
+/* phone (Android / iPhone): circuit covers the full banner,
+   big EEE-13 sits across the bottom */
+@media(max-width:600px){
+  .banner{padding:22px 18px 100px}
+  .bcircuit{width:100%;opacity:.75}
+  .bwm{
+    left:0;right:0;top:auto;bottom:14px;
+    transform:none;text-align:center;
+    font-size:22vw;letter-spacing:3px;
+    color:rgba(16,185,129,.40);
+  }
+}
+
+/* ---------- 2. Header: logo + menu + title, always visible ---------- */
+.top{position:sticky;top:0;z-index:35;box-shadow:0 2px 10px rgba(15,23,42,.06)}
+.tl{gap:10px}
+.top-logo{display:block;flex-shrink:0;border-radius:50%;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
+.top-logo img{
+  display:block;width:42px;height:42px;border-radius:50%;object-fit:cover;
+  background:#fff;border:2px solid #d1fae5;
+  box-shadow:0 2px 8px rgba(4,120,87,.25);
+}
+.top-logo:hover{transform:scale(1.06)}
+.top-logo:active{transform:scale(.93)}
+.top-logo:focus-visible,.menu-btn:focus-visible{outline:3px solid rgba(16,185,129,.5);outline-offset:2px}
+
+/* ---------- 3. Three-line button -> animated X ---------- */
+.menu-btn{
+  width:42px;height:42px;border-radius:12px;padding:0;
+  transition:background .2s ease,box-shadow .2s ease;
+}
+.menu-btn.open{background:#ecfdf5;box-shadow:0 0 0 3px rgba(16,185,129,.25)}
+.mb-lines{position:relative;display:block;width:20px;height:14px;transition:transform .35s ease}
+.mb-lines i{
+  position:absolute;left:0;display:block;width:100%;height:2px;border-radius:2px;
+  background:#064e3b;
+  transition:top .3s ease,transform .3s ease,opacity .2s ease;
+}
+.mb-lines i:nth-child(1){top:0}
+.mb-lines i:nth-child(2){top:6px}
+.mb-lines i:nth-child(3){top:12px}
+.menu-btn.open .mb-lines{transform:rotate(180deg)}
+.menu-btn.open .mb-lines i:nth-child(1){top:6px;transform:rotate(45deg)}
+.menu-btn.open .mb-lines i:nth-child(2){opacity:0;transform:scaleX(0)}
+.menu-btn.open .mb-lines i:nth-child(3){top:6px;transform:rotate(-45deg)}
+
+/* ---------- 4. Mobile drawer: slides in below the header ---------- */
+@keyframes fx-fade{from{opacity:0}to{opacity:1}}
+@keyframes fx-navin{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@media(max-width:900px){
+  .side{top:var(--toph,84px);padding-top:14px;transition:transform .32s cubic-bezier(.22,.8,.3,1)}
+  .scrim{top:var(--toph,84px)}
+  .scrim.show{animation:fx-fade .25s ease}
+  .side.open #nav .nav{animation:fx-navin .38s ease both}
+  .side.open #nav .nav:nth-child(1){animation-delay:.06s}
+  .side.open #nav .nav:nth-child(2){animation-delay:.10s}
+  .side.open #nav .nav:nth-child(3){animation-delay:.14s}
+  .side.open #nav .nav:nth-child(4){animation-delay:.18s}
+  .side.open #nav .nav:nth-child(5){animation-delay:.22s}
+  .side.open #nav .nav:nth-child(6){animation-delay:.26s}
+  .side.open #nav .nav:nth-child(7){animation-delay:.30s}
+  .side.open #nav .nav:nth-child(8){animation-delay:.34s}
+}
+@media(max-width:420px){
+  .top{padding:10px 12px}
+  .tl{gap:8px}
+  .top-logo img{width:38px;height:38px}
+  .menu-btn{width:38px;height:38px}
+  .top h1{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){
+  .mb-lines,.mb-lines i,.side,.top-logo{transition:none!important}
+  .side.open #nav .nav,.scrim.show{animation:none!important}
+}

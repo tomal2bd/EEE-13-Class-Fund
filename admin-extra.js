@@ -184,7 +184,7 @@
     return card;
   }
 
-  // FIX: students never keep the admin cards. They are cleared for students
+  // Students never keep the admin cards. They are cleared for students
   // and rebuilt when an admin signs in again.
   function buildSettings() {
     const box = $('settings-extra');
@@ -694,9 +694,36 @@
     EEE.showPage('adminprofile');
   }, true);
 
+  /* ============ 7) Logout cleanup: forget everything the admin had ============ */
+  // When anyone logs out, all built pages and data in memory are reset,
+  // so the next person on the same tab never sees the old admin's data.
+  function resetAfterLogout() {
+    sBuilt = false;
+    mBuilt = false;
+    lBuilt = false;
+    pBuilt = false;
+    pEditing = false;
+    lRows = [];
+    lOpen = false;
+    lUI = {};
+    pUI = {};
+    pData = { full_name: '', phone: '', designation: '' };
+    mSel.clear();
+    ['page-manual', 'page-paylog', 'page-adminprofile', 'page-dues'].forEach(id => {
+      const p = $(id);
+      if (p) p.innerHTML = '';
+    });
+    const box = $('settings-extra');
+    if (box) box.innerHTML = '';
+  }
+  ['logout-btn', 'av-logout'].forEach(id => {
+    const b = $(id);
+    if (b) b.addEventListener('click', resetAfterLogout);
+  });
+
   /* ---------- refresh hooks ---------- */
   EEE.refreshHooks.push(async () => {
-    buildSettings();   // FIX: runs for everyone. Students get the admin cards removed.
+    buildSettings();   // runs for everyone. Students get the admin cards removed.
     if (!isAdmin()) return;
     orderNav();
     showProfileBtn();

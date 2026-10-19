@@ -164,7 +164,7 @@
     });
   }
 
-  function showPage(name) {
+  function showPage(name, fromPop) {
     const def = PAGE_DEFS[name];
     if (!def) return;
     document.querySelectorAll('#pages > section').forEach(s => { s.hidden = s.id !== 'page-' + name; });
@@ -174,8 +174,21 @@
     closeAvMenu();
     if (def.onShow) def.onShow($('page-' + name));
     window.scrollTo(0, 0);
+    // Back button support: every new page adds one history step
+    if (!fromPop) {
+      const st = { page: name };
+      if (!history.state || !history.state.page) history.replaceState(st, '');
+      else if (history.state.page !== name) history.pushState(st, '');
+    }
   }
   EEE.showPage = showPage;
+
+  // Phone Back button: go to the previous page instead of closing the app
+  window.addEventListener('popstate', e => {
+    if ($('app-view').hidden) return;
+    const page = (e.state && e.state.page) || 'overview';
+    if (PAGE_DEFS[page]) showPage(page, true);
+  });
 
   /* ---------- profile menu (top right) ---------- */
   function closeAvMenu() { const m = $('avmenu'); if (m) m.hidden = true; }
@@ -782,10 +795,10 @@
   }));
 
   db.auth.getSession().then(async ({ data }) => {
-  if (data.session) {
-    try { await enter(data.session.user, null); } catch (e) { console.error(e); }
-  }
-  // লগইন করা না থাকলে (বা enter ব্যর্থ হলে) তখনই লগইন পেজ দেখাও
-  if ($('app-view').hidden) $('login-view').hidden = false;
-});
+    if (data.session) {
+      try { await enter(data.session.user, null); } catch (e) { console.error(e); }
+    }
+    // If not logged in (or enter failed), show the login page now
+    if ($('app-view').hidden) $('login-view').hidden = false;
+  });
 })();

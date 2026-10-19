@@ -458,11 +458,12 @@
     $('m-msg').textContent = '';
     members = r.data || [];
     $('c-stu').textContent = members.filter(m => m.is_active && m.approved).length;
-    // sidebar badge: how many new sign ups are waiting for approval
-    EEE.setBadge('students', members.filter(m => !m.approved).length);
+    // sidebar badge: new sign ups waiting for a decision
+    EEE.setBadge('students', members.filter(m => !m.approved && !m.rejected).length);
     renderMembers();
   }
   function memberStatus(m) {
+    if (m.rejected && !m.approved) return pill('Rejected', 'no');
     if (!m.approved) return pill('Pending', 'wait');
     return pill(m.is_active ? 'Active' : 'Removed', m.is_active ? 'ok' : 'no');
   }
@@ -472,9 +473,12 @@
     if (!m.approved) {
       const ok = el('button', 'btn sm', 'Approve');
       ok.addEventListener('click', () => approveMember(m));
-      const no = el('button', 'btn danger sm', 'Reject');
-      no.addEventListener('click', () => rejectMember(m));
-      box.appendChild(ok); box.appendChild(no);
+      box.appendChild(ok);
+      if (!m.rejected) {
+        const no = el('button', 'btn danger sm', 'Reject');
+        no.addEventListener('click', () => rejectMember(m));
+        box.appendChild(no);
+      }
       return box;
     }
     const b = el('button', 'btn sm ' + (m.is_active ? 'danger' : 'ghost'), m.is_active ? 'Remove' : 'Restore');
@@ -485,8 +489,9 @@
   function renderMembers() {
     const q = $('m-search').value.trim().toLowerCase();
     const list = members.filter(m => [m.full_name, m.roll_no, m.registration_no, m.email, m.phone].join(' ').toLowerCase().includes(q));
-    // waiting for approval first
-    list.sort((a, b) => Number(a.approved) - Number(b.approved));
+    // waiting for a decision first, then everyone else
+    const order = m => (!m.approved && !m.rejected) ? 0 : 1;
+    list.sort((a, b) => order(a) - order(b));
     fill($('t-members'), list, [
       m => m.full_name || '-', m => m.roll_no || '-', m => m.registration_no || '-', m => m.phone || '-', m => m.email || '-',
       m => fmtDate(m.created_at), m => memberStatus(m), m => memberAction(m)
@@ -494,16 +499,16 @@
   }
   async function approveMember(m) {
     if (!confirm('Approve ' + (m.full_name || 'this member') + '?\nRoll: ' + (m.roll_no || '-') + ' · Reg: ' + (m.registration_no || '-'))) return;
-    const r = await db.from('students').update({ approved: true, is_active: true }).eq('id', m.id);
+    const r = await db.from('students').update({ approved: true, is_active: true, rejected: false }).eq('id', m.id);
     if (r.error) { toast('Could not approve: ' + r.error.message); return; }
     toast('Member approved.');
     await loadMembers();
   }
   async function rejectMember(m) {
-    if (!confirm('Keep ' + (m.full_name || 'this member') + ' out? They will not be able to use the site.')) return;
-    const r = await db.from('students').update({ approved: false, is_active: false }).eq('id', m.id);
-    if (r.error) { toast('Could not update: ' + r.error.message); return; }
-    toast('Member kept out.');
+    if (!confirm('Reject ' + (m.full_name || 'this member') + '? They will not be able to use the site.')) return;
+    const r = await db.from('students').update({ approved: false, is_active: false, rejected: true }).eq('id', m.id);
+    if (r.error) { toast('Could not reject: ' + r.error.message); return; }
+    toast('Member rejected.');
     await loadMembers();
   }
   async function toggleMember(m) {
@@ -633,20 +638,19 @@
         setMsg('No student record found for this account. Please contact the admin.');
         return;
       }
-      // new sign up: waiting for the admin to approve
-      if (!S.student.approved && !S.student.is_active) {
+      if (S.student.rejected && !S.student.approved) {
         await db.auth.signOut();
-        setMsg('Your account is waiting for admin approval. Please contact the admin.', false);
-        return;
-      }
-      if (!S.student.is_active) {
-        await db.auth.signOut();
-        setMsg('Your account has been removed. Please contact the admin.');
+        setMsg('Your sign up was not approved. Please contact the admin.');
         return;
       }
       if (!S.student.approved) {
         await db.auth.signOut();
         setMsg('Your account is waiting for admin approval. Please contact the admin.');
+        return;
+      }
+      if (!S.student.is_active) {
+        await db.auth.signOut();
+        setMsg('Your account has been removed. Please contact the admin.');
         return;
       }
     }

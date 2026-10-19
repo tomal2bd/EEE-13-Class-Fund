@@ -801,8 +801,9 @@
     btn.disabled = false; btn.textContent = 'Create Account';
     if (r.error) {
       const m = r.error.message || '';
-      if (/database error/i.test(m)) setMsg('Could not create the account. This registration number may already be registered.');
-      else if (/already registered/i.test(m)) setMsg('This email is already registered. Please sign in instead.');
+      // PRIVACY: the same message for "email already used" and "registration number already used",
+      // so nobody can use this form to find out who has an account.
+      if (/database error|already registered|already been registered/i.test(m)) setMsg('Could not create the account. Please check your details. If you already have an account, sign in or use "Forgot password?".');
       else if (/rate limit/i.test(m)) setMsg('Too many attempts. Please wait a while and try again.');
       else setMsg('Sign up failed: ' + m);
       return;
@@ -822,7 +823,8 @@
     stopLive();
     await db.auth.signOut();
     S.user = null; S.student = null; S.role = null; S.settings = null;
-    ['in-password', 'u-pass', 'u-pass2'].forEach(id => { $(id).value = ''; });
+    // PRIVACY: clear the email too, so the next person on a shared device cannot see it
+    ['in-email', 'in-password', 'u-pass', 'u-pass2'].forEach(id => { const f = $(id); if (f) f.value = ''; });
     // FIX: remove the admin settings cards so the next person who logs in cannot see them
     const extra = $('settings-extra'); if (extra) extra.innerHTML = '';
     $('app-view').hidden = true;

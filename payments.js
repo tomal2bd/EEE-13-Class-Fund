@@ -207,6 +207,53 @@
     draw();
   }
 
+  /* ---------- Receipt (print or save as PDF) ---------- */
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function printReceipt(p) {
+    const s = EEE.state.student || {};
+    const weeks = EEE.weeksText((p.payment_weeks || []).map(w => w.week_start).sort()) || '-';
+    const no = 'R-' + String(p.id).replace(/-/g, '').slice(0, 8).toUpperCase();
+    const rows = [
+      ['Receipt no', no],
+      ['Student', s.full_name || '-'],
+      ['Class roll', s.roll_no || '-'],
+      ['Payment for', weeks],
+      ['Method', p.method || '-'],
+      ['TrxID', p.transaction_id || '-'],
+      ['Submitted', EEE.fmtTime(p.submitted_at)],
+      ['Approved', p.reviewed_at ? EEE.fmtTime(p.reviewed_at) : '-']
+    ].map(r => '<tr><td class="k">' + esc(r[0]) + '</td><td class="v">' + esc(r[1]) + '</td></tr>').join('');
+
+    const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt ' + esc(no) + '</title>' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"><style>' +
+      'body{font-family:"Segoe UI",Arial,sans-serif;margin:0;padding:24px;color:#0f172a;background:#fff}' +
+      '.r{max-width:480px;margin:0 auto;border:2px solid #059669;border-radius:16px;padding:24px}' +
+      'h1{margin:0;font-size:22px;color:#022c22}.sub{color:#64748b;font-size:13px;margin:2px 0 18px}' +
+      'table{width:100%;border-collapse:collapse}td{padding:9px 0;border-bottom:1px solid #e2e8f0;font-size:14px;vertical-align:top}' +
+      '.k{color:#64748b;width:38%}.v{font-weight:600;text-align:right;word-break:break-word}' +
+      '.amt{margin:18px 0 8px;padding:14px;border-radius:12px;background:#d1fae5;display:flex;justify-content:space-between;align-items:center}' +
+      '.amt span{font-weight:700;color:#064e3b}.amt b{font-size:26px;color:#047857}' +
+      '.paid{display:inline-block;background:#059669;color:#fff;font-weight:800;letter-spacing:2px;padding:4px 14px;border-radius:999px;font-size:12px}' +
+      '.f{margin-top:16px;text-align:center;color:#64748b;font-size:12px}' +
+      '.btn{display:block;margin:20px auto 0;padding:10px 22px;border:0;border-radius:10px;background:#059669;color:#fff;font-size:14px;font-weight:600;cursor:pointer}' +
+      '@media print{.btn{display:none}body{padding:0}}' +
+      '</style></head><body><div class="r">' +
+      '<h1>EEE-13 · Class Fund</h1><div class="sub">Payment receipt</div>' +
+      '<span class="paid">PAID</span>' +
+      '<div class="amt"><span>Amount</span><b>' + esc(money(p.amount)) + '</b></div>' +
+      '<table>' + rows + '</table>' +
+      '<div class="f">This receipt was generated from the Class Fund website after admin approval.</div>' +
+      '</div><button class="btn" onclick="window.print()">Print / Save as PDF</button></body></html>';
+
+    const w = window.open('', '_blank');
+    if (!w) { toast('Please allow pop-ups to open the receipt.'); return; }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+  }
+  EEE.printReceipt = printReceipt;
+
   /* ---------- Student: My Payments page ---------- */
   let myMonth = null;
   let histOpen = false;
@@ -300,6 +347,12 @@
         card.appendChild(again);
       }
     }
+    if (p.status === 'approved') {
+      const rb = el('button', 'btn sm ghost', 'Receipt');
+      rb.style.marginTop = '10px';
+      rb.addEventListener('click', () => printReceipt(p));
+      card.appendChild(rb);
+    }
     return card;
   }
 
@@ -309,7 +362,7 @@
     if (!sec) return;
 
     const r = await db.from('payments')
-      .select('id, method, transaction_id, status, amount, submitted_at, review_note, payment_weeks(week_start, amount)')
+      .select('id, method, transaction_id, status, amount, submitted_at, reviewed_at, review_note, payment_weeks(week_start, amount)')
       .order('submitted_at', { ascending: false });
     sec.innerHTML = '';
     if (r.error) {
@@ -537,6 +590,57 @@
   const bellBtn = $('bell-btn');
   if (bellBtn) bellBtn.addEventListener('click', openNotifs);
   EEE.refreshHooks.push(updateNotifBadge);
+
+  /* ---------- Student: welcome message (shown once per device) ---------- */
+  let welcomeShown = false;
+  function welcomeKey() {
+    return 'eee_welcome_' + (EEE.state.user ? EEE.state.user.id : 'x');
+  }
+  function welcomeSeen() {
+    try { return !!localStorage.getItem(welcomeKey()); } catch (e) { return true; }
+  }
+  function welcomeMark() {
+    try { localStorage.setItem(welcomeKey(), '1'); } catch (e) { /* storage not available */ }
+  }
+  function welcomeLine(text) {
+    const p = el('div', '', text);
+    p.style.cssText = 'font-size:15px;line-height:1.5;margin-bottom:10px;color:#0f172a;';
+    return p;
+  }
+  function showWelcome() {
+    if (welcomeShown || EEE.state.role !== 'student' || !EEE.state.student || welcomeSeen()) return;
+    welcomeShown = true;
+    const st = EEE.state.settings || {};
+    const weekly = Number(st.weekly_amount || 30);
+    const name = EEE.state.student.nickname || EEE.state.student.full_name || '';
+
+    const back = el('div', 'modal-back');
+    back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = el('div', 'card');
+    box.style.cssText = 'width:100%;max-width:440px;max-height:92vh;overflow:auto;margin:0;padding:26px;border-top:6px solid #10b981;';
+
+    const h = el('h2', '', 'Welcome' + (name ? ', ' + name : '') + '!');
+    h.style.cssText = 'font-size:26px;font-weight:800;margin:0 0 6px;color:#064e3b;';
+    box.appendChild(h);
+    const sub = el('div', '', 'Your account is approved. Here is how the Class Fund works:');
+    sub.style.cssText = 'font-size:14px;color:#475569;margin-bottom:16px;';
+    box.appendChild(sub);
+
+    box.appendChild(welcomeLine('1.  Every week you pay ' + money(weekly) + '. The weeks start on the 1st, 8th, 15th, 22nd and 29th of the month.'));
+    box.appendChild(welcomeLine('2.  On the Dashboard, tap bKash or Nagad, send the money to the number shown, then enter your sender number and TrxID.'));
+    box.appendChild(welcomeLine('3.  The admin checks your payment. You will see it under My Payments, and the bell at the top tells you when it is approved or rejected.'));
+    box.appendChild(welcomeLine('4.  After approval you can open a receipt from My Payments.'));
+    box.appendChild(welcomeLine('5.  Public Ledger shows all the money coming in and going out, so everything stays transparent.'));
+
+    const go = el('button', 'btn full', 'Got it, let us start');
+    go.style.marginTop = '10px';
+    go.addEventListener('click', () => { welcomeMark(); back.remove(); });
+    box.appendChild(go);
+
+    back.appendChild(box);
+    document.body.appendChild(back);
+  }
+  EEE.refreshHooks.push(async () => { showWelcome(); });
 
   EEE.openPay = openPay;
   const bar = $('paybar');

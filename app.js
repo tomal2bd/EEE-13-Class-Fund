@@ -781,5 +781,11 @@
     else toast('Payments will be enabled in the next update.');
   }));
 
-  db.auth.getSession().then(({ data }) => { if (data.session) enter(data.session.user, null); });
+  db.auth.getSession().then(async ({ data }) => {
+  if (data.session) {
+    try { await enter(data.session.user, null); } catch (e) { console.error(e); }
+  }
+  // লগইন করা না থাকলে (বা enter ব্যর্থ হলে) তখনই লগইন পেজ দেখাও
+  if ($('app-view').hidden) $('login-view').hidden = false;
+});
 })();

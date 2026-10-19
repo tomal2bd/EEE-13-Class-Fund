@@ -14,10 +14,20 @@
 #push-btn.on{background:#059669;border-color:#059669;color:#fff}
 #push-btn.on .slash{display:none}
 #push-btn.busy{opacity:.6;pointer-events:none}
+
+#push-banner{display:flex;align-items:center;gap:10px;margin:10px 12px;padding:10px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;color:#065f46;font-size:14px;line-height:1.35}
+#push-banner .pb-text{flex:1;min-width:0}
+#push-banner .pb-go{background:#059669;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:600;font-size:13px;cursor:pointer;flex-shrink:0}
+#push-banner .pb-go.busy{opacity:.6;pointer-events:none}
+#push-banner .pb-x{background:transparent;border:0;color:#065f46;font-size:20px;line-height:1;cursor:pointer;padding:0 4px;flex-shrink:0}
 `;
   const style = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
+
+  let isOn = false;          // is this device subscribed right now
+  let detected = false;      // have we finished checking yet
+  let bannerDismissed = false; // X pressed (only for this page load)
 
   function urlBase64ToUint8Array(b64) {
     const padding = '='.repeat((4 - (b64.length % 4)) % 4);
@@ -40,21 +50,77 @@
   }
 
   function setState(on) {
+    isOn = !!on;
     const b = $('push-btn');
-    if (!b) return;
-    b.classList.toggle('on', !!on);
-    const label = on ? 'Payment reminders are on' : 'Turn on payment reminders';
-    b.title = label;
-    b.setAttribute('aria-label', label);
+    if (b) {
+      b.classList.toggle('on', isOn);
+      const label = isOn ? 'Payment reminders are on' : 'Turn on payment reminders';
+      b.title = label;
+      b.setAttribute('aria-label', label);
+    }
+    updateBanner();
+  }
+
+  function removeBanner() {
+    const old = $('push-banner');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+  }
+
+  function updateBanner() {
+    // Show only when: signed in, check finished, reminders off, not dismissed
+    const shouldShow = !!(EEE.state && EEE.state.user && EEE.state.role) &&
+      detected && !isOn && !bannerDismissed;
+    if (!shouldShow) { removeBanner(); return; }
+    if ($('push-banner')) return;
+
+    const needsInstall = isIOS() && !isInstalled();
+
+    const bar = document.createElement('div');
+    bar.id = 'push-banner';
+
+    const text = document.createElement('div');
+    text.className = 'pb-text';
+    text.textContent = needsInstall
+      ? '🔔 To get payment reminders: tap Share, then Add to Home Screen, and open the app from there.'
+      : '🔔 Turn on payment reminders so you never miss a week. Tap the bell at the top, or press the button.';
+    bar.appendChild(text);
+
+    if (!needsInstall) {
+      const go = document.createElement('button');
+      go.className = 'pb-go';
+      go.textContent = 'Turn on';
+      go.addEventListener('click', async () => {
+        go.classList.add('busy');
+        try { await enable(); }
+        catch (e) { console.error(e); toast('Could not turn on reminders: ' + (e && e.message ? e.message : e)); }
+        go.classList.remove('busy');
+      });
+      bar.appendChild(go);
+    }
+
+    const x = document.createElement('button');
+    x.className = 'pb-x';
+    x.setAttribute('aria-label', 'Close');
+    x.textContent = '\u00D7';
+    x.addEventListener('click', () => { bannerDismissed = true; removeBanner(); });
+    bar.appendChild(x);
+
+    // Place the banner at the very top of the page content
+    const host = document.querySelector('main') || document.body;
+    host.insertBefore(bar, host.firstChild);
   }
 
   async function detect() {
-    if (!supported() || Notification.permission !== 'granted') { setState(false); return; }
     try {
+      if (!supported() || Notification.permission !== 'granted') {
+        detected = true; setState(false); return;
+      }
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
+      detected = true;
       setState(!!sub);
     } catch (e) {
+      detected = true;
       setState(false);
     }
   }
@@ -101,22 +167,26 @@
   }
 
   function ensureButton() {
-    if (!EEE.state.role || $('push-btn')) return;
-    const bell = $('bell-btn');
-    if (!bell || !bell.parentNode) return;
+    if (!EEE.state.role) { removeBanner(); return; }
 
-    const b = el('button', '');
-    b.id = 'push-btn';
-    b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line class="slash" x1="3" y1="3" x2="21" y2="21"/></svg>';
-    b.addEventListener('click', async () => {
-      b.classList.add('busy');
-      try { await enable(); }
-      catch (e) { console.error(e); toast('Could not turn on reminders: ' + (e && e.message ? e.message : e)); }
-      b.classList.remove('busy');
-    });
-    bell.parentNode.insertBefore(b, bell);
-    setState(false);
-    detect();
+    if (!$('push-btn')) {
+      const bell = $('bell-btn');
+      if (bell && bell.parentNode) {
+        const b = el('button', '');
+        b.id = 'push-btn';
+        b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line class="slash" x1="3" y1="3" x2="21" y2="21"/></svg>';
+        b.addEventListener('click', async () => {
+          b.classList.add('busy');
+          try { await enable(); }
+          catch (e) { console.error(e); toast('Could not turn on reminders: ' + (e && e.message ? e.message : e)); }
+          b.classList.remove('busy');
+        });
+        bell.parentNode.insertBefore(b, bell);
+        setState(false);
+      }
+    }
+
+    if (!detected) detect(); else updateBanner();
   }
 
   EEE.refreshHooks.push(ensureButton);

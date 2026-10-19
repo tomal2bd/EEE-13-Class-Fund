@@ -1,10 +1,6 @@
 (function () {
   'use strict';
 
-  // Password reset link detection. This must run before the Supabase client is created.
-  const RECOVERY_LINK = /type=recovery/.test(window.location.hash);
-  const LINK_ERROR = /error_code=|error=access_denied/.test(window.location.hash);
-
   const db = window.supabase.createClient(
     'https://odrehouprwotoveklwnq.supabase.co',
     'sb_publishable_6diM-UcWc9yIE0FMU9mPsA_4cvpG_JB'
@@ -462,56 +458,52 @@
     $('m-msg').textContent = '';
     members = r.data || [];
     $('c-stu').textContent = members.filter(m => m.is_active && m.approved).length;
-    EEE.setBadge('students', members.filter(m => m.is_active && !m.approved).length);
+    // sidebar badge: how many new sign ups are waiting for approval
+    EEE.setBadge('students', members.filter(m => !m.approved).length);
     renderMembers();
+  }
+  function memberStatus(m) {
+    if (!m.approved) return pill('Pending', 'wait');
+    return pill(m.is_active ? 'Active' : 'Removed', m.is_active ? 'ok' : 'no');
+  }
+  function memberAction(m) {
+    const box = el('div');
+    box.style.cssText = 'display:flex;gap:6px;';
+    if (!m.approved) {
+      const ok = el('button', 'btn sm', 'Approve');
+      ok.addEventListener('click', () => approveMember(m));
+      const no = el('button', 'btn danger sm', 'Reject');
+      no.addEventListener('click', () => rejectMember(m));
+      box.appendChild(ok); box.appendChild(no);
+      return box;
+    }
+    const b = el('button', 'btn sm ' + (m.is_active ? 'danger' : 'ghost'), m.is_active ? 'Remove' : 'Restore');
+    b.addEventListener('click', () => toggleMember(m));
+    box.appendChild(b);
+    return box;
   }
   function renderMembers() {
     const q = $('m-search').value.trim().toLowerCase();
     const list = members.filter(m => [m.full_name, m.roll_no, m.registration_no, m.email, m.phone].join(' ').toLowerCase().includes(q));
-    // people waiting for approval are shown first
-    list.sort((a, b) => {
-      const pa = a.is_active && !a.approved ? 0 : 1;
-      const pb = b.is_active && !b.approved ? 0 : 1;
-      return pa - pb;
-    });
+    // waiting for approval first
+    list.sort((a, b) => Number(a.approved) - Number(b.approved));
     fill($('t-members'), list, [
       m => m.full_name || '-', m => m.roll_no || '-', m => m.registration_no || '-', m => m.phone || '-', m => m.email || '-',
-      m => fmtDate(m.created_at),
-      m => {
-        if (!m.is_active) return pill('Removed', 'no');
-        if (!m.approved) return pill('Pending approval', 'wait');
-        return pill('Active', 'ok');
-      },
-      m => {
-        const box = el('div');
-        box.style.cssText = 'display:flex;gap:6px;';
-        if (m.is_active && !m.approved) {
-          const a = el('button', 'btn sm', 'Approve');
-          a.addEventListener('click', () => approveMember(m));
-          const r = el('button', 'btn sm danger', 'Reject');
-          r.addEventListener('click', () => rejectMember(m));
-          box.appendChild(a); box.appendChild(r);
-        } else {
-          const b = el('button', 'btn sm ' + (m.is_active ? 'danger' : 'ghost'), m.is_active ? 'Remove' : 'Restore');
-          b.addEventListener('click', () => toggleMember(m));
-          box.appendChild(b);
-        }
-        return box;
-      }
+      m => fmtDate(m.created_at), m => memberStatus(m), m => memberAction(m)
     ], 'No members have signed up yet');
   }
   async function approveMember(m) {
-    if (!confirm('Approve ' + (m.full_name || 'this member') + '? They will be able to sign in.')) return;
-    const r = await db.from('students').update({ approved: true }).eq('id', m.id);
+    if (!confirm('Approve ' + (m.full_name || 'this member') + '?\nRoll: ' + (m.roll_no || '-') + ' · Reg: ' + (m.registration_no || '-'))) return;
+    const r = await db.from('students').update({ approved: true, is_active: true }).eq('id', m.id);
     if (r.error) { toast('Could not approve: ' + r.error.message); return; }
     toast('Member approved.');
     await loadMembers();
   }
   async function rejectMember(m) {
-    if (!confirm('Reject ' + (m.full_name || 'this member') + '? They will not be able to sign in.')) return;
-    const r = await db.from('students').update({ is_active: false }).eq('id', m.id);
-    if (r.error) { toast('Could not reject: ' + r.error.message); return; }
-    toast('Member rejected.');
+    if (!confirm('Keep ' + (m.full_name || 'this member') + ' out? They will not be able to use the site.')) return;
+    const r = await db.from('students').update({ approved: false, is_active: false }).eq('id', m.id);
+    if (r.error) { toast('Could not update: ' + r.error.message); return; }
+    toast('Member kept out.');
     await loadMembers();
   }
   async function toggleMember(m) {
@@ -522,8 +514,7 @@
     toast('Member ' + (m.is_active ? 'removed' : 'restored') + '.');
     await loadMembers();
   }
-  // other admin pages (Dues, Add Payment) only see approved members
-  EEE.getMembers = () => members.filter(m => m.approved);
+  EEE.getMembers = () => members;
 
   /* ---------- profile (student) ---------- */
   async function loadStudentRow() {
@@ -614,101 +605,12 @@
     const m = $('message'); m.className = good ? 'ok' : 'err'; m.textContent = text || '';
   }
   function setTab(t) {
-    closeAuthPanel();
     $('form-in').hidden = t !== 'in';
     $('form-up').hidden = t !== 'up';
     $('tab-in').classList.toggle('on', t === 'in');
     $('tab-up').classList.toggle('on', t === 'up');
     $('auth-sub').textContent = t === 'in' ? 'Sign in to your account' : 'Create your student account';
     setMsg('');
-  }
-
-  /* ---------- forgot password / reset password ---------- */
-  function closeAuthPanel() {
-    const p = $('auth-panel'); if (p) p.remove();
-    const tabs = document.querySelector('#login-view .tabs'); if (tabs) tabs.hidden = false;
-  }
-  function openAuthPanel(sub) {
-    closeAuthPanel();
-    const tabs = document.querySelector('#login-view .tabs'); if (tabs) tabs.hidden = true;
-    $('form-in').hidden = true;
-    $('form-up').hidden = true;
-    $('auth-sub').textContent = sub;
-    const box = el('div'); box.id = 'auth-panel';
-    $('message').parentNode.insertBefore(box, $('message'));
-    setMsg('');
-    return box;
-  }
-  function backLink() {
-    const a = el('a', 'forgot', 'Back to sign in');
-    a.href = '#';
-    a.addEventListener('click', e => { e.preventDefault(); setTab('in'); });
-    return a;
-  }
-
-  // Step 1: the user types the email and we send the reset link
-  function showForgot() {
-    const box = openAuthPanel('Reset your password');
-    box.appendChild(el('label', '', 'Email address'));
-    const inp = el('input'); inp.type = 'email'; inp.placeholder = 'you@example.com'; inp.autocomplete = 'email';
-    inp.value = $('in-email').value.trim();
-    box.appendChild(inp);
-    const btn = el('button', 'btn full', 'Send reset link');
-    box.appendChild(btn);
-    box.appendChild(backLink());
-
-    async function send() {
-      const email = inp.value.trim();
-      if (!/^[^\s@]+@[^\s@]+$/.test(email)) { setMsg('Please enter a valid email address.'); return; }
-      setMsg('');
-      btn.disabled = true; btn.textContent = 'Sending...';
-      const r = await db.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname
-      });
-      btn.disabled = false; btn.textContent = 'Send reset link';
-      if (r.error) {
-        const m = r.error.message || '';
-        if (/rate limit|security purposes/i.test(m)) setMsg('Too many requests. Please wait a few minutes and try again.');
-        else setMsg('Could not send the email: ' + m);
-        return;
-      }
-      setMsg('If this email has an account, a reset link has been sent. Please check your inbox and your spam folder.', true);
-    }
-    btn.addEventListener('click', send);
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
-    inp.focus();
-  }
-
-  // Step 2: the user opened the link from the email and chooses a new password
-  function showReset() {
-    $('login-view').hidden = false;
-    $('app-view').hidden = true;
-    const box = openAuthPanel('Choose a new password');
-    box.appendChild(el('label', '', 'New password'));
-    const p1 = el('input'); p1.type = 'password'; p1.placeholder = 'Min 8 characters'; p1.autocomplete = 'new-password';
-    box.appendChild(p1);
-    box.appendChild(el('label', '', 'Confirm new password'));
-    const p2 = el('input'); p2.type = 'password'; p2.placeholder = 'Repeat password'; p2.autocomplete = 'new-password';
-    box.appendChild(p2);
-    const btn = el('button', 'btn full', 'Set new password');
-    box.appendChild(btn);
-
-    async function save() {
-      if (p1.value.length < 8) { setMsg('Password must be at least 8 characters.'); return; }
-      if (p1.value !== p2.value) { setMsg('Passwords do not match.'); return; }
-      setMsg('');
-      btn.disabled = true; btn.textContent = 'Saving...';
-      const r = await db.auth.updateUser({ password: p1.value });
-      btn.disabled = false; btn.textContent = 'Set new password';
-      if (r.error) { setMsg('Could not change password: ' + r.error.message); return; }
-      await db.auth.signOut();
-      try { window.history.replaceState(null, '', window.location.pathname); } catch (e) { /* ignore */ }
-      setTab('in');
-      setMsg('Password changed. Please sign in with your new password.', true);
-    }
-    btn.addEventListener('click', save);
-    p2.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
-    p1.focus();
   }
 
   async function enter(user, expected) {
@@ -731,6 +633,12 @@
         setMsg('No student record found for this account. Please contact the admin.');
         return;
       }
+      // new sign up: waiting for the admin to approve
+      if (!S.student.approved && !S.student.is_active) {
+        await db.auth.signOut();
+        setMsg('Your account is waiting for admin approval. Please contact the admin.', false);
+        return;
+      }
       if (!S.student.is_active) {
         await db.auth.signOut();
         setMsg('Your account has been removed. Please contact the admin.');
@@ -744,9 +652,6 @@
     }
     const st = await db.from('fund_settings').select('*').eq('id', 1).maybeSingle();
     S.settings = st.data || null;
-
-    // FIX: a student must never see admin settings cards left over from an earlier admin login
-    if (role !== 'admin') { const x = $('settings-extra'); if (x) x.innerHTML = ''; }
 
     $('role').textContent = role;
     $('who').textContent = S.email;
@@ -801,9 +706,8 @@
     btn.disabled = false; btn.textContent = 'Create Account';
     if (r.error) {
       const m = r.error.message || '';
-      // PRIVACY: the same message for "email already used" and "registration number already used",
-      // so nobody can use this form to find out who has an account.
-      if (/database error|already registered|already been registered/i.test(m)) setMsg('Could not create the account. Please check your details. If you already have an account, sign in or use "Forgot password?".');
+      if (/database error/i.test(m)) setMsg('Could not create the account. This registration number may already be registered.');
+      else if (/already registered/i.test(m)) setMsg('This email is already registered. Please sign in instead.');
       else if (/rate limit/i.test(m)) setMsg('Too many attempts. Please wait a while and try again.');
       else setMsg('Sign up failed: ' + m);
       return;
@@ -812,21 +716,14 @@
       setMsg('Account created, but Supabase still requires email confirmation. The "Confirm email" setting must be turned off.');
       return;
     }
-    // The new account must be approved by the admin before the student can sign in.
-    await db.auth.signOut();
-    ['u-name', 'u-nick', 'u-roll', 'u-reg', 'u-phone', 'u-email', 'u-pass', 'u-pass2'].forEach(id => { $(id).value = ''; });
-    setTab('in');
-    setMsg('Account created. Please wait for the admin to approve your account. You can sign in after that.', true);
+    await enter(r.data.user, 'student');
   }
 
   async function doLogout() {
     stopLive();
     await db.auth.signOut();
-    S.user = null; S.student = null; S.role = null; S.settings = null;
-    // PRIVACY: clear the email too, so the next person on a shared device cannot see it
-    ['in-email', 'in-password', 'u-pass', 'u-pass2'].forEach(id => { const f = $(id); if (f) f.value = ''; });
-    // FIX: remove the admin settings cards so the next person who logs in cannot see them
-    const extra = $('settings-extra'); if (extra) extra.innerHTML = '';
+    S.user = null; S.student = null; S.role = null;
+    ['in-password', 'u-pass', 'u-pass2'].forEach(id => { $(id).value = ''; });
     $('app-view').hidden = true;
     $('login-view').hidden = false;
     closeMenu();
@@ -847,7 +744,7 @@
   $('u-pass2').addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
   $('forgot').addEventListener('click', e => {
     e.preventDefault();
-    showForgot();
+    setMsg('Password reset by email is coming soon. For now, please contact your CR.');
   });
   $('logout-btn').addEventListener('click', doLogout);
   $('menu-btn').addEventListener('click', () => ($('side').classList.contains('open') ? closeMenu() : openMenu()));
@@ -880,11 +777,5 @@
     else toast('Payments will be enabled in the next update.');
   }));
 
-  // The reset link opens the site with a temporary session. Show the new-password form, not the dashboard.
-  db.auth.onAuthStateChange(event => { if (event === 'PASSWORD_RECOVERY') showReset(); });
-  if (LINK_ERROR) setMsg('This reset link is invalid or has expired. Please request a new one.');
-  db.auth.getSession().then(({ data }) => {
-    if (RECOVERY_LINK) { showReset(); return; }
-    if (data.session) enter(data.session.user, null);
-  });
+  db.auth.getSession().then(({ data }) => { if (data.session) enter(data.session.user, null); });
 })();

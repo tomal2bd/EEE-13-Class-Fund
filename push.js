@@ -25,9 +25,11 @@
   style.textContent = css;
   document.head.appendChild(style);
 
-  let isOn = false;          // is this device subscribed right now
-  let detected = false;      // have we finished checking yet
+  let isOn = false;            // is this device subscribed right now
+  let detected = false;        // have we finished checking yet
   let bannerDismissed = false; // X pressed (only for this page load)
+  let syncedFor = null;        // user id we last synced to the database
+  let syncing = false;
 
   function urlBase64ToUint8Array(b64) {
     const padding = '='.repeat((4 - (b64.length % 4)) % 4);
@@ -67,7 +69,6 @@
   }
 
   function updateBanner() {
-    // Show only when: signed in, check finished, reminders off, not dismissed
     const shouldShow = !!(EEE.state && EEE.state.user && EEE.state.role) &&
       detected && !isOn && !bannerDismissed;
     if (!shouldShow) { removeBanner(); return; }
@@ -105,9 +106,37 @@
     x.addEventListener('click', () => { bannerDismissed = true; removeBanner(); });
     bar.appendChild(x);
 
-    // Place the banner at the very top of the page content
     const host = document.querySelector('main') || document.body;
     host.insertBefore(bar, host.firstChild);
+  }
+
+  // Save this device's subscription under the current user.
+  // upsert: if the same device was saved under another account, it moves to this one.
+  async function saveSubscription(sub) {
+    const json = sub.toJSON();
+    const r = await db.from('push_subscriptions').upsert({
+      user_id: EEE.state.user.id,
+      endpoint: json.endpoint,
+      subscription: json
+    }, { onConflict: 'endpoint' });
+    return r.error || null;
+  }
+
+  // If this device is already subscribed in the browser, make sure the
+  // database has it under the user who is signed in right now.
+  async function syncToDatabase(sub) {
+    if (syncing || !EEE.state || !EEE.state.user) return;
+    const uid = EEE.state.user.id;
+    if (syncedFor === uid) return;
+    syncing = true;
+    try {
+      const err = await saveSubscription(sub);
+      if (err) console.error('Push sync failed:', err.message);
+      else syncedFor = uid;
+    } catch (e) {
+      console.error('Push sync error:', e);
+    }
+    syncing = false;
   }
 
   async function detect() {
@@ -119,6 +148,7 @@
       const sub = await reg.pushManager.getSubscription();
       detected = true;
       setState(!!sub);
+      if (sub) syncToDatabase(sub);
     } catch (e) {
       detected = true;
       setState(false);
@@ -151,23 +181,18 @@
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
     }
-    const json = sub.toJSON();
-    const r = await db.from('push_subscriptions').insert({
-      user_id: EEE.state.user.id,
-      endpoint: json.endpoint,
-      subscription: json
-    });
-    // 23505 = this device is already saved, which is fine
-    if (r.error && r.error.code !== '23505') {
-      toast('Could not save: ' + r.error.message);
+    const err = await saveSubscription(sub);
+    if (err) {
+      toast('Could not save: ' + err.message);
       return;
     }
+    syncedFor = EEE.state.user.id;
     setState(true);
     toast('Payment reminders are on for this device.');
   }
 
   function ensureButton() {
-    if (!EEE.state.role) { removeBanner(); return; }
+    if (!EEE.state.role) { removeBanner(); syncedFor = null; return; }
 
     if (!$('push-btn')) {
       const bell = $('bell-btn');
@@ -182,11 +207,12 @@
           b.classList.remove('busy');
         });
         bell.parentNode.insertBefore(b, bell);
-        setState(false);
+        setState(isOn);
       }
     }
 
-    if (!detected) detect(); else updateBanner();
+    // Re-check on every refresh so a user switch is noticed
+    detect();
   }
 
   EEE.refreshHooks.push(ensureButton);

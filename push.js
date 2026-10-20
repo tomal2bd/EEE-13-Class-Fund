@@ -61,6 +61,8 @@
       b.setAttribute('aria-label', label);
     }
     updateBanner();
+    // Tell the install gate (in install.js) that the state changed
+    if (typeof EEE.updateGate === 'function') EEE.updateGate();
   }
 
   function removeBanner() {
@@ -201,6 +203,7 @@
         b.id = 'push-btn';
         b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line class="slash" x1="3" y1="3" x2="21" y2="21"/></svg>';
         b.addEventListener('click', async () => {
+          if (isOn) { toast('Payment reminders are already on.'); return; }
           b.classList.add('busy');
           try { await enable(); }
           catch (e) { console.error(e); toast('Could not turn on reminders: ' + (e && e.message ? e.message : e)); }
@@ -214,6 +217,13 @@
     // Re-check on every refresh so a user switch is noticed
     detect();
   }
+
+  // Shared with install.js (the install and notification gate)
+  EEE.push = {
+    isOn: function () { return isOn; },
+    detected: function () { return detected; },
+    enable: enable
+  };
 
   EEE.refreshHooks.push(ensureButton);
 })();

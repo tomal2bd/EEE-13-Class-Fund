@@ -765,6 +765,7 @@
   $('login-btn').addEventListener('click', doLogin);
   $('signup-btn').addEventListener('click', doSignup);
   $('in-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  $('in-email').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('in-password').focus(); } });
   $('u-pass2').addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
   $('forgot').addEventListener('click', e => {
     e.preventDefault();

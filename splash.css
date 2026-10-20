@@ -2,14 +2,14 @@
    Logo splash that continues the system (Android/iPhone) splash, then the dashboard rises in. */
 #eee-splash{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#064e3b;transition:opacity .55s ease,transform .55s ease}
 #eee-splash.out{opacity:0;transform:scale(1.06)}
-.sp-stage{position:absolute;left:50%;top:50%;width:160px;height:160px;margin:-80px 0 0 -80px;animation:spGrow 1.1s cubic-bezier(.2,.8,.2,1) .1s forwards}
+.sp-stage{position:absolute;left:50%;top:50%;width:160px;height:160px;margin:-80px 0 0 -80px;animation:spGrow .8s cubic-bezier(.2,.8,.2,1) .05s forwards}
 /* logo is visible from the very first frame, same centre as the system splash */
-.sp-logo{position:absolute;left:16px;top:16px;width:128px;height:128px;border-radius:50%;object-fit:cover;background:#fff;animation:spPop .7s cubic-bezier(.2,.9,.3,1.3) 1.05s forwards}
+.sp-logo{position:absolute;left:16px;top:16px;width:128px;height:128px;border-radius:50%;object-fit:cover;background:#fff;animation:spPop .6s cubic-bezier(.2,.9,.3,1.3) .7s forwards}
 .sp-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
-.sp-arc{fill:none;stroke:#fbbf24;stroke-width:4;stroke-linecap:round;stroke-dasharray:465;stroke-dashoffset:465;animation:spDraw 1s cubic-bezier(.5,0,.2,1) .15s forwards}
+.sp-arc{fill:none;stroke:#fbbf24;stroke-width:4;stroke-linecap:round;stroke-dasharray:465;stroke-dashoffset:465;animation:spDraw .7s cubic-bezier(.5,0,.2,1) .1s forwards}
 .sp-nm{position:absolute;left:0;right:0;top:calc(50% + 128px);display:flex;justify-content:center;font:900 34px "Segoe UI",Arial,sans-serif;color:#fff;letter-spacing:3px}
 .sp-nm span{display:inline-block;opacity:0;animation:spLetter .55s cubic-bezier(.2,.9,.3,1.4) forwards}
-.sp-sb{position:absolute;left:0;right:0;top:calc(50% + 178px);text-align:center;font:700 13px "Segoe UI",Arial,sans-serif;color:#fbbf24;text-transform:uppercase;letter-spacing:8px;opacity:0;animation:spSub .8s ease 1.9s forwards}
+.sp-sb{position:absolute;left:0;right:0;top:calc(50% + 178px);text-align:center;font:700 13px "Segoe UI",Arial,sans-serif;color:#fbbf24;text-transform:uppercase;letter-spacing:8px;opacity:0;animation:spSub .6s ease 1.3s forwards}
 @keyframes spGrow{from{transform:scale(1)}to{transform:scale(1.4)}}
 @keyframes spDraw{to{stroke-dashoffset:0}}
 @keyframes spPop{0%{transform:scale(1)}40%{transform:scale(1.1);box-shadow:0 0 36px 8px rgba(251,191,36,.6)}100%{transform:scale(1);box-shadow:0 0 22px 4px rgba(251,191,36,.35)}}
@@ -20,3 +20,6 @@
 /* hide the home page pieces until the reveal starts, so nothing appears early */
 body:not(.eee-shown) #hello,
 body:not(.eee-shown) #paybar{opacity:0}
+
+/* faster rise-in of the home page pieces (delays are set by fixes.js) */
+body.eee-shown .top,body.eee-shown #hello,body.eee-shown #paybar,body.eee-shown #stats > *,body.eee-shown #dx .card,body.eee-shown .eee-r{animation-duration:.5s!important}

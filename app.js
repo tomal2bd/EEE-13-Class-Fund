@@ -624,7 +624,7 @@
   EEE.refresh = refreshAll;
   function startLive() {
     stopLive();
-    timer = setInterval(() => { if (!document.hidden && !$('app-view').hidden) refreshAll(); }, 20000);
+    timer = setInterval(() => { if (!document.hidden && !$('app-view').hidden) refreshAll(); }, 60000);
   }
   function stopLive() { if (timer) clearInterval(timer); timer = null; }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('app-view').hidden) refreshAll(); });

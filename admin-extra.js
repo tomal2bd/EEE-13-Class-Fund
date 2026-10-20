@@ -4,8 +4,8 @@
   if (!EEE) return;
   const { db, $, el, money, toast } = EEE;
 
-  const START = [1, 8, 15, 22, 29];
-  const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
+    const START = [1, 8, 15, 22];
+  const ORD = ['1st', '2nd', '3rd', '4th'];
   const pad = n => String(n).padStart(2, '0');
   const dim = (y, m) => new Date(y, m, 0).getDate();
   const isAdmin = () => EEE.state.role === 'admin';

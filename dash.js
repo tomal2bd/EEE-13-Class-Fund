@@ -251,12 +251,15 @@
   async function studentView() {
     const S = EEE.state;
     const [r, notice] = await Promise.all([
-      db.from('payments').select('status, amount, payment_weeks(week_start)'),
+      db.from('payments')
+        .select('status, amount, method, submitted_at, review_note, payment_weeks(week_start)')
+        .order('submitted_at', { ascending: false }),
       noticesCard(false)
     ]);
     if (r.error) return [el('p', 'err', 'Could not load your status: ' + r.error.message)];
+    const rows = r.data || [];
     const wstat = {};
-    (r.data || []).forEach(p => {
+    rows.forEach(p => {
       if (p.status === 'approved' || p.status === 'pending') {
         (p.payment_weeks || []).forEach(w => { if (wstat[w.week_start] !== 'approved') wstat[w.week_start] = p.status; });
       }
@@ -264,8 +267,15 @@
     const weekly = Number((S.settings || {}).weekly_amount || 30);
     const cw = curWeek();
     const need = needWeeks(S.settings);
-    const dueWeeks = need.filter(w => !wstat[w]).length;
+    const dueList = need.filter(w => !wstat[w]);
+    const dueWeeks = dueList.length;
+    const doneWeeks = need.filter(w => wstat[w] === 'approved').length;
+    const pct = need.length ? Math.round((doneWeeks / need.length) * 100) : 0;
     const status = wstat[cw.iso] || 'due';
+
+    // the big bKash/Nagad banner at the top shows only when this week is due
+    const pb = $('paybar');
+    if (pb) pb.hidden = !(status === 'due' && typeof EEE.openPay === 'function');
 
     // banner message
     if (status === 'due') setBannerMsg('This week ' + money(weekly) + ' is due. Please pay.');
@@ -275,31 +285,59 @@
     const grid = el('div', 'dx-grid');
     if (notice) grid.appendChild(notice);
 
+    // 1) this week
     const c1 = card('This week · ' + cw.name);
-    const bd = el('span', 'dx-badge ' + (status === 'approved' ? 'dx-ok' : status === 'pending' ? 'dx-wait' : 'dx-due'),
-      status === 'approved' ? 'Paid ✓' : status === 'pending' ? 'Pending approval' : 'Due');
-    c1.appendChild(bd);
+    c1.appendChild(el('span', 'dx-badge ' + (status === 'approved' ? 'dx-ok' : status === 'pending' ? 'dx-wait' : 'dx-due'),
+      status === 'approved' ? 'Paid ✓' : status === 'pending' ? 'Pending approval' : 'Due'));
     c1.appendChild(el('div', 'dx-big', money(weekly)));
-    const total = el('div', 'dx-sub', dueWeeks ? 'Total due: ' + money(dueWeeks * weekly) + ' (' + dueWeeks + ' week)' : 'Total due: ৳0');
-    c1.appendChild(total);
-    const row = el('div', 'dx-row');
-    if (status === 'due' && typeof EEE.openPay === 'function') {
-      [['bKash', '#e2136e'], ['Nagad', '#f6921e']].forEach(([m, col]) => {
-        const b = el('button', 'dx-paybtn', 'Pay with ' + m);
-        b.style.background = col;
-        b.addEventListener('click', () => EEE.openPay(m));
-        row.appendChild(b);
-      });
+    c1.appendChild(el('div', 'dx-sub', dueWeeks ? 'Total due: ' + money(dueWeeks * weekly) + ' (' + dueWeeks + ' week(s))' : 'Total due: ৳0'));
+    if (dueWeeks) {
+      const un = el('div', 'dx-sub', 'Unpaid: ' + EEE.weeksText(dueList));
+      un.style.marginTop = '6px';
+      c1.appendChild(un);
     }
+    const row = el('div', 'dx-row');
     const mp = el('button', 'btn ghost sm', 'My payments');
     mp.addEventListener('click', () => EEE.showPage('mypayments'));
     row.appendChild(mp);
     c1.appendChild(row);
     grid.appendChild(c1);
 
+    // 2) my progress
+    const c3 = card('My progress');
+    c3.appendChild(el('div', 'dx-big', doneWeeks + ' of ' + need.length + ' weeks paid'));
+    const track = el('div', 'dx-track');
+    const fillBar = el('div', 'dx-fill'); fillBar.style.width = pct + '%';
+    track.appendChild(fillBar);
+    c3.appendChild(track);
+    c3.appendChild(el('div', 'dx-sub', pct + '% (approved payments only)'));
+    grid.appendChild(c3);
+
+    // 3) latest payment
+    const c4 = card('My last payment');
+    const last = rows[0];
+    if (!last) {
+      c4.appendChild(el('p', 'empty', 'You have not made any payment yet.'));
+    } else {
+      const cls = last.status === 'approved' ? 'dx-ok' : last.status === 'rejected' ? 'dx-due' : 'dx-wait';
+      const txt = last.status === 'approved' ? 'Approved ✓' : last.status === 'rejected' ? 'Rejected' : 'Pending approval';
+      c4.appendChild(el('span', 'dx-badge ' + cls, txt));
+      c4.appendChild(el('div', 'dx-big', money(last.amount)));
+      const wk = EEE.weeksText((last.payment_weeks || []).map(w => w.week_start).sort());
+      c4.appendChild(el('div', 'dx-sub', (last.method || '') + (wk ? ' · ' + wk : '')));
+      c4.appendChild(el('div', 'dx-sub', EEE.fmtTime(last.submitted_at)));
+      if (last.status === 'rejected') {
+        const why = el('div', 'dx-sub', 'Reason: ' + (last.review_note || 'Not given'));
+        why.style.color = '#b91c1c';
+        why.style.marginTop = '6px';
+        c4.appendChild(why);
+      }
+    }
+    grid.appendChild(c4);
+
+    // 4) fund progress (everyone)
     const c2 = card('Fund progress this week');
-    const n = paidThisWeek();
-    c2.appendChild(el('div', 'dx-big', n + ' member(s) paid'));
+    c2.appendChild(el('div', 'dx-big', paidThisWeek() + ' member(s) paid'));
     c2.appendChild(el('div', 'dx-sub', 'Approved payments for the ' + cw.name + '.'));
     grid.appendChild(c2);
 

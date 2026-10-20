@@ -185,12 +185,31 @@
         const msg = inp.value.trim();
         if (!msg) { EEE.toast('Write the notice first.'); return; }
         post.disabled = true;
-        const ins = await db.from('notices').insert({ message: msg });
-        post.disabled = false;
-        if (ins.error) { EEE.toast('Could not post: ' + ins.error.message); return; }
+        const ins = await db.from('notices').insert({ message: msg }).select('id').single();
+        if (ins.error) { post.disabled = false; EEE.toast('Could not post: ' + ins.error.message); return; }
         inp.value = '';
         noticeIdx = 0; // the new notice is first
-        EEE.toast('Notice posted.');
+        // The notice is saved. Now send it to every phone.
+        let note = 'Notice posted.';
+        try {
+          const fn = await db.functions.invoke('send-notice', { body: { notice_id: ins.data.id } });
+          if (fn.error) {
+            let why = fn.error.message || 'unknown error';
+            try {
+              if (fn.error.context && typeof fn.error.context.json === 'function') {
+                const j = await fn.error.context.json();
+                if (j && j.error) why = j.error;
+              }
+            } catch (e2) {}
+            note = 'Notice posted, but phone alerts failed: ' + why;
+          } else if (fn.data && typeof fn.data.sent === 'number') {
+            note = 'Notice posted. Sent to ' + fn.data.sent + ' device(s).';
+          }
+        } catch (e) {
+          note = 'Notice posted, but phone alerts failed: ' + (e && e.message ? e.message : e);
+        }
+        post.disabled = false;
+        EEE.toast(note);
         render();
       });
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') post.click(); });

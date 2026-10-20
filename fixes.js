@@ -6,8 +6,16 @@
 /* ---------- Opening splash ---------- */
 (function () {
   var LOGO = 'icon-192.png';
-  var SHOW_MS = 2300;   // how long before it starts closing
-  var CLOSE_MS = 700;   // iris-close time
+  var SHOW_MS = 2600;   // how long before it starts closing
+  var CLOSE_MS = 600;   // iris-close time
+  var GAP_MIN = 10;     // show again only if the last time was more than this many minutes ago
+
+  // A normal refresh right after opening should not show the splash again
+  try {
+    var last = Number(localStorage.getItem('eee_splash_at') || 0);
+    if (Date.now() - last < GAP_MIN * 60 * 1000) return;
+    localStorage.setItem('eee_splash_at', String(Date.now()));
+  } catch (e) { /* storage not available: show it */ }
 
   var css =
     '#eee-splash{position:fixed;inset:0;z-index:100000;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;' +

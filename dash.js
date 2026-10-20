@@ -37,6 +37,7 @@
 
   /* ---------- styles ---------- */
   const css = `
+body:not(.dx-ready) #dx ~ *{visibility:hidden}
 #chart-total,#chart-month-total{display:none !important}
 #hello-n{display:none !important}
 .hello-m{font-size:15px;font-weight:700;opacity:.97;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.25)}
@@ -447,7 +448,25 @@
     if (!b) { b = el('div'); b.id = 'dx'; stats.parentNode.insertBefore(b, stats); }
     b.innerHTML = '';
     nodes.forEach(n => b.appendChild(n));
+    b.style.minHeight = '';
+    document.body.classList.add('dx-ready');
   }
+
+  // Reserve the place for the cards at page load, so the balance cards do not jump
+  (function () {
+    const st0 = $('stats');
+    if (st0 && !$('dx')) {
+      const ph = el('div');
+      ph.id = 'dx';
+      ph.style.minHeight = '360px';
+      st0.parentNode.insertBefore(ph, st0);
+    }
+    // safety: never keep things hidden if the first render fails
+    setTimeout(() => {
+      document.body.classList.add('dx-ready');
+      const d = $('dx'); if (d) d.style.minHeight = '';
+    }, 8000);
+  })();
 
   /* ---------- admin backup: download CSV files (shown in Settings) ---------- */
   function csvCell(v) {

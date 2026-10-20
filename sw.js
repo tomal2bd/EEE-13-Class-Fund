@@ -1,5 +1,8 @@
-const CACHE = 'eee13-fund-v3';
-const SHELL = ['./', './index.html', './style.css', './circuit.css', './fixes.css', './icon-192.png', './icon-512.png'];
+// Bump CACHE and V together whenever you change ?v=N in index.html
+const CACHE = 'eee13-fund-v4';
+const V = '?v=4';
+const FILES = ['style.css','circuit.css','fixes.css','splash.css','app.js','payments.js','admin.js','admin-extra.js','dash.js','fixes.js','push.js','install.js','splash.js'];
+const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'].concat(FILES.map(f => './' + f + V));
 
 self.addEventListener('install', e => {
   // one missing file must not break the install
@@ -22,17 +25,36 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== location.origin) return;
+
+  const isPage = req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
+  if (isPage) {
+    // the page itself: always ask the server first, so new ?v=N numbers are seen at once
+    e.respondWith(
+      fetch(req, { cache: 'no-cache' })
+        .then(res => { if (res.ok) { const c = res.clone(); caches.open(CACHE).then(x => x.put(req, c)); } return res; })
+        .catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // other files: answer from the phone's cache straight away (fast).
+  // Files with ?v=N are new URLs whenever you bump N, so they are always fresh.
+  // Files without ?v (icons, manifest) refresh quietly in the background.
   e.respondWith(
-    // cache: 'no-cache' = always ask the server if the file changed.
-    // Without this, the phone can keep showing a 10 minute old copy of a file.
-    fetch(req, { cache: 'no-cache' })
-      .then(res => {
-        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
+    caches.match(req).then(cached => {
+      const net = fetch(req, { cache: 'no-cache' }).then(res => {
+        if (res.ok) { const c = res.clone(); caches.open(CACHE).then(x => x.put(req, c)); }
         return res;
-      })
-      .catch(() => caches.match(req))
+      });
+      if (cached) {
+        if (!url.search.includes('v=')) net.catch(() => {});
+        return cached;
+      }
+      return net;
+    })
   );
 });
+
 // ===== Push Notification =====
 self.addEventListener('push', e => {
   let data = {};

@@ -84,11 +84,10 @@
   }
 
   /* ---------- calendar weeks: 1-7 = 1st, 8-14 = 2nd, 15-21 = 3rd, 22-28 = 4th, 29-end = 5th ---------- */
-  const WEEK_ORD = ['1st', '2nd', '3rd', '4th', '5th'];
-  const WEEK_START_DAYS = [1, 8, 15, 22, 29];
+    const WEEK_ORD = ['1st', '2nd', '3rd', '4th'];
   function weekIndex(iso) {
     const day = Number(String(iso).slice(8, 10));
-    return WEEK_START_DAYS.indexOf(day);
+    return day <= 7 ? 0 : day <= 14 ? 1 : day <= 21 ? 2 : 3;
   }
   function weekMonthYear(iso) {
     const d = parseDate(iso);

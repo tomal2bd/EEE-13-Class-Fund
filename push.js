@@ -111,14 +111,14 @@
   }
 
   // Save this device's subscription under the current user.
-  // upsert: if the same device was saved under another account, it moves to this one.
+  // It uses a safe database function, so a device that was saved under
+  // another account earlier moves to the account that is signed in now.
   async function saveSubscription(sub) {
     const json = sub.toJSON();
-    const r = await db.from('push_subscriptions').upsert({
-      user_id: EEE.state.user.id,
-      endpoint: json.endpoint,
-      subscription: json
-    }, { onConflict: 'endpoint' });
+    const r = await db.rpc('save_push_subscription', {
+      p_endpoint: json.endpoint,
+      p_subscription: json
+    });
     return r.error || null;
   }
 

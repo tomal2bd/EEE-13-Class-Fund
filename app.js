@@ -748,16 +748,11 @@
     await enter(r.data.user, 'student');
   }
 
-  async function doLogout() {
+   async function doLogout() {
     stopLive();
-    await db.auth.signOut();
-    S.user = null; S.student = null; S.role = null;
-    ['in-password', 'u-pass', 'u-pass2'].forEach(id => { $(id).value = ''; });
-    $('app-view').hidden = true;
-    $('login-view').hidden = false;
-    closeMenu();
-    closeAvMenu();
-    setTab('in');
+    try { await db.auth.signOut(); } catch (e) { console.error(e); }
+    // page reload: no data of the old user stays in memory
+    window.location.replace(window.location.pathname);
   }
 
   /* ---------- wire up ---------- */

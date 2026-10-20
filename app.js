@@ -604,6 +604,8 @@
   /* ---------- live refresh ---------- */
   let timer = null;
   async function refreshAll() {
+    const st = await db.from('fund_settings').select('*').eq('id', 1).maybeSingle();
+    if (st.data) { S.settings = st.data; renderContactFooter(); }
     await loadPublic();
     if (S.role === 'admin') await loadMembers();
     for (const fn of EEE.refreshHooks) { try { await fn(); } catch (e) { console.error(e); } }

@@ -49,9 +49,10 @@
     const d = new Date(String(s).length === 10 ? s + 'T00:00:00' : s);
     return isNaN(d) ? null : d;
   }
-  const fmtDate = s => { const d = parseDate(s); return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'; };
-  const fmtDay = s => { const d = parseDate(s); return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '-'; };
-  const fmtTime = s => { const d = parseDate(s); return d ? d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '-'; };
+    const tz = s => (String(s).length === 10 ? {} : { timeZone: 'Asia/Dhaka' });
+  const fmtDate = s => { const d = parseDate(s); return d ? d.toLocaleDateString('en-GB', Object.assign({ day: 'numeric', month: 'short', year: 'numeric' }, tz(s))) : '-'; };
+  const fmtDay = s => { const d = parseDate(s); return d ? d.toLocaleDateString('en-GB', Object.assign({ day: 'numeric', month: 'short' }, tz(s))) : '-'; };
+  const fmtTime = s => { const d = parseDate(s); return d ? d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Dhaka' }) : '-'; };
   const monthName = k => { const d = parseDate(k + '-01'); return d ? d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : k; };
   const monthShortYear = k => {
     const d = parseDate(k + '-01');

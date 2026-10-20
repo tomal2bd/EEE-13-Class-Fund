@@ -259,7 +259,7 @@
       const keep = stu.value;
       stu.innerHTML = '';
       const f = el('option', '', 'Select student'); f.value = ''; stu.appendChild(f);
-      EEE.getMembers().filter(x => x.is_active).forEach(x => {
+            EEE.getMembers().filter(x => x.is_active && x.approved).forEach(x => {
         const o = el('option', '', (x.full_name || '-') + (x.roll_no ? ' (Roll ' + x.roll_no + ')' : ''));
         o.value = x.id; stu.appendChild(o);
       });
@@ -324,7 +324,7 @@
       m++; if (m > 12) { m = 1; y++; }
     }
     const weekly = Number(st.weekly_amount || 30);
-    const rows = EEE.getMembers().filter(x => x.is_active).map(s => {
+        const rows = EEE.getMembers().filter(x => x.is_active && x.approved).map(s => {
       const got = taken[s.id] || new Set();
       const due = need.filter(w => !got.has(w)).length;
       return { s, paid: need.length - due, due };
@@ -520,7 +520,7 @@
   async function pStats() {
     if (!pBuilt || !isAdmin()) return;
     const sum = EEE.state.summary || {};
-    const active = (EEE.getMembers ? EEE.getMembers() : []).filter(m => m.is_active).length;
+        const active = (EEE.getMembers ? EEE.getMembers() : []).filter(m => m.is_active && m.approved).length;
     const r = await db.from('payments')
       .select('amount, method, status, submitted_at, students(full_name)')
       .order('submitted_at', { ascending: false })

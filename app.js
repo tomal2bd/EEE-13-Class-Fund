@@ -351,7 +351,7 @@
   }
 
   // Month dropdown. Options are rebuilt only when the list of months changes,
-  // so the dropdown does not close by itself during the 20 second refresh.
+  // so the dropdown does not close by itself during the 60 second refresh.
   function syncMonthSelect(keys) {
     const sel = $('r-month');
     if (!sel) return;
@@ -462,15 +462,24 @@
     }
     return { data: all };
   }
+
+  // Remember what was shown last time. If the data is the same, do not redraw
+  // (this stops the flicker on the 60 second refresh).
+  let lastPublicSig = '';
   async function loadPublic() {
     const [s, c, e] = await Promise.all([
       db.from('public_summary').select('*').single(),
       fetchAll(() => db.from('public_contributions').select('*').order('approved_at', { ascending: false }).order('student_name').order('week_start')),
       fetchAll(() => db.from('public_expenses').select('*').order('expense_date', { ascending: false }).order('id'))
     ]);
+    // if a request failed, keep what is on screen instead of wiping it
+    if (c.error || e.error) return;
     if (s.data) S.summary = s.data;
     S.contribs = c.data || [];
     S.expenses = e.data || [];
+    const sig = JSON.stringify([S.summary, S.contribs, S.expenses]);
+    if (sig === lastPublicSig) return;
+    lastPublicSig = sig;
     renderStats(); renderFeed(); renderChart(); renderReport();
   }
 

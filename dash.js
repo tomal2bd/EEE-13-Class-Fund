@@ -249,7 +249,7 @@
     const S = EEE.state;
     const [p, m, pw, notice] = await Promise.all([
       db.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      db.from('students').select('id').eq('is_active', true).eq('approved', false),
+            db.from('students').select('id').eq('approved', false).eq('rejected', false),
       db.from('payment_weeks').select('week_start, payments(student_id, status)'),
       noticesCard(true)
     ]);
@@ -467,7 +467,7 @@
     bell.hidden = false;
     const [p, m] = await Promise.all([
       db.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      db.from('students').select('id', { count: 'exact', head: true }).eq('is_active', true).eq('approved', false)
+     db.from('students').select('id', { count: 'exact', head: true }).eq('approved', false).eq('rejected', false)
     ]);
     if (p.error || m.error) return;
     setAdminBadge((p.count || 0) + (m.count || 0));
@@ -495,7 +495,7 @@
         .eq('status', 'pending')
         .order('submitted_at', { ascending: false })
         .limit(8),
-      db.from('students').select('id', { count: 'exact', head: true }).eq('is_active', true).eq('approved', false)
+      db.from('students').select('id', { count: 'exact', head: true }).eq('approved', false).eq('rejected', false)
     ]);
     box.innerHTML = '';
     box.appendChild(el('h2', '', 'Waiting for you'));

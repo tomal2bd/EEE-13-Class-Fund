@@ -12,7 +12,7 @@
 
   // Show on every fresh open of the app. A normal refresh does not show it again.
   try {
-    if (sessionStorage.getItem('eee_splash_done')) return;
+    if (sessionStorage.getItem('eee_splash_done')) { window.__eeeNoSplash = true; return; }
     sessionStorage.setItem('eee_splash_done', '1');
   } catch (e) { /* storage not available: show it */ }
 
@@ -153,6 +153,7 @@
   function close() {
     if (closed) return;
     closed = true;
+    try { document.dispatchEvent(new Event('eee-splash-close')); } catch (e) {}
     box.classList.add('out');
     setTimeout(function () { box.remove(); }, CLOSE_MS + 80);
   }
@@ -227,4 +228,120 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
+})();
+
+/* ---------- Dashboard entrance: everything rises in one by one ---------- */
+(function () {
+  var done = false;
+
+  // Hide the dashboard pieces until the reveal starts (a safety timer always starts it)
+  var css = [
+    'body:not(.eee-shown) .top,',
+    'body:not(.eee-shown) #stats > *,',
+    'body:not(.eee-shown) #dx .card,',
+    'body:not(.eee-shown) .eee-r{opacity:0}',
+    '@keyframes eeeRise{from{opacity:0;transform:translateY(26px) scale(.98)}to{opacity:1;transform:none}}',
+    '@keyframes eeeDrop{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}',
+    '@keyframes eeeGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}',
+    '.eee-grow{transform-origin:bottom center}',
+    '@media (prefers-reduced-motion:reduce){body:not(.eee-shown) .top,body:not(.eee-shown) #stats > *,body:not(.eee-shown) #dx .card,body:not(.eee-shown) .eee-r{opacity:1}}'
+  ].join('');
+  var st = document.createElement('style');
+  st.textContent = css;
+  document.head.appendChild(st);
+
+  // mark the chart and live-payments cards (they are fixed in the page)
+  function tag() {
+    ['chart', 'chart-month', 'feed'].forEach(function (id) {
+      var e = document.getElementById(id);
+      var c = e && e.closest ? e.closest('.card') : null;
+      if (c) c.classList.add('eee-r');
+    });
+  }
+  tag();
+  document.addEventListener('DOMContentLoaded', tag);
+
+  // numbers count up from 0
+  function countUp(e) {
+    if (!e) return;
+    var text = e.textContent || '';
+    var num = parseFloat(text.replace(/[^0-9.]/g, ''));
+    if (isNaN(num) || num <= 0) return;
+    var prefix = (text.match(/^[^0-9]*/) || [''])[0];
+    var t0 = null, dur = 1100;
+    function frame(t) {
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / dur);
+      var v = num * (1 - Math.pow(1 - p, 3));
+      e.textContent = prefix + v.toLocaleString('en-US', { maximumFractionDigits: p === 1 ? 2 : 0 });
+      if (p < 1) requestAnimationFrame(frame);
+      else e.textContent = text;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function effects() {
+    ['c-in', 'c-out', 'c-bal', 'c-stu'].forEach(function (id) { countUp(document.getElementById(id)); });
+
+    // progress bars fill from 0
+    document.querySelectorAll('#dx .dx-fill').forEach(function (f) {
+      var w = f.style.width;
+      f.style.width = '0%';
+      f.style.transition = 'width 1.1s cubic-bezier(.2,.8,.2,1)';
+      void f.offsetWidth;
+      f.style.width = w;
+    });
+
+    // chart bars grow up
+    var bars = document.querySelectorAll('#chart .bar > div, #chart-month .bar > div');
+    bars.forEach(function (b, i) {
+      b.classList.add('eee-grow');
+      b.style.animation = 'eeeGrow .9s cubic-bezier(.2,.8,.2,1) ' + (0.25 + (i % 8) * 0.06) + 's both';
+    });
+    setTimeout(function () {
+      bars.forEach(function (b) { b.style.animation = ''; b.classList.remove('eee-grow'); });
+    }, 2200);
+  }
+
+  function reveal() {
+    if (done) return;
+    done = true;
+    var list = [];
+    function add(e) { if (e && list.indexOf(e) === -1) list.push(e); }
+    Array.prototype.forEach.call(document.querySelectorAll('#stats > *'), add);
+    Array.prototype.forEach.call(document.querySelectorAll('#dx .card'), add);
+    Array.prototype.forEach.call(document.querySelectorAll('.eee-r'), add);
+    list.sort(function (a, b) { return (a.compareDocumentPosition(b) & 4) ? -1 : 1; });
+
+    var top = document.querySelector('.top');
+    if (top) top.style.animation = 'eeeDrop .6s cubic-bezier(.2,.8,.2,1) both';
+
+    list.forEach(function (e, i) {
+      e.style.animation = 'eeeRise .8s cubic-bezier(.2,.8,.2,1) ' + (0.15 + Math.min(i, 10) * 0.1) + 's both';
+    });
+    document.body.classList.add('eee-shown');
+    setTimeout(effects, 250);
+
+    // clean up so later hover or layout changes are not affected
+    setTimeout(function () {
+      list.forEach(function (e) { e.style.animation = ''; });
+      if (top) top.style.animation = '';
+    }, 3000);
+  }
+
+  // start when the splash begins to fade
+  document.addEventListener('eee-splash-close', reveal);
+
+  // no splash (page refresh): start as soon as the dashboard is ready
+  if (window.__eeeNoSplash) {
+    var tries = 0;
+    (function wait() {
+      if (document.body && document.body.classList.contains('dx-ready')) { reveal(); return; }
+      if (++tries > 60) return;
+      setTimeout(wait, 100);
+    })();
+  }
+
+  // safety: never leave the page hidden
+  setTimeout(reveal, 7000);
 })();

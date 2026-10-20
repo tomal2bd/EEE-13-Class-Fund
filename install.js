@@ -33,6 +33,13 @@
   function isIOS() {
     return /iphone|ipad|ipod/i.test(navigator.userAgent);
   }
+  // Phones and tablets only. Laptops and desktops are skipped.
+  function isPhone() {
+    const ua = navigator.userAgent || '';
+    if (/android|iphone|ipad|ipod|mobile/i.test(ua)) return true;
+    // New iPads say they are a Mac, but they have a touch screen
+    return /macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+  }
   function isInstalled() {
     return window.navigator.standalone === true ||
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
@@ -91,7 +98,7 @@
   function updateGate() {
     const loggedIn = !!(EEE.state && EEE.state.user && EEE.state.role);
     const push = EEE.push;
-    if (!loggedIn || !push || !push.detected()) { removeGate(); return; }
+    if (!isPhone() || !loggedIn || !push || !push.detected()) { removeGate(); return; }
 
     const installed = isInstalled();
     const on = push.isOn();
@@ -157,6 +164,7 @@
 
   function ensureButton() {
     updateGate();
+    if (!isPhone()) return;
     if (isInstalled()) return;
     if (!EEE.state || !EEE.state.role) return;
     if (getButton()) return;

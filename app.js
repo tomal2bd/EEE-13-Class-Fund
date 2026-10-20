@@ -450,11 +450,22 @@
   }
 
   /* ---------- load public data ---------- */
+  async function fetchAll(build) {
+    let all = [];
+    for (let from = 0; from < 20000; from += 1000) {
+      const r = await build().range(from, from + 999);
+      if (r.error) return { data: all, error: r.error };
+      const rows = r.data || [];
+      all = all.concat(rows);
+      if (rows.length < 1000) break;
+    }
+    return { data: all };
+  }
   async function loadPublic() {
     const [s, c, e] = await Promise.all([
       db.from('public_summary').select('*').single(),
-      db.from('public_contributions').select('*').order('approved_at', { ascending: false }).limit(2000),
-      db.from('public_expenses').select('*').order('expense_date', { ascending: false }).limit(500)
+      fetchAll(() => db.from('public_contributions').select('*').order('approved_at', { ascending: false }).order('student_name').order('week_start')),
+      fetchAll(() => db.from('public_expenses').select('*').order('expense_date', { ascending: false }).order('id'))
     ]);
     if (s.data) S.summary = s.data;
     S.contribs = c.data || [];

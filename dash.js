@@ -58,10 +58,16 @@
 .dx-todo b{font-size:20px}
 .dx-notice{grid-column:1/-1;border:2px solid #fbbf24;background:#fffbeb}
 .dx-notice h2{color:#92400e}
-.dx-nitem{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #fde68a}
-.dx-nitem:last-of-type{border-bottom:0}
+.dx-nitem{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 0}
 .dx-nmsg{font-size:16px;font-weight:700;color:#0f172a;word-break:break-word}
 .dx-ntime{font-size:12px;color:#92400e;margin-top:2px}
+.dx-ncar{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.dx-ncar::-webkit-scrollbar{display:none}
+.dx-nslide{flex:0 0 100%;min-width:0;box-sizing:border-box;scroll-snap-align:start}
+.dx-ndots{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:6px}
+.dx-ndot{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:#fcd34d;cursor:pointer;transition:width .2s}
+.dx-ndot.on{background:#92400e;width:22px;border-radius:999px}
+.dx-ncount{text-align:center;font-size:12px;color:#92400e;margin-top:4px}
 .dx-nform{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .dx-nform input{flex:1;min-width:200px;margin:0}
 `;
@@ -89,12 +95,14 @@
     m.textContent = text || '';
   }
 
-  /* ---------- notice board ---------- */
+  /* ---------- notice board (one notice at a time, swipe sideways) ---------- */
+  let noticeIdx = 0; // which notice is showing, kept when the page refreshes
+
   async function noticesCard(isAdmin) {
     const r = await db.from('notices')
       .select('id, message, created_at')
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(10);
     if (r.error) {
       if (!isAdmin) return null;
       const c = card('Notice board');
@@ -110,26 +118,61 @@
     c.classList.add('dx-notice');
 
     if (!list.length) c.appendChild(el('p', 'empty', 'No notices yet.'));
-    list.forEach(n => {
-      const row = el('div', 'dx-nitem');
-      const left = el('div');
-      left.appendChild(el('div', 'dx-nmsg', n.message));
-      left.appendChild(el('div', 'dx-ntime', EEE.fmtTime(n.created_at)));
-      row.appendChild(left);
-      if (isAdmin) {
-        const del = el('button', 'btn danger sm', 'Delete');
-        del.addEventListener('click', async () => {
-          if (!confirm('Delete this notice?')) return;
-          del.disabled = true;
-          const d = await db.from('notices').delete().eq('id', n.id);
-          if (d.error) { del.disabled = false; EEE.toast('Could not delete: ' + d.error.message); return; }
-          EEE.toast('Notice deleted.');
-          render();
+    else {
+      if (noticeIdx >= list.length || noticeIdx < 0) noticeIdx = 0;
+
+      const car = el('div', 'dx-ncar');
+      list.forEach(n => {
+        const slide = el('div', 'dx-nslide');
+        const row = el('div', 'dx-nitem');
+        const left = el('div');
+        left.appendChild(el('div', 'dx-nmsg', n.message));
+        left.appendChild(el('div', 'dx-ntime', EEE.fmtTime(n.created_at)));
+        row.appendChild(left);
+        if (isAdmin) {
+          const del = el('button', 'btn danger sm', 'Delete');
+          del.addEventListener('click', async () => {
+            if (!confirm('Delete this notice?')) return;
+            del.disabled = true;
+            const d = await db.from('notices').delete().eq('id', n.id);
+            if (d.error) { del.disabled = false; EEE.toast('Could not delete: ' + d.error.message); return; }
+            EEE.toast('Notice deleted.');
+            render();
+          });
+          row.appendChild(del);
+        }
+        slide.appendChild(row);
+        car.appendChild(slide);
+      });
+      c.appendChild(car);
+
+      if (list.length > 1) {
+        const dots = el('div', 'dx-ndots');
+        const dotEls = list.map((n, i) => {
+          const d = el('button', 'dx-ndot');
+          d.setAttribute('aria-label', 'Notice ' + (i + 1));
+          d.addEventListener('click', () => car.scrollTo({ left: i * car.clientWidth, behavior: 'smooth' }));
+          dots.appendChild(d);
+          return d;
         });
-        row.appendChild(del);
+        const count = el('div', 'dx-ncount');
+        const mark = i => {
+          dotEls.forEach((d, k) => d.classList.toggle('on', k === i));
+          count.textContent = (i + 1) + ' of ' + list.length;
+        };
+        car.addEventListener('scroll', () => {
+          if (!car.clientWidth) return;
+          const i = Math.max(0, Math.min(list.length - 1, Math.round(car.scrollLeft / car.clientWidth)));
+          noticeIdx = i;
+          mark(i);
+        });
+        mark(noticeIdx);
+        c.appendChild(dots);
+        c.appendChild(count);
       }
-      c.appendChild(row);
-    });
+      // go back to the notice that was showing before the refresh
+      requestAnimationFrame(() => { if (car.clientWidth) car.scrollLeft = noticeIdx * car.clientWidth; });
+    }
 
     if (isAdmin) {
       const form = el('div', 'dx-nform');
@@ -146,6 +189,7 @@
         post.disabled = false;
         if (ins.error) { EEE.toast('Could not post: ' + ins.error.message); return; }
         inp.value = '';
+        noticeIdx = 0; // the new notice is first
         EEE.toast('Notice posted.');
         render();
       });
@@ -249,7 +293,7 @@
     const S = EEE.state;
     const [p, m, pw, notice] = await Promise.all([
       db.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-            db.from('students').select('id').eq('approved', false).eq('rejected', false),
+      db.from('students').select('id').eq('approved', false).eq('rejected', false),
       db.from('payment_weeks').select('week_start, payments(student_id, status)'),
       noticesCard(true)
     ]);
@@ -353,7 +397,7 @@
     if (v === null || v === undefined) return '';
     let s = String(v);
     // stop spreadsheet formulas from running
-        if (/^[=+@\t\r]/.test(s) || /^-(?![0-9.])/.test(s)) s = "'" + s;
+    if (/^[=+@\t\r]/.test(s) || /^-(?![0-9.])/.test(s)) s = "'" + s;
     return '"' + s.replace(/"/g, '""') + '"';
   }
   function downloadCsv(name, header, rows) {
@@ -467,7 +511,7 @@
     bell.hidden = false;
     const [p, m] = await Promise.all([
       db.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-     db.from('students').select('id', { count: 'exact', head: true }).eq('approved', false).eq('rejected', false)
+      db.from('students').select('id', { count: 'exact', head: true }).eq('approved', false).eq('rejected', false)
     ]);
     if (p.error || m.error) return;
     setAdminBadge((p.count || 0) + (m.count || 0));

@@ -1,7 +1,7 @@
 // Bump CACHE and V together whenever you change ?v=N in index.html
-const CACHE = 'eee13-fund-v4';
-const V = '?v=4';
-const FILES = ['style.css','circuit.css','fixes.css','splash.css','app.js','payments.js','admin.js','admin-extra.js','dash.js','fixes.js','push.js','install.js','splash.js'];
+const CACHE = 'eee13-fund-v5';
+const V = '?v=5';
+const FILES = ['style.css','circuit.css','fixes.css','splash.css','motion.css','app.js','payments.js','admin.js','admin-extra.js','dash.js','fixes.js','push.js','install.js','splash.js'];
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'].concat(FILES.map(f => './' + f + V));
 
 self.addEventListener('install', e => {

@@ -353,7 +353,7 @@
     if (v === null || v === undefined) return '';
     let s = String(v);
     // stop spreadsheet formulas from running
-    if (/^[=+@]/.test(s) || /^-(?![0-9.])/.test(s)) s = "'" + s;
+        if (/^[=+@\t\r]/.test(s) || /^-(?![0-9.])/.test(s)) s = "'" + s;
     return '"' + s.replace(/"/g, '""') + '"';
   }
   function downloadCsv(name, header, rows) {

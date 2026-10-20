@@ -1,4 +1,4 @@
-const CACHE = 'eee13-fund-v2';
+const CACHE = 'eee13-fund-v3';
 const SHELL = ['./', './index.html', './style.css', './circuit.css', './fixes.css', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -23,7 +23,9 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== location.origin) return;
   e.respondWith(
-    fetch(req)
+    // cache: 'no-cache' = always ask the server if the file changed.
+    // Without this, the phone can keep showing a 10 minute old copy of a file.
+    fetch(req, { cache: 'no-cache' })
       .then(res => {
         if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
         return res;

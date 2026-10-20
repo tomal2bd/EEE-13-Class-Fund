@@ -265,7 +265,7 @@
       });
       stu.value = keep;
     }
-    month.addEventListener('change', drawWeeks);
+    month.addEventListener('change', () => { mSel.clear(); drawWeeks(); });
     btn.addEventListener('click', async () => {
       msg.className = 'err'; msg.textContent = '';
       if (!stu.value) { msg.textContent = 'Please select a student.'; return; }

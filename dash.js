@@ -277,7 +277,7 @@
     grid.appendChild(c1);
 
     // progress card
-    const members = (EEE.getMembers ? EEE.getMembers() : []).filter(x => x.is_active);
+    const members = (EEE.getMembers ? EEE.getMembers() : []).filter(x => x.is_active && x.approved);
     const cw = curWeek();
     const done = Math.min(paidThisWeek(), members.length || paidThisWeek());
     const pct = members.length ? Math.round((done / members.length) * 100) : 0;

@@ -39,7 +39,7 @@
   document.body.insertAdjacentHTML('afterbegin',
     '<div id="eee-splash" aria-hidden="true">' +
     '<div class="sp-stage"><svg class="sp-ring" viewBox="0 0 160 160"><circle class="sp-arc" cx="80" cy="80" r="74"/></svg>' +
-    '<img class="sp-logo" src="icon-192.png" alt=""></div>' +
+    '<img class="sp-logo" src="icon-512.png" alt=""></div>' +
     '<div class="sp-nm">' + letters + '</div><div class="sp-sb">Class Fund</div></div>');
 
   var box = document.getElementById('eee-splash');

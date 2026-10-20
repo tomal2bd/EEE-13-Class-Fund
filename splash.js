@@ -34,7 +34,7 @@
   if (!fresh) return;
 
   var letters = 'EEE-13'.split('').map(function (c, i) {
-    return '<span style="animation-delay:' + (1.3 + i * 0.08).toFixed(2) + 's">' + c + '</span>';
+    return '<span style="animation-delay:' + (0.9 + i * 0.06).toFixed(2) + 's">' + c + '</span>';
   }).join('');
   document.body.insertAdjacentHTML('afterbegin',
     '<div id="eee-splash" aria-hidden="true">' +
@@ -53,7 +53,7 @@
   }
   (function check() {
     var age = Date.now() - t0;
-    if (age >= 4500 || (age >= 2600 && document.body.classList.contains('dx-ready'))) close();
+    if (age >= 3500 || (age >= 1900 && document.body.classList.contains('dx-ready'))) close();
     else setTimeout(check, 120);
   })();
 })();

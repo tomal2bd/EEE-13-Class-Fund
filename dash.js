@@ -171,8 +171,6 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
         c.appendChild(dots);
         c.appendChild(count);
       }
-      // go back to the notice that was showing before the refresh
-      requestAnimationFrame(() => { if (car.clientWidth) car.scrollLeft = noticeIdx * car.clientWidth; });
     }
 
     if (isAdmin) {
@@ -455,6 +453,13 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
       b.replaceChildren(...Array.from(fresh.childNodes));
       b.dataset.sig = sig;
       window.scrollTo(0, y);
+      // The cards are on screen now, so the notice slider has a width.
+      // Put it back on the notice that was showing before the refresh.
+      const car = b.querySelector('.dx-ncar');
+      if (car && car.clientWidth) {
+        car.style.scrollBehavior = 'auto';
+        car.scrollLeft = noticeIdx * car.clientWidth;
+      }
     }
     b.style.minHeight = '';
     document.body.classList.add('dx-ready');

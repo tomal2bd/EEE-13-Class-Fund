@@ -25,8 +25,8 @@ html{scroll-behavior:smooth}
 }
 .btn:active,.tab:active,.rbtn:active,.paybtn:active,.avmenu button:active{transform:scale(.97)}
 @media (hover:hover){
-  .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(4,120,87,.22)}
-  .btn:active{transform:scale(.97)}
+  .btn:not(:disabled):not(.ghost):hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(4,120,87,.22)}
+  .btn.ghost:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.10)}
   .paybtn:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(0,0,0,.18)}
   .paybtn:active{transform:scale(.97)}
 }
@@ -41,7 +41,6 @@ html{scroll-behavior:smooth}
 .nav{transition:background-color .2s ease,color .2s ease}
 tbody tr{transition:background-color .15s ease}
 tbody tr:hover{background-color:rgba(16,185,129,.06)}
-tbody tr{animation:mFade .3s ease both}
 
 /* ---------- 7. Form fields: soft focus glow ---------- */
 input,select,textarea{transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease}
@@ -50,9 +49,16 @@ input:focus,select:focus,textarea:focus{border-color:#10b981;box-shadow:0 0 0 3p
 /* ---------- 8. Messages (errors, success) ---------- */
 .err:not(:empty),#p-msg:not(:empty),#s-pw-msg:not(:empty){animation:mRise .3s ease}
 
+/* ---------- 9. Payment popup and toast message ---------- */
+@keyframes mToast{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes mZoom{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.back{animation:mFade .2s ease}
+.modal{animation:mZoom .28s cubic-bezier(.2,.8,.2,1)}
+.toast{animation:mToast .3s ease}
+
 /* ---------- Respect "reduce motion" phones ---------- */
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  #pages > section,#login-view *,.avmenu,tbody tr,.err,#p-msg,#s-pw-msg{animation:none!important}
+  #pages > section,#login-view *,.avmenu,.err,#p-msg,#s-pw-msg,.back,.modal,.toast{animation:none!important}
   .btn,.tab,.rbtn,.paybtn,.stat,.pcard{transition:none!important}
 }

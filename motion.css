@@ -1,0 +1,58 @@
+/* motion.css - EEE-13 Class Fund
+   Standard, subtle animations for the whole site. Load AFTER fixes.css. */
+
+html{scroll-behavior:smooth}
+
+/* ---------- 1. Page change: the new page fades and slides up a little ---------- */
+@keyframes mRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes mFade{from{opacity:0}to{opacity:1}}
+@keyframes mPop{from{opacity:0;transform:translateY(-6px) scale(.96)}to{opacity:1;transform:none}}
+
+#pages > section:not([hidden]){animation:mRise .35s cubic-bezier(.2,.8,.2,1)}
+
+/* ---------- 2. Sign-in page ---------- */
+#login-view:not([hidden]) .ahead{animation:mFade .5s ease both}
+#login-view:not([hidden]) .banner{animation:mRise .5s cubic-bezier(.2,.8,.2,1) .05s both}
+#login-view:not([hidden]) .acard{animation:mRise .5s cubic-bezier(.2,.8,.2,1) .15s both}
+#form-in:not([hidden]),#form-up:not([hidden]){animation:mFade .3s ease}
+
+/* ---------- 3. Dropdown menu ---------- */
+.avmenu:not([hidden]){animation:mPop .18s ease;transform-origin:top right}
+
+/* ---------- 4. Buttons: smooth hover and a press effect ---------- */
+.btn,.tab,.rbtn,.paybtn,.avmenu button,.avatar-btn,.top-logo{
+  transition:transform .15s ease,box-shadow .2s ease,background-color .2s ease,color .2s ease,border-color .2s ease,filter .2s ease;
+}
+.btn:active,.tab:active,.rbtn:active,.paybtn:active,.avmenu button:active{transform:scale(.97)}
+@media (hover:hover){
+  .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(4,120,87,.22)}
+  .btn:active{transform:scale(.97)}
+  .paybtn:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(0,0,0,.18)}
+  .paybtn:active{transform:scale(.97)}
+}
+
+/* ---------- 5. Cards: gentle lift on hover ---------- */
+.stat,.pcard{transition:transform .25s ease,box-shadow .25s ease}
+@media (hover:hover){
+  .stat:hover,.pcard:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(15,23,42,.14)}
+}
+
+/* ---------- 6. Menu items and table rows ---------- */
+.nav{transition:background-color .2s ease,color .2s ease}
+tbody tr{transition:background-color .15s ease}
+tbody tr:hover{background-color:rgba(16,185,129,.06)}
+tbody tr{animation:mFade .3s ease both}
+
+/* ---------- 7. Form fields: soft focus glow ---------- */
+input,select,textarea{transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease}
+input:focus,select:focus,textarea:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.22);outline:none}
+
+/* ---------- 8. Messages (errors, success) ---------- */
+.err:not(:empty),#p-msg:not(:empty),#s-pw-msg:not(:empty){animation:mRise .3s ease}
+
+/* ---------- Respect "reduce motion" phones ---------- */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  #pages > section,#login-view *,.avmenu,tbody tr,.err,#p-msg,#s-pw-msg{animation:none!important}
+  .btn,.tab,.rbtn,.paybtn,.stat,.pcard{transition:none!important}
+}

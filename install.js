@@ -40,9 +40,22 @@
     // New iPads say they are a Mac, but they have a touch screen
     return /macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
   }
-  function isInstalled() {
+  // True only when the app is open as the installed app (not a browser tab)
+  function isStandalone() {
     return window.navigator.standalone === true ||
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  }
+  // On Android the installed app and the browser share storage, so a note
+  // saved while the installed app is open lets a browser tab know too.
+  function getFlag() {
+    try { return localStorage.getItem('eee_app_installed') === '1'; } catch (e) { return false; }
+  }
+  function setFlag(v) {
+    try { if (v) localStorage.setItem('eee_app_installed', '1'); else localStorage.removeItem('eee_app_installed'); } catch (e) {}
+  }
+  function isInstalled() {
+    if (isStandalone()) { setFlag(true); return true; }
+    return getFlag();
   }
 
   function getButton() {
@@ -186,11 +199,13 @@
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    setFlag(false); // the browser only offers install when the app is not installed
     showButton(true);
     updateGate();
   });
 
   window.addEventListener('appinstalled', () => {
+    setFlag(true);
     deferredPrompt = null;
     showButton(false);
     updateGate();

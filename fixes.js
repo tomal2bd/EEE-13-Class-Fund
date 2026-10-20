@@ -1,50 +1,86 @@
 /* fixes.js - EEE-13 Class Fund
-   Adds: opening splash (ring draws, logo shines, coins rise, iris-close exit),
+   Adds: opening splash "Coin Toss" (a gold coin spins up, lands on the logo, light burst, name appears),
    header logo (click = go Home), animated three-line menu button.
    Load this LAST, after dash.js */
 
-/* ---------- Opening splash ---------- */
+/* ---------- Opening splash: Coin Toss ---------- */
 (function () {
   var LOGO = 'icon-192.png';
-  var SHOW_MS = 2600;   // how long before it starts closing
-  var CLOSE_MS = 600;   // iris-close time
-  var GAP_MIN = 10;     // show again only if the last time was more than this many minutes ago
+  var MIN_MS = 3200;    // the splash stays at least this long
+  var MAX_MS = 4800;    // and never longer than this, even if the page is slow
+  var CLOSE_MS = 600;   // fade-out time
 
-  // A normal refresh right after opening should not show the splash again
+  // Show on every fresh open of the app. A normal refresh does not show it again.
   try {
-    var last = Number(localStorage.getItem('eee_splash_at') || 0);
-    if (Date.now() - last < GAP_MIN * 60 * 1000) return;
-    localStorage.setItem('eee_splash_at', String(Date.now()));
+    if (sessionStorage.getItem('eee_splash_done')) return;
+    sessionStorage.setItem('eee_splash_done', '1');
   } catch (e) { /* storage not available: show it */ }
 
   var css =
     '#eee-splash{position:fixed;inset:0;z-index:100000;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
-    'background:radial-gradient(circle at 50% 40%,#065f46 0%,#022c22 70%);clip-path:circle(150% at 50% 50%);' +
-    'transition:clip-path ' + CLOSE_MS + 'ms cubic-bezier(.7,0,.3,1)}' +
-    '#eee-splash.out{clip-path:circle(0% at 50% 50%)}' +
-    '#eee-splash .core{position:relative;width:170px;height:170px;display:flex;align-items:center;justify-content:center;animation:eeeCore 2.3s ease both}' +
-    '#eee-splash svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}' +
-    '#eee-splash .ring{fill:none;stroke:#fbbf24;stroke-width:4;stroke-linecap:round;stroke-dasharray:439;stroke-dashoffset:439;' +
-    'filter:drop-shadow(0 0 8px rgba(251,191,36,.8));animation:eeeRing 1.3s cubic-bezier(.6,0,.2,1) .15s forwards}' +
-    '#eee-splash .lg{position:relative;width:104px;height:104px;border-radius:26px;overflow:hidden;background:#fff;' +
-    'box-shadow:0 0 0 0 rgba(251,191,36,.6),0 12px 36px rgba(0,0,0,.45);animation:eeeLogo .7s cubic-bezier(.2,.9,.3,1.3) .7s both,eeePulse 1.2s ease 1.5s}' +
-    '#eee-splash .lg img{width:100%;height:100%;object-fit:contain;display:block}' +
-    '#eee-splash .lg::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;' +
-    'background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent);transform:skewX(-20deg);animation:eeeShine .9s ease 1.35s forwards}' +
-    '#eee-splash .nm{display:flex;margin-top:26px;font-family:"Segoe UI",Arial,sans-serif;font-size:34px;font-weight:900;color:#fff;letter-spacing:2px}' +
-    '#eee-splash .nm span{display:inline-block;opacity:0;animation:eeeLetter .5s cubic-bezier(.2,.9,.3,1.4) forwards}' +
-    '#eee-splash .sb{margin-top:8px;font-family:"Segoe UI",Arial,sans-serif;font-size:13px;font-weight:700;color:#fbbf24;text-transform:uppercase;' +
-    'opacity:0;animation:eeeSub 1s ease 1.3s forwards}' +
-    '#eee-splash .coin{position:absolute;bottom:-40px;font-family:"Segoe UI",Arial,sans-serif;font-weight:900;color:#fbbf24;opacity:0;' +
-    'text-shadow:0 0 10px rgba(251,191,36,.7);animation:eeeCoin linear forwards}' +
-    '@keyframes eeeRing{to{stroke-dashoffset:0}}' +
-    '@keyframes eeeLogo{from{opacity:0;transform:scale(.3) rotate(-25deg)}to{opacity:1;transform:none}}' +
-    '@keyframes eeePulse{0%{box-shadow:0 0 0 0 rgba(251,191,36,.7),0 12px 36px rgba(0,0,0,.45)}100%{box-shadow:0 0 0 34px rgba(251,191,36,0),0 12px 36px rgba(0,0,0,.45)}}' +
-    '@keyframes eeeShine{to{left:130%}}' +
-    '@keyframes eeeLetter{from{opacity:0;transform:translateY(-26px) scale(.6)}to{opacity:1;transform:none}}' +
-    '@keyframes eeeSub{from{opacity:0;letter-spacing:0}to{opacity:1;letter-spacing:7px}}' +
-    '@keyframes eeeCoin{0%{opacity:0;transform:translateY(0) rotate(0)}15%{opacity:.9}100%{opacity:0;transform:translateY(-110vh) rotate(40deg)}}' +
-    '@keyframes eeeCore{0%,85%{transform:scale(1)}100%{transform:scale(1.08)}}' +
+    'background:radial-gradient(circle at 50% 42%,#0b7a57 0%,#044c37 45%,#021f17 100%);' +
+    'transition:opacity ' + CLOSE_MS + 'ms ease,transform ' + CLOSE_MS + 'ms ease,filter ' + CLOSE_MS + 'ms ease}' +
+    '#eee-splash.out{opacity:0;transform:scale(1.12);filter:blur(6px)}' +
+
+    /* soft light rays turning slowly behind the coin */
+    '#eee-splash .rays{position:absolute;left:50%;top:42%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;opacity:0;' +
+    'background:repeating-conic-gradient(from 0deg,rgba(251,191,36,.16) 0deg 6deg,transparent 6deg 24deg);' +
+    '-webkit-mask-image:radial-gradient(circle,#000 0%,transparent 45%);mask-image:radial-gradient(circle,#000 0%,transparent 45%);' +
+    'animation:eeeRaysIn 1s ease 1.6s forwards,eeeRaysTurn 12s linear 1.6s infinite}' +
+
+    '#eee-splash .stage{position:relative;width:200px;height:200px;perspective:700px;display:flex;align-items:center;justify-content:center}' +
+
+    /* the toss: up, then down, with a small bounce */
+    '#eee-splash .toss{position:relative;width:128px;height:128px;transform-style:preserve-3d;' +
+    'animation:eeeToss 1.7s cubic-bezier(.3,.7,.4,1) .1s both}' +
+    '#eee-splash .spin{position:absolute;inset:0;transform-style:preserve-3d;animation:eeeSpin 1.7s cubic-bezier(.2,.6,.25,1) .1s both}' +
+    '#eee-splash .face{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
+    '-webkit-backface-visibility:hidden;backface-visibility:hidden;overflow:hidden}' +
+    '#eee-splash .front{background:radial-gradient(circle at 35% 30%,#fff3b0 0%,#fbbf24 45%,#b45309 100%);' +
+    'border:5px solid #fde68a;box-shadow:inset 0 0 0 5px rgba(180,83,9,.45),0 0 30px rgba(251,191,36,.55);' +
+    'font:900 66px "Segoe UI",Arial,sans-serif;color:#78350f;text-shadow:0 2px 0 rgba(255,255,255,.5)}' +
+    '#eee-splash .back{transform:rotateY(180deg);background:#fff;border:5px solid #fde68a;box-shadow:0 0 34px rgba(251,191,36,.7)}' +
+    '#eee-splash .back img{width:86%;height:86%;object-fit:contain;display:block}' +
+
+    /* shine sweep on the coin face after landing */
+    '#eee-splash .back::after{content:"";position:absolute;top:0;left:-80%;width:45%;height:100%;' +
+    'background:linear-gradient(100deg,transparent,rgba(255,255,255,.9),transparent);transform:skewX(-20deg);animation:eeeShine .8s ease 1.95s forwards}' +
+
+    /* ground shadow that grows when the coin comes down */
+    '#eee-splash .shadow{position:absolute;bottom:6px;left:50%;width:100px;height:14px;margin-left:-50px;border-radius:50%;' +
+    'background:rgba(0,0,0,.45);filter:blur(5px);animation:eeeShadow 1.7s ease .1s both}' +
+
+    /* shock rings when it lands */
+    '#eee-splash .ring{position:absolute;left:50%;top:50%;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:50%;' +
+    'border:3px solid #fbbf24;opacity:0;animation:eeeRing 1.1s ease-out forwards}' +
+    '#eee-splash .ring.r1{animation-delay:1.75s}' +
+    '#eee-splash .ring.r2{animation-delay:1.95s;border-color:#fde68a}' +
+
+    /* sparks flying out */
+    '#eee-splash .spark{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#fde68a;' +
+    'box-shadow:0 0 10px 2px rgba(251,191,36,.9);opacity:0;animation:eeeSpark .9s ease-out 1.75s forwards}' +
+
+    /* name + subtitle */
+    '#eee-splash .nm{display:flex;margin-top:30px;font-family:"Segoe UI",Arial,sans-serif;font-size:36px;font-weight:900;color:#fff;letter-spacing:3px}' +
+    '#eee-splash .nm span{display:inline-block;opacity:0;animation:eeeLetter .55s cubic-bezier(.2,.9,.3,1.4) forwards}' +
+    '#eee-splash .sb{margin-top:10px;font-family:"Segoe UI",Arial,sans-serif;font-size:13px;font-weight:700;color:#fbbf24;text-transform:uppercase;' +
+    'letter-spacing:8px;opacity:0;animation:eeeSub .9s ease 2.35s forwards}' +
+
+    /* small coins drifting up in the background */
+    '#eee-splash .dust{position:absolute;bottom:-30px;font-family:"Segoe UI",Arial,sans-serif;font-weight:900;color:#fbbf24;opacity:0;' +
+    'text-shadow:0 0 8px rgba(251,191,36,.6);animation:eeeDust linear forwards}' +
+
+    '@keyframes eeeToss{0%{transform:translateY(70px) scale(.5)}45%{transform:translateY(-78px) scale(1.12)}78%{transform:translateY(0) scale(1)}88%{transform:translateY(-14px) scale(1)}100%{transform:translateY(0) scale(1)}}' +
+    '@keyframes eeeSpin{0%{transform:rotateY(0)}100%{transform:rotateY(1980deg)}}' +
+    '@keyframes eeeShadow{0%{opacity:.1;transform:scale(.4)}45%{opacity:.2;transform:scale(.55)}78%,100%{opacity:.6;transform:scale(1)}}' +
+    '@keyframes eeeRing{0%{opacity:.9;transform:scale(.9)}100%{opacity:0;transform:scale(3.2)}}' +
+    '@keyframes eeeSpark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}' +
+    '@keyframes eeeShine{to{left:140%}}' +
+    '@keyframes eeeRaysIn{to{opacity:1}}' +
+    '@keyframes eeeRaysTurn{to{transform:rotate(360deg)}}' +
+    '@keyframes eeeLetter{from{opacity:0;transform:translateY(22px) scale(.7)}to{opacity:1;transform:none}}' +
+    '@keyframes eeeSub{from{opacity:0}to{opacity:1}}' +
+    '@keyframes eeeDust{0%{opacity:0;transform:translateY(0) rotate(0)}20%{opacity:.8}100%{opacity:0;transform:translateY(-105vh) rotate(35deg)}}' +
     '@media (prefers-reduced-motion:reduce){#eee-splash *{animation-duration:.01s !important;animation-delay:0s !important}}';
 
   var style = document.createElement('style');
@@ -54,31 +90,51 @@
   var box = document.createElement('div');
   box.id = 'eee-splash';
 
-  // rising ৳ coins
-  for (var i = 0; i < 9; i++) {
-    var c = document.createElement('div');
-    c.className = 'coin';
-    c.textContent = '৳';
-    c.style.left = (6 + Math.random() * 88) + '%';
-    c.style.fontSize = (16 + Math.random() * 22) + 'px';
-    c.style.animationDuration = (1.8 + Math.random() * 1.4) + 's';
-    c.style.animationDelay = (Math.random() * 1.2) + 's';
-    box.appendChild(c);
+  var rays = document.createElement('div');
+  rays.className = 'rays';
+  box.appendChild(rays);
+
+  // small coins drifting up
+  for (var i = 0; i < 8; i++) {
+    var d = document.createElement('div');
+    d.className = 'dust';
+    d.textContent = '৳';
+    d.style.left = (6 + Math.random() * 88) + '%';
+    d.style.fontSize = (14 + Math.random() * 18) + 'px';
+    d.style.animationDuration = (2.2 + Math.random() * 1.6) + 's';
+    d.style.animationDelay = (Math.random() * 1.6) + 's';
+    box.appendChild(d);
   }
 
-  var core = document.createElement('div');
-  core.className = 'core';
-  core.innerHTML =
-    '<svg viewBox="0 0 160 160"><circle class="ring" cx="80" cy="80" r="70"/></svg>' +
-    '<div class="lg"><img src="' + LOGO + '" alt=""></div>';
-  box.appendChild(core);
+  var stage = document.createElement('div');
+  stage.className = 'stage';
+  stage.innerHTML =
+    '<div class="shadow"></div>' +
+    '<div class="ring r1"></div><div class="ring r2"></div>' +
+    '<div class="toss"><div class="spin">' +
+    '<div class="face front">৳</div>' +
+    '<div class="face back"><img src="' + LOGO + '" alt=""></div>' +
+    '</div></div>';
+
+  // sparks burst out in all directions
+  for (var k = 0; k < 14; k++) {
+    var sp = document.createElement('div');
+    sp.className = 'spark';
+    var ang = (k / 14) * Math.PI * 2 + Math.random() * 0.3;
+    var dist = 90 + Math.random() * 60;
+    sp.style.setProperty('--dx', Math.round(Math.cos(ang) * dist) + 'px');
+    sp.style.setProperty('--dy', Math.round(Math.sin(ang) * dist) + 'px');
+    sp.style.animationDelay = (1.75 + Math.random() * 0.12) + 's';
+    stage.appendChild(sp);
+  }
+  box.appendChild(stage);
 
   var nm = document.createElement('div');
   nm.className = 'nm';
-  'EEE-13'.split('').forEach(function (ch, k) {
+  'EEE-13'.split('').forEach(function (ch, n) {
     var s = document.createElement('span');
     s.textContent = ch;
-    s.style.animationDelay = (0.9 + k * 0.09) + 's';
+    s.style.animationDelay = (1.9 + n * 0.09) + 's';
     nm.appendChild(s);
   });
   box.appendChild(nm);
@@ -90,10 +146,23 @@
 
   document.body.appendChild(box);
 
-  setTimeout(function () {
+  // Close when the minimum time has passed AND the dashboard is ready
+  // (or when the maximum time is reached, whichever comes first)
+  var startedAt = Date.now();
+  var closed = false;
+  function close() {
+    if (closed) return;
+    closed = true;
     box.classList.add('out');
     setTimeout(function () { box.remove(); }, CLOSE_MS + 80);
-  }, SHOW_MS);
+  }
+  function check() {
+    var age = Date.now() - startedAt;
+    var ready = document.body.classList.contains('dx-ready');
+    if (age >= MAX_MS || (age >= MIN_MS && ready)) close();
+    else setTimeout(check, 120);
+  }
+  setTimeout(check, MIN_MS);
 })();
 
 (function () {

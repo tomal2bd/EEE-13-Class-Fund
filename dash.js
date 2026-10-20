@@ -442,12 +442,20 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     const my = ++seq;
     let nodes;
     try { nodes = S.role === 'admin' ? await adminView() : await studentView(); }
-    catch (e) { console.error(e); return; }
+    catch (e) { console.error(e); document.body.classList.add('dx-ready'); return; }
     if (my !== seq) return;
     let b = $('dx');
     if (!b) { b = el('div'); b.id = 'dx'; stats.parentNode.insertBefore(b, stats); }
-    b.innerHTML = '';
-    nodes.forEach(n => b.appendChild(n));
+    // build the new cards off-screen and compare with what is already shown
+    const fresh = document.createElement('div');
+    nodes.forEach(n => fresh.appendChild(n));
+    const sig = fresh.innerHTML;
+    if (!(b.dataset.sig === sig && b.childNodes.length)) {
+      const y = window.scrollY;
+      b.replaceChildren(...Array.from(fresh.childNodes));
+      b.dataset.sig = sig;
+      window.scrollTo(0, y);
+    }
     b.style.minHeight = '';
     document.body.classList.add('dx-ready');
   }

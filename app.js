@@ -204,7 +204,8 @@
     const st = S.settings || {};
     const people = [
       { name: st.owner_name, phone: st.owner_phone, email: st.owner_email },
-      { name: st.assistant_name, phone: st.assistant_phone, email: st.assistant_email }
+      { name: st.assistant_name, phone: st.assistant_phone, email: st.assistant_email },
+      { name: st.assistant2_name, phone: st.assistant2_phone, email: st.assistant2_email }
     ].filter(p => p.phone || p.email);
 
     const box = $('contact'); box.innerHTML = '';

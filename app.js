@@ -14,6 +14,33 @@
     return e;
   };
 
+  /* ---------- boot loader: shown on refresh when a saved login exists ---------- */
+  let bootEl = null;
+  function showBoot() {
+    try {
+      let has = false;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i) || '';
+        if (k.indexOf('sb-') === 0 && k.slice(-11) === '-auth-token') { has = true; break; }
+      }
+      if (!has) return;
+      const st = document.createElement('style');
+      st.textContent = '@keyframes bootspin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(st);
+      bootEl = document.createElement('div');
+      bootEl.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#f1f5f9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:inherit;color:#334155;font-weight:700;font-size:15px;';
+      const sp = document.createElement('div');
+      sp.style.cssText = 'width:34px;height:34px;border:4px solid #cbd5e1;border-top-color:#1d4ed8;border-radius:50%;animation:bootspin .8s linear infinite;';
+      bootEl.appendChild(sp);
+      bootEl.appendChild(document.createTextNode('Loading...'));
+      document.body.appendChild(bootEl);
+    } catch (e) { /* ignore */ }
+  }
+  function hideBoot() {
+    if (bootEl) { bootEl.remove(); bootEl = null; }
+  }
+  showBoot();
+
   const ICON = {
     grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
     users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -49,7 +76,7 @@
     const d = new Date(String(s).length === 10 ? s + 'T00:00:00' : s);
     return isNaN(d) ? null : d;
   }
-    const tz = s => (String(s).length === 10 ? {} : { timeZone: 'Asia/Dhaka' });
+  const tz = s => (String(s).length === 10 ? {} : { timeZone: 'Asia/Dhaka' });
   const fmtDate = s => { const d = parseDate(s); return d ? d.toLocaleDateString('en-GB', Object.assign({ day: 'numeric', month: 'short', year: 'numeric' }, tz(s))) : '-'; };
   const fmtDay = s => { const d = parseDate(s); return d ? d.toLocaleDateString('en-GB', Object.assign({ day: 'numeric', month: 'short' }, tz(s))) : '-'; };
   const fmtTime = s => { const d = parseDate(s); return d ? d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Dhaka' }) : '-'; };
@@ -85,7 +112,7 @@
   }
 
   /* ---------- calendar weeks: 1-7 = 1st, 8-14 = 2nd, 15-21 = 3rd, 22-28 = 4th, 29-end = 5th ---------- */
-    const WEEK_ORD = ['1st', '2nd', '3rd', '4th'];
+  const WEEK_ORD = ['1st', '2nd', '3rd', '4th'];
   function weekIndex(iso) {
     const day = Number(String(iso).slice(8, 10));
     return day <= 7 ? 0 : day <= 14 ? 1 : day <= 21 ? 2 : 3;
@@ -625,14 +652,19 @@
 
   /* ---------- live refresh ---------- */
   let timer = null;
-  async function refreshAll() {
+  async function loadSettings() {
     const st = await db.from('fund_settings').select('*').eq('id', 1).maybeSingle();
     if (st.data) { S.settings = st.data; renderContactFooter(); }
-    await loadPublic();
-    if (S.role === 'admin') await loadMembers();
+  }
+  // skipSettings: enter() already loaded the settings, so do not load them twice
+  async function refreshAll(skipSettings) {
+    const tasks = [loadPublic()];
+    if (skipSettings !== true) tasks.push(loadSettings());
+    if (S.role === 'admin') tasks.push(loadMembers());
+    await Promise.all(tasks);
     for (const fn of EEE.refreshHooks) { try { await fn(); } catch (e) { console.error(e); } }
   }
-  EEE.refresh = refreshAll;
+  EEE.refresh = () => refreshAll();
   function startLive() {
     stopLive();
     timer = setInterval(() => { if (!document.hidden && !$('app-view').hidden) refreshAll(); }, 60000);
@@ -655,7 +687,12 @@
   }
 
   async function enter(user, expected) {
-    const p = await db.from('profiles').select('email, role').eq('id', user.id).single();
+    // load profile, student record and settings at the same time (faster than one by one)
+    const [p, sr, st] = await Promise.all([
+      db.from('profiles').select('email, role').eq('id', user.id).single(),
+      db.from('students').select('*').eq('profile_id', user.id).maybeSingle(),
+      db.from('fund_settings').select('*').eq('id', 1).maybeSingle()
+    ]);
     if (p.error || !p.data) {
       setMsg('Profile not found: ' + (p.error ? p.error.message : 'no data'));
       await db.auth.signOut(); return;
@@ -668,7 +705,7 @@
     }
     S.user = user; S.email = p.data.email; S.role = role;
     if (role === 'student') {
-      const sr = await loadStudentRow();
+      S.student = sr.data || null;
       if (sr.error || !S.student) {
         await db.auth.signOut();
         setMsg('No student record found for this account. Please contact the admin.');
@@ -690,7 +727,6 @@
         return;
       }
     }
-    const st = await db.from('fund_settings').select('*').eq('id', 1).maybeSingle();
     S.settings = st.data || null;
 
     $('role').textContent = role;
@@ -708,8 +744,9 @@
 
     $('login-view').hidden = true;
     $('app-view').hidden = false;
+    hideBoot();
     showPage('overview');
-    await refreshAll();
+    await refreshAll(true);
     startLive();
   }
 
@@ -759,7 +796,7 @@
     await enter(r.data.user, 'student');
   }
 
-   async function doLogout() {
+  async function doLogout() {
     stopLive();
     try { await db.auth.signOut(); } catch (e) { console.error(e); }
     // page reload: no data of the old user stays in memory
@@ -814,10 +851,14 @@
   }));
 
   db.auth.getSession().then(async ({ data }) => {
-    if (data.session) {
-      try { await enter(data.session.user, null); } catch (e) { console.error(e); }
-    }
+    try {
+      if (data.session) await enter(data.session.user, null);
+    } catch (e) { console.error(e); }
+    hideBoot();
     // If not logged in (or enter failed), show the login page now
     if ($('app-view').hidden) $('login-view').hidden = false;
+  }).catch(() => {
+    hideBoot();
+    $('login-view').hidden = false;
   });
 })();

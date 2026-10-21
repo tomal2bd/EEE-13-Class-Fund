@@ -71,10 +71,22 @@ html.eee-fast .top,html.eee-fast #stats>*,html.eee-fast #dx .card,html.eee-fast 
 .hello .stars i{position:absolute;border-radius:50%;background:#fff;animation:twinkle 2.6s ease-in-out infinite}
 @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
 
-/* ---------- bKash / Nagad buttons: smaller on a laptop ---------- */
+/* ---------- bKash / Nagad buttons: quick pay ---------- */
 #page-overview #paybar{max-width:560px;gap:14px}
-#page-overview #paybar .paybtn{min-height:104px;border-radius:16px;background-size:auto 46px;background-position:center 36%;box-shadow:0 4px 14px rgba(0,0,0,.12)}
-#page-overview #paybar .paybtn small{padding:6px 0;font-size:12px}
+#page-overview #paybar .paybtn{position:relative;cursor:pointer;min-height:124px;border-radius:16px;border:3px solid #fff;background-size:auto 46px;background-position:center 30%;box-shadow:0 6px 18px rgba(0,0,0,.22);transition:transform .15s ease,box-shadow .15s ease;-webkit-tap-highlight-color:transparent;animation:paypulse 2s ease-in-out infinite}
+#page-overview #paybar .paybtn:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.3)}
+#page-overview #paybar .paybtn:active{transform:scale(.96);animation:none}
+/* small badge on top */
+#page-overview #paybar .paybtn::before{content:"⚡ QUICK PAY";position:absolute;top:8px;left:8px;padding:3px 9px;border-radius:999px;background:#fff;color:#0f172a;font-size:10px;font-weight:800;letter-spacing:.5px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+/* white action bar at the bottom with a bouncing finger */
+#page-overview #paybar .paybtn small{position:absolute;left:10px;right:10px;bottom:10px;display:block;padding:9px 0;border-radius:999px;background:#fff;color:#0f172a;font-size:14px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+#page-overview #paybar .paybtn small::after{content:" 👆";display:inline-block;animation:payfinger 1s ease-in-out infinite}
+#page-overview #paybar .bkash small{color:#be185d}
+#page-overview #paybar .nagad small{color:#ea580c}
+#page-overview #paybar .nagad{animation-delay:.5s}
+@keyframes payfinger{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes paypulse{0%,100%{box-shadow:0 6px 18px rgba(0,0,0,.22),0 0 0 0 rgba(16,185,129,.55)}50%{box-shadow:0 6px 18px rgba(0,0,0,.22),0 0 0 12px rgba(16,185,129,0)}}
+@media (prefers-reduced-motion:reduce){#page-overview #paybar .paybtn,#page-overview #paybar .paybtn small::after{animation:none}}
 
 .cards .stat.k-in{background:linear-gradient(135deg,#059669,#34d399);color:#fff;border:0}
 .cards .stat.k-out{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:0}
@@ -127,7 +139,29 @@ html.eee-fast .top,html.eee-fast #stats>*,html.eee-fast #dx .card,html.eee-fast 
 #hello-time{font-size:24px}
 .pbname{font-size:20px}
 #page-overview #paybar{max-width:none;gap:10px}
-#page-overview #paybar .paybtn{min-height:96px}
+#page-overview #paybar .paybtn{min-height:118px}
+}
+
+/* ---------- compact dashboard ---------- */
+.hello{min-height:96px;padding:16px 22px;margin-bottom:14px}
+.hello-g{font-size:24px}
+.hello-n{font-size:13px;margin-top:2px}
+.hello-t{padding:8px 14px}
+#hello-time{font-size:22px}
+#hello-date{font-size:12px}
+#stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+#stats .stat{padding:12px 14px;gap:10px}
+#stats .stat .val{font-size:20px}
+#feed{max-height:250px;overflow-y:auto}
+#chart,#chart-month{height:150px!important}
+.chartrow{gap:14px;margin-bottom:14px}
+@media(max-width:600px){
+.hello{min-height:88px;padding:14px 16px}
+.hello-g{font-size:19px}
+#hello-time{font-size:19px}
+#stats{grid-template-columns:repeat(2,1fr)}
+#stats .stat .val{font-size:17px}
+#chart,#chart-month{height:140px!important}
 }
 </style>
 </head>
@@ -389,8 +423,8 @@ html.eee-fast .top,html.eee-fast #stats>*,html.eee-fast #dx .card,html.eee-fast 
           </div>
         </div>
         <div class="paybar" id="paybar" hidden>
-          <button class="paybtn bkash" data-pay="bKash" aria-label="Pay with bKash"><small>Pay your weekly fund</small></button>
-          <button class="paybtn nagad" data-pay="Nagad" aria-label="Pay with Nagad"><small>Pay your weekly fund</small></button>
+          <button class="paybtn bkash" data-pay="bKash" aria-label="Pay with bKash"><small>Tap to pay</small></button>
+          <button class="paybtn nagad" data-pay="Nagad" aria-label="Pay with Nagad"><small>Tap to pay</small></button>
         </div>
         <div class="cards" id="stats">
           <div class="card stat k-in"><div class="ico in">↓</div><div><div class="lbl">Total contributions</div><div class="val" id="c-in">-</div></div></div>

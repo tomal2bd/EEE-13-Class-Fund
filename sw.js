@@ -1,14 +1,19 @@
-// Bump CACHE and V together whenever you change ?v=N in index.html
-const CACHE = 'eee13-fund-v5';
-const V = '?v=5';
-const FILES = ['style.css','circuit.css','fixes.css','splash.css','motion.css','app.js','payments.js','admin.js','admin-extra.js','dash.js','fixes.js','push.js','install.js','splash.js'];
-const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'].concat(FILES.map(f => './' + f + V));
+// Bump CACHE whenever you change any ?v=N in index.html
+const CACHE = 'eee13-fund-v6';
+const V = '?v=5';      // version of the other files (style.css, payments.js ...)
+const APPV = '?v=6';   // version of app.js
+const SUPA = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+const FILES = ['style.css','circuit.css','fixes.css','splash.css','motion.css','payments.js','admin.js','admin-extra.js','dash.js','fixes.js','push.js','install.js','splash.js'];
+const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './app.js' + APPV].concat(FILES.map(f => './' + f + V));
 
 self.addEventListener('install', e => {
   // one missing file must not break the install
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {}))))
+      .then(c => Promise.all(
+        SHELL.map(u => c.add(u).catch(() => {}))
+          .concat(c.add(new Request(SUPA, { mode: 'cors' })).catch(() => {}))
+      ))
       .then(() => self.skipWaiting())
   );
 });
@@ -23,8 +28,21 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
+  if (req.method !== 'GET') return;
+
+  // Supabase library from the CDN: keep a copy, so the app starts without waiting for the download
+  if (req.url === SUPA) {
+    e.respondWith(
+      caches.match(req).then(hit => hit || fetch(req).then(res => {
+        if (res.ok) { const c = res.clone(); caches.open(CACHE).then(x => x.put(req, c)); }
+        return res;
+      }))
+    );
+    return;
+  }
+
   const url = new URL(req.url);
-  if (req.method !== 'GET' || url.origin !== location.origin) return;
+  if (url.origin !== location.origin) return;
 
   const isPage = req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
   if (isPage) {

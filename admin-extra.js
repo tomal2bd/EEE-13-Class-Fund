@@ -4,7 +4,7 @@
   if (!EEE) return;
   const { db, $, el, money, toast } = EEE;
 
-    const START = [1, 8, 15, 22];
+  const START = [1, 8, 15, 22];
   const ORD = ['1st', '2nd', '3rd', '4th'];
   const pad = n => String(n).padStart(2, '0');
   const dim = (y, m) => new Date(y, m, 0).getDate();
@@ -62,7 +62,8 @@
   ];
   const CONTACT = [
     ['owner_name', 'Owner name', 'text'], ['owner_phone', 'Owner phone', 'tel'], ['owner_email', 'Owner email', 'email'],
-    ['assistant_name', 'Assistant name', 'text'], ['assistant_phone', 'Assistant phone', 'tel'], ['assistant_email', 'Assistant email', 'email']
+    ['assistant_name', 'Assistant name', 'text'], ['assistant_phone', 'Assistant phone', 'tel'], ['assistant_email', 'Assistant email', 'email'],
+    ['assistant2_name', 'Assistant 2 name', 'text'], ['assistant2_phone', 'Assistant 2 phone', 'tel'], ['assistant2_email', 'Assistant 2 email', 'email']
   ];
 
   function settingsCard(title, defs, hintText) {
@@ -259,7 +260,7 @@
       const keep = stu.value;
       stu.innerHTML = '';
       const f = el('option', '', 'Select student'); f.value = ''; stu.appendChild(f);
-            EEE.getMembers().filter(x => x.is_active && x.approved).forEach(x => {
+      EEE.getMembers().filter(x => x.is_active && x.approved).forEach(x => {
         const o = el('option', '', (x.full_name || '-') + (x.roll_no ? ' (Roll ' + x.roll_no + ')' : ''));
         o.value = x.id; stu.appendChild(o);
       });
@@ -324,7 +325,7 @@
       m++; if (m > 12) { m = 1; y++; }
     }
     const weekly = Number(st.weekly_amount || 30);
-        const rows = EEE.getMembers().filter(x => x.is_active && x.approved).map(s => {
+    const rows = EEE.getMembers().filter(x => x.is_active && x.approved).map(s => {
       const got = taken[s.id] || new Set();
       const due = need.filter(w => !got.has(w)).length;
       return { s, paid: need.length - due, due };
@@ -520,7 +521,7 @@
   async function pStats() {
     if (!pBuilt || !isAdmin()) return;
     const sum = EEE.state.summary || {};
-        const active = (EEE.getMembers ? EEE.getMembers() : []).filter(m => m.is_active && m.approved).length;
+    const active = (EEE.getMembers ? EEE.getMembers() : []).filter(m => m.is_active && m.approved).length;
     const r = await db.from('payments')
       .select('amount, method, status, submitted_at, students(full_name)')
       .order('submitted_at', { ascending: false })

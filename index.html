@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#064e3b">
+<meta name="theme-color" content="#064e3b" id="tc">
 <link rel="preconnect" href="https://odrehouprwotoveklwnq.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <script>
 try{if(sessionStorage.getItem('eee_splash_done'))document.documentElement.classList.add('eee-fast');}catch(e){}
+try{if(localStorage.getItem('eee_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}
 </script>
 <style>
 /* refresh (no splash): show the dashboard at once, no slow entrance animation */
@@ -16,6 +17,8 @@ html.eee-fast .top,html.eee-fast #stats>*,html.eee-fast #dx .card,html.eee-fast 
 #boot{position:fixed;inset:0;z-index:1000;background:#f3f8f6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font:700 15px "Segoe UI",Arial,sans-serif;color:#064e3b}
 #boot i{width:36px;height:36px;border:4px solid #d1fae5;border-top-color:#059669;border-radius:50%;animation:bootspin .8s linear infinite}
 @keyframes bootspin{to{transform:rotate(360deg)}}
+html[data-theme="dark"] #boot{background:#0b1220;color:#d1fae5}
+html[data-theme="dark"] #boot i{border-color:#1f2d45;border-top-color:#34d399}
 </style>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -163,6 +166,73 @@ html.eee-fast .top,html.eee-fast #stats>*,html.eee-fast #dx .card,html.eee-fast 
 #stats .stat .val{font-size:17px}
 #chart,#chart-month{height:140px!important}
 }
+
+/* ---------- theme toggle button ---------- */
+.themebtn{width:40px;height:40px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;color:#0f172a;display:grid;place-items:center;cursor:pointer;padding:0;flex-shrink:0}
+.themebtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.themebtn .i-sun{display:none}
+.themebtn.floating{position:fixed;top:12px;right:12px;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+
+/* ---------- DARK MODE ---------- */
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"] body,
+html[data-theme="dark"] .app,
+html[data-theme="dark"] .main,
+html[data-theme="dark"] .pad{background:#0b1220!important;color:#e2e8f0}
+html[data-theme="dark"] .top,
+html[data-theme="dark"] .foot{background:#0f1a2c!important;border-color:#1f2d45!important;color:#cbd5e1}
+html[data-theme="dark"] .card:not(.stat),
+html[data-theme="dark"] .pcard:not(.paid),
+html[data-theme="dark"] .acard,
+html[data-theme="dark"] .avmenu{background:#111c2e!important;border-color:#1f2d45!important;color:#e2e8f0}
+html[data-theme="dark"] .top h1,
+html[data-theme="dark"] .card h2,
+html[data-theme="dark"] .acard h1,
+html[data-theme="dark"] .pcard .pval,
+html[data-theme="dark"] .avinfo .avn,
+html[data-theme="dark"] .fname{color:#f1f5f9!important}
+html[data-theme="dark"] .pcard:not(.paid) .pl,
+html[data-theme="dark"] .avinfo .ave,
+html[data-theme="dark"] .acard .sub,
+html[data-theme="dark"] .help,
+html[data-theme="dark"] .hint,
+html[data-theme="dark"] .empty,
+html[data-theme="dark"] .fsub,
+html[data-theme="dark"] .who{color:#94a3b8!important}
+html[data-theme="dark"] label{color:#cbd5e1!important}
+html[data-theme="dark"] .famt,
+html[data-theme="dark"] .avlabel,
+html[data-theme="dark"] .lfilter .lper{color:#34d399!important}
+html[data-theme="dark"] .feed-item{border-color:#1f2d45!important}
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea{background:#0b1626!important;color:#e2e8f0!important;border-color:#2a3b57!important}
+html[data-theme="dark"] input::placeholder{color:#64748b}
+html[data-theme="dark"] input:disabled{opacity:.65}
+html[data-theme="dark"] table{color:#e2e8f0}
+html[data-theme="dark"] th{background:#16233a!important;color:#cbd5e1!important;border-color:#1f2d45!important}
+html[data-theme="dark"] td{color:#e2e8f0;border-color:#1f2d45!important}
+html[data-theme="dark"] tbody tr:hover td{background:#14223a}
+html[data-theme="dark"] .tab:not(.on),
+html[data-theme="dark"] .rbtn:not(.on){background:#16233a!important;color:#cbd5e1!important;border-color:#2a3b57!important}
+html[data-theme="dark"] .btn.ghost{background:#16233a!important;color:#e2e8f0!important;border-color:#2a3b57!important}
+html[data-theme="dark"] .bars .bar span{color:#e2e8f0!important}
+html[data-theme="dark"] .avatar-btn{background:#16233a!important;color:#34d399!important}
+html[data-theme="dark"] .avmenu button{color:#e2e8f0}
+html[data-theme="dark"] .avmenu button:hover{background:#16233a}
+html[data-theme="dark"] .avinfo,
+html[data-theme="dark"] .avmenu .avsep{border-color:#1f2d45!important;background-color:transparent}
+html[data-theme="dark"] .avmenu .avsep{background:#1f2d45!important}
+html[data-theme="dark"] .avmenu button.out{background:#3b1219;color:#fca5a5}
+html[data-theme="dark"] .avmenu button.out:hover{background:#4c1620}
+html[data-theme="dark"] #bell-btn{background:#16233a!important;border-color:#2a3b57!important;color:#e2e8f0!important}
+html[data-theme="dark"] .themebtn{background:#16233a;border-color:#2a3b57;color:#fcd34d}
+html[data-theme="dark"] .themebtn .i-sun{display:block}
+html[data-theme="dark"] .themebtn .i-moon{display:none}
+html[data-theme="dark"] .editcard{border-color:#10b981!important}
+html[data-theme="dark"] .auth{background:#0b1220!important}
+html[data-theme="dark"] .ahead .atitle,
+html[data-theme="dark"] .ahead .asub{color:#e2e8f0}
 </style>
 </head>
 <body>
@@ -172,6 +242,10 @@ html.eee-fast .top,html.eee-fast #stats>*,html.eee-fast #dx .card,html.eee-fast 
 
 <!-- ================= AUTH ================= -->
 <div class="auth" id="login-view" hidden>
+<button class="themebtn floating" aria-label="Switch light or dark mode" title="Dark / Light">
+  <svg class="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
 <svg class="bgcircuit" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 <path class="trace" d="M800 450 L800 100 L600 100 L600 0 L400 0"/>
 <path class="pulse" pathLength="1000" d="M800 450 L800 100 L600 100 L600 0 L400 0" style="animation-duration:8.2s;animation-delay:-6.0s"/>
@@ -380,6 +454,10 @@ html.eee-fast .top,html.eee-fast #stats>*,html.eee-fast #dx .card,html.eee-fast 
         <h1 id="title">Dashboard</h1>
       </div>
       <div class="user">
+        <button class="themebtn" aria-label="Switch light or dark mode" title="Dark / Light">
+          <svg class="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
         <button id="bell-btn" hidden aria-label="Notifications" style="position:relative;width:40px;height:40px;display:grid;place-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:50%;cursor:pointer;padding:0;color:#0f172a;">
           <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span id="bell-badge" hidden style="position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;background:#dc2626;color:#fff;border-radius:999px;font-size:11px;font-weight:700;display:grid;place-items:center;">0</span>
@@ -644,6 +722,31 @@ if (!window.supabase) {
   makeStars();
   tick();
   setInterval(tick, 1000);
+})();
+</script>
+<!-- dark / light mode switch -->
+<script>
+(function () {
+  function current() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function paintBar() {
+    var m = document.getElementById('tc');
+    if (m) m.setAttribute('content', current() === 'dark' ? '#0b1220' : '#064e3b');
+  }
+  function setTheme(t) {
+    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('eee_theme', t); } catch (e) {}
+    paintBar();
+  }
+  var btns = document.querySelectorAll('.themebtn');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function () {
+      setTheme(current() === 'dark' ? 'light' : 'dark');
+    });
+  }
+  paintBar();
 })();
 </script>
 <script>

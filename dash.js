@@ -79,6 +79,17 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
 #page-overview #paybar .paybtn,#page-overview #paybar .paybtn::after,#page-overview #paybar .paybtn small::after{animation:none !important}
 }
 
+/* ===== Loading screen with the app logo ===== */
+.dx-boot{background:radial-gradient(circle at 50% 35%,#ecfdf5,#f3f8f6 62%,#d1fae5) !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;gap:14px !important;font-family:"Segoe UI",Arial,sans-serif !important}
+.dx-boot .bt-logo{position:relative;width:96px;height:96px;display:grid;place-items:center;margin-bottom:6px}
+.dx-boot .bt-logo::before{content:"";position:absolute;inset:-10px;border-radius:50%;border:4px solid #d1fae5;border-top-color:#059669;animation:dxbspin .9s linear infinite}
+.dx-boot .bt-logo img{width:84px;height:84px;border-radius:50%;object-fit:cover;background:#fff;box-shadow:0 8px 26px rgba(5,150,105,.35);animation:dxbpulse 1.6s ease-in-out infinite}
+.dx-boot .bt-name{font-size:21px;font-weight:800;color:#064e3b;letter-spacing:.3px}
+.dx-boot .bt-sub{font-size:13px;font-weight:700;color:#047857;letter-spacing:.6px}
+@keyframes dxbspin{to{transform:rotate(360deg)}}
+@keyframes dxbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){.dx-boot .bt-logo::before,.dx-boot .bt-logo img{animation:none}}
+
 /* ===== Entrance animation: all dashboard parts rise in together after refresh ===== */
 #page-overview:not(.dx-go) .dx-sec{opacity:0 !important;visibility:hidden !important}
 #page-overview.dx-go .dx-sec{animation:dxrise .6s cubic-bezier(.2,.7,.2,1) var(--d,0s) both !important}
@@ -123,6 +134,30 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
   const style = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
+
+
+  /* ---------- loading screens: show the app logo ---------- */
+  function brandBoots() {
+    document.querySelectorAll('body > div').forEach(d => {
+      if (d.classList.contains('dx-boot')) return;
+      const isBoot = d.id === 'boot';
+      const isSaved = !d.id && !d.className && d.style && d.style.zIndex === '9999' && /^\s*Loading\.\.\.\s*$/.test(d.textContent || '');
+      if (!isBoot && !isSaved) return;
+      // if the library failed to load, keep the error message and the Try again button
+      if (isBoot && d.querySelector('button')) return;
+      d.classList.add('dx-boot');
+      d.textContent = '';
+      const logo = el('div', 'bt-logo');
+      const img = document.createElement('img');
+      img.src = 'icon-192.png';
+      img.alt = '';
+      logo.appendChild(img);
+      d.appendChild(logo);
+      d.appendChild(el('div', 'bt-name', 'EEE-13 · Class Fund'));
+      d.appendChild(el('div', 'bt-sub', 'Loading...'));
+    });
+  }
+  brandBoots();
 
   /* ---------- helpers ---------- */
   function card(title) {

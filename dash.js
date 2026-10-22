@@ -19,16 +19,35 @@
     START.forEach((day, i) => { if (day <= t.d) idx = i; });
     return { iso: t.y + '-' + pad(t.m) + '-' + pad(START[idx]), name: ORD[idx] + ' week' };
   }
+  // Fund start: before the start date nothing is due. The calendar week that
+  // contains the start date is the first week to pay (earlier weeks are never due).
+  function fundInfo(st) {
+    st = st || EEE.state.settings || {};
+    const iso = String(st.start_date || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return { set: false, started: false, startIso: '', firstWeek: '' };
+    const t = today();
+    const todayIso = t.y + '-' + pad(t.m) + '-' + pad(t.d);
+    const d = Number(iso.slice(8, 10));
+    let idx = 0;
+    START.forEach((day, i) => { if (day <= d) idx = i; });
+    return { set: true, started: todayIso >= iso, startIso: iso, firstWeek: iso.slice(0, 7) + '-' + pad(START[idx]) };
+  }
+  EEE.fundInfo = fundInfo;
+
   function needWeeks(st) {
     const t = today();
     const need = [];
     if (!st || !st.start_date) return need;
+    const fi = fundInfo(st);
+    if (!fi.started) return need;
     let [y, m] = st.start_date.split('-').map(Number);
     while (y < t.y || (y === t.y && m <= t.m)) {
       START.forEach(day => {
         if (day > dim(y, m)) return;
         if (y === t.y && m === t.m && day > t.d) return;
-        need.push(y + '-' + pad(m) + '-' + pad(day));
+        const iso = y + '-' + pad(m) + '-' + pad(day);
+        if (iso < fi.firstWeek) return;
+        need.push(iso);
       });
       m++; if (m > 12) { m = 1; y++; }
     }
@@ -380,13 +399,14 @@ html body .top,html body .eee-r,html body #page-overview #stats>*,html body #pag
     const dueWeeks = dueList.length;
     const doneWeeks = need.filter(w => wstat[w] === 'approved').length;
     const pct = need.length ? Math.round((doneWeeks / need.length) * 100) : 0;
-    const status = wstat[cw.iso] || 'due';
+    const fi = fundInfo();
+    const status = !fi.started ? 'soon' : (wstat[cw.iso] || 'due');
 
     // the big bKash/Nagad buttons show only when this week is due
     const pb = $('paybar');
-    if (pb) pb.hidden = !(status === 'due' && typeof EEE.openPay === 'function');
+    if (pb) pb.hidden = !((status === 'due' || status === 'soon') && typeof EEE.openPay === 'function');
     const ph = document.querySelector('#paybar .payhead');
-    if (ph) ph.textContent = 'Tap bKash or Nagad to pay this week (' + money(weekly) + ')';
+    if (ph) ph.textContent = fi.started ? 'Tap bKash or Nagad to pay this week (' + money(weekly) + ')' : (fi.set ? 'Fund starts on ' + EEE.fmtDate(fi.startIso) : 'Fund start date is not set yet');
     document.querySelectorAll('#paybar .paybtn small').forEach(s => { s.textContent = 'Tap to pay'; });
 
     setDateLine();
@@ -414,20 +434,27 @@ html body .top,html body .eee-r,html body #page-overview #stats>*,html body #pag
     const bottom = el('div', 'dx-grid');
 
     const c1 = card('This week · ' + cw.name);
-    c1.appendChild(el('span', 'dx-badge ' + (status === 'approved' ? 'dx-ok' : status === 'pending' ? 'dx-wait' : 'dx-due'),
-      status === 'approved' ? 'Paid ✓' : status === 'pending' ? 'Pending approval' : 'Due'));
-    c1.appendChild(el('div', 'dx-big', money(weekly)));
-    c1.appendChild(el('div', 'dx-sub', dueWeeks ? 'Total due: ' + money(dueWeeks * weekly) + ' (' + dueWeeks + ' week(s))' : 'Total due: ৳0'));
-    if (dueWeeks) {
-      const un = el('div', 'dx-sub', 'Unpaid: ' + EEE.weeksText(dueList));
-      un.style.marginTop = '6px';
-      c1.appendChild(un);
+    if (!fi.started) {
+      c1.appendChild(el('span', 'dx-badge dx-wait', 'Fund not started'));
+      c1.appendChild(el('div', 'dx-big', fi.set ? 'Starts ' + EEE.fmtDate(fi.startIso) : 'Start date not set'));
+      c1.appendChild(el('div', 'dx-sub', 'No payment is needed before the fund starts.'));
+    } else {
+      c1.appendChild(el('span', 'dx-badge ' + (status === 'approved' ? 'dx-ok' : status === 'pending' ? 'dx-wait' : 'dx-due'),
+        status === 'approved' ? 'Paid ✓' : status === 'pending' ? 'Pending approval' : 'Due'));
+      c1.appendChild(el('div', 'dx-big', money(weekly)));
+      c1.appendChild(el('div', 'dx-sub', dueWeeks ? 'Total due: ' + money(dueWeeks * weekly) + ' (' + dueWeeks + ' week(s))' : 'Total due: ৳0'));
+      if (dueWeeks) {
+        const un = el('div', 'dx-sub', 'Unpaid: ' + EEE.weeksText(dueList));
+        un.style.marginTop = '6px';
+        c1.appendChild(un);
+      }
+      const row = el('div', 'dx-row');
+      const mp = el('button', 'btn ghost sm', 'My payments');
+      mp.addEventListener('click', () => EEE.showPage('mypayments'));
+      row.appendChild(mp);
+      c1.appendChild(row);
+
     }
-    const row = el('div', 'dx-row');
-    const mp = el('button', 'btn ghost sm', 'My payments');
-    mp.addEventListener('click', () => EEE.showPage('mypayments'));
-    row.appendChild(mp);
-    c1.appendChild(row);
     bottom.appendChild(c1);
 
     const c4 = card('My last payment');
@@ -882,6 +909,46 @@ html body .top,html body .eee-r,html body #page-overview #stats>*,html body #pag
       else if (isOpen() && dx < -55) { done = true; $('menu-btn').click(); }
     }, { passive: true });
   })();
+
+  /* ---------- fund not started: message when someone taps bKash / Nagad ---------- */
+  function showNotStarted() {
+    const fi = fundInfo();
+    const back = el('div', 'modal-back');
+    back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = el('div', 'card');
+    box.style.cssText = 'width:100%;max-width:400px;margin:0;padding:26px;border-top:6px solid #f59e0b;text-align:center;';
+    const ic = el('div', '', '⏳');
+    ic.style.cssText = 'font-size:44px;margin-bottom:6px;';
+    box.appendChild(ic);
+    const h = el('h2', '', 'Fund has not started yet');
+    h.style.cssText = 'font-size:22px;font-weight:800;margin:0 0 10px;color:#92400e;';
+    box.appendChild(h);
+    if (fi.set) {
+      const d = el('div', '', EEE.fmtDate(fi.startIso));
+      d.style.cssText = 'display:inline-block;margin:0 0 12px;padding:8px 18px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:20px;font-weight:800;';
+      box.appendChild(d);
+      const p = el('div', '', 'The class fund will start on this date. You do not need to pay anything before that day.');
+      p.style.cssText = 'font-size:15px;line-height:1.5;color:#334155;margin-bottom:18px;';
+      box.appendChild(p);
+    } else {
+      const p = el('div', '', 'The admin has not set the fund start date yet. You do not need to pay anything now.');
+      p.style.cssText = 'font-size:15px;line-height:1.5;color:#334155;margin-bottom:18px;';
+      box.appendChild(p);
+    }
+    const ok = el('button', 'btn full', 'OK');
+    ok.addEventListener('click', () => back.remove());
+    box.appendChild(ok);
+    back.addEventListener('click', e => { if (e.target === back) back.remove(); });
+    back.appendChild(box);
+    document.body.appendChild(back);
+  }
+  const origOpenPay = EEE.openPay;
+  if (typeof origOpenPay === 'function') {
+    EEE.openPay = function (method, weekIso) {
+      if (!fundInfo().started) { showNotStarted(); return; }
+      return origOpenPay(method, weekIso);
+    };
+  }
 
   wireAdminBell();
   EEE.refreshHooks.push(render);

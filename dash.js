@@ -90,6 +90,10 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
 @keyframes dxbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 @media (prefers-reduced-motion:reduce){.dx-boot .bt-logo::before,.dx-boot .bt-logo img{animation:none}}
 
+/* ===== Always behave like a refresh: no slow one-by-one entrance on the small parts,
+   only the one animation below that brings everything together ===== */
+html body .top,html body .eee-r,html body #page-overview #stats>*,html body #page-overview #dx .card,html body #page-overview #dx-n .card,html body #page-overview #dx-b .card{opacity:1 !important;animation:none !important}
+
 /* ===== Entrance animation: all dashboard parts rise in together after refresh ===== */
 #page-overview:not(.dx-go) .dx-sec{opacity:0 !important;visibility:hidden !important}
 #page-overview.dx-go .dx-sec{animation:dxrise .6s cubic-bezier(.2,.7,.2,1) var(--d,0s) both !important}
@@ -633,7 +637,21 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
   (function () {
     hosts();
     // safety: never keep things hidden if the first render fails
-    setTimeout(reveal, 8000);
+    setTimeout(() => { const a = $('app-view'); if (a && !a.hidden) reveal(); }, 8000);
+    // Every time the app opens (refresh or after sign in): hide the dashboard again,
+    // so everything appears together with the animation once the data is ready
+    const app = $('app-view');
+    if (app && window.MutationObserver) {
+      let wasHidden = app.hidden;
+      new MutationObserver(() => {
+        if (wasHidden && !app.hidden) {
+          const pg = $('page-overview');
+          if (pg) pg.classList.remove('dx-go');
+          setTimeout(() => { if (!app.hidden) reveal(); }, 8000);
+        }
+        wasHidden = app.hidden;
+      }).observe(app, { attributes: true, attributeFilter: ['hidden'] });
+    }
   })();
 
   /* ---------- admin backup: download CSV files (shown in Settings) ---------- */

@@ -41,7 +41,42 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
 #chart-total,#chart-month-total{display:none !important}
 #hello-n{display:none !important}
 .hello-m{font-size:15px;font-weight:700;opacity:.97;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.25)}
-.dx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:20px}
+
+/* ===== Greeting card: a little bigger ===== */
+#hello{padding:16px 20px;min-height:84px;border-radius:18px;margin-bottom:12px}
+#hello .hello-g{font-size:23px}
+#hello .hello-m{font-size:14px;margin-top:5px}
+#hello .hello-t{padding:8px 14px;border-radius:12px}
+#hello #hello-time{font-size:19px}
+#hello #hello-date{display:block;font-size:12px;margin-top:2px}
+@media(max-width:600px){
+#hello{padding:14px 14px;min-height:76px}
+#hello .hello-g{font-size:19px}
+#hello .hello-m{font-size:13px}
+#hello #hello-time{font-size:15px}
+#hello #hello-date{display:none}
+}
+
+/* ===== bKash / Nagad: clear "tap to pay" buttons with effect ===== */
+#page-overview #paybar .payhead{font-size:15px;color:#047857}
+#page-overview #paybar .paybtn{min-height:104px;animation:dxglowB 1.8s ease-out infinite !important}
+#page-overview #paybar .paybtn.nagad{animation-name:dxglowN !important}
+#page-overview #paybar .paybtn::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);transform:skewX(-20deg);animation:dxshine 2.8s ease-in-out infinite;pointer-events:none}
+#page-overview #paybar .bkash small{background:#e2136e !important;color:#fff !important}
+#page-overview #paybar .nagad small{background:#f6921e !important;color:#fff !important}
+#page-overview #paybar .paybtn small::after{display:inline-block;animation:dxarrow 1s ease-in-out infinite}
+@keyframes dxglowB{0%{box-shadow:0 5px 14px rgba(0,0,0,.2),0 0 0 0 rgba(226,19,110,.55)}70%{box-shadow:0 5px 14px rgba(0,0,0,.2),0 0 0 14px rgba(226,19,110,0)}100%{box-shadow:0 5px 14px rgba(0,0,0,.2),0 0 0 0 rgba(226,19,110,0)}}
+@keyframes dxglowN{0%{box-shadow:0 5px 14px rgba(0,0,0,.2),0 0 0 0 rgba(246,146,30,.6)}70%{box-shadow:0 5px 14px rgba(0,0,0,.2),0 0 0 14px rgba(246,146,30,0)}100%{box-shadow:0 5px 14px rgba(0,0,0,.2),0 0 0 0 rgba(246,146,30,0)}}
+@keyframes dxshine{0%,55%{left:-70%}100%{left:130%}}
+@keyframes dxarrow{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){
+#page-overview #paybar .paybtn,#page-overview #paybar .paybtn::after,#page-overview #paybar .paybtn small::after{animation:none !important}
+}
+
+/* ===== dashboard cards ===== */
+#dx-n:empty{display:none}
+#dx-n .dx-notice{margin-bottom:14px}
+.dx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin:0 0 14px}
 .dx-grid .card{margin-bottom:0;min-width:0}
 .dx-big{font-size:26px;font-weight:800;margin:4px 0}
 .dx-sub{font-size:14px;color:#475569;font-weight:600}
@@ -255,7 +290,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
         .order('submitted_at', { ascending: false }),
       noticesCard(false)
     ]);
-    if (r.error) return [el('p', 'err', 'Could not load your status: ' + r.error.message)];
+    if (r.error) return { notice: null, mid: el('p', 'err', 'Could not load your status: ' + r.error.message), bottom: null };
     const rows = r.data || [];
     const wstat = {};
     rows.forEach(p => {
@@ -272,19 +307,40 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     const pct = need.length ? Math.round((doneWeeks / need.length) * 100) : 0;
     const status = wstat[cw.iso] || 'due';
 
-    // the big bKash/Nagad banner at the top shows only when this week is due
+    // the big bKash/Nagad buttons show only when this week is due
     const pb = $('paybar');
     if (pb) pb.hidden = !(status === 'due' && typeof EEE.openPay === 'function');
+    const ph = document.querySelector('#paybar .payhead');
+    if (ph) ph.textContent = 'Tap bKash or Nagad to pay this week (' + money(weekly) + ')';
+    document.querySelectorAll('#paybar .paybtn small').forEach(s => { s.textContent = 'Tap to pay'; });
 
     // banner message
     if (status === 'due') setBannerMsg('This week ' + money(weekly) + ' is due. Please pay.');
     else if (dueWeeks) setBannerMsg('This week is done. ' + dueWeeks + ' older week(s) still unpaid.');
     else setBannerMsg('All your payments are done ✓');
 
-    const grid = el('div', 'dx-grid');
-    if (notice) grid.appendChild(notice);
+    /* ----- middle part: fund progress, my progress ----- */
+    const mid = el('div', 'dx-grid');
 
-    // 1) this week
+    // fund progress (everyone)
+    const c2 = card('Fund progress this week');
+    c2.appendChild(el('div', 'dx-big', paidThisWeek() + ' member(s) paid'));
+    c2.appendChild(el('div', 'dx-sub', 'Approved payments for the ' + cw.name + '.'));
+    mid.appendChild(c2);
+
+    // my progress
+    const c3 = card('My progress');
+    c3.appendChild(el('div', 'dx-big', doneWeeks + ' of ' + need.length + ' weeks paid'));
+    const track = el('div', 'dx-track');
+    const fillBar = el('div', 'dx-fill'); fillBar.style.width = pct + '%';
+    track.appendChild(fillBar);
+    c3.appendChild(track);
+    c3.appendChild(el('div', 'dx-sub', pct + '% (approved payments only)'));
+    mid.appendChild(c3);
+
+    /* ----- bottom part (below the charts): this week, last payment, expenses ----- */
+    const bottom = el('div', 'dx-grid');
+
     const c1 = card('This week · ' + cw.name);
     c1.appendChild(el('span', 'dx-badge ' + (status === 'approved' ? 'dx-ok' : status === 'pending' ? 'dx-wait' : 'dx-due'),
       status === 'approved' ? 'Paid ✓' : status === 'pending' ? 'Pending approval' : 'Due'));
@@ -300,19 +356,8 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     mp.addEventListener('click', () => EEE.showPage('mypayments'));
     row.appendChild(mp);
     c1.appendChild(row);
-    grid.appendChild(c1);
+    bottom.appendChild(c1);
 
-    // 2) my progress
-    const c3 = card('My progress');
-    c3.appendChild(el('div', 'dx-big', doneWeeks + ' of ' + need.length + ' weeks paid'));
-    const track = el('div', 'dx-track');
-    const fillBar = el('div', 'dx-fill'); fillBar.style.width = pct + '%';
-    track.appendChild(fillBar);
-    c3.appendChild(track);
-    c3.appendChild(el('div', 'dx-sub', pct + '% (approved payments only)'));
-    grid.appendChild(c3);
-
-    // 3) latest payment
     const c4 = card('My last payment');
     const last = rows[0];
     if (!last) {
@@ -332,16 +377,10 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
         c4.appendChild(why);
       }
     }
-    grid.appendChild(c4);
+    bottom.appendChild(c4);
 
-    // 4) fund progress (everyone)
-    const c2 = card('Fund progress this week');
-    c2.appendChild(el('div', 'dx-big', paidThisWeek() + ' member(s) paid'));
-    c2.appendChild(el('div', 'dx-sub', 'Approved payments for the ' + cw.name + '.'));
-    grid.appendChild(c2);
-
-    grid.appendChild(expensesCard());
-    return [grid];
+    bottom.appendChild(expensesCard());
+    return { notice, mid, bottom };
   }
 
   /* ---------- admin ---------- */
@@ -360,8 +399,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
       ? pendPay + ' payment(s) and ' + pendMem + ' member(s) waiting for you.'
       : 'Nothing is waiting. All clear ✓');
 
-    const grid = el('div', 'dx-grid');
-    if (notice) grid.appendChild(notice);
+    const mid = el('div', 'dx-grid');
 
     // waiting card
     const c1 = card('Waiting for you');
@@ -374,7 +412,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     }
     c1.appendChild(todo('Payments to review', pendPay, 'review'));
     c1.appendChild(todo('Members to approve', pendMem, 'students'));
-    grid.appendChild(c1);
+    mid.appendChild(c1);
 
     // progress card
     const members = (EEE.getMembers ? EEE.getMembers() : []).filter(x => x.is_active && x.approved);
@@ -388,7 +426,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     track.appendChild(fillBar);
     c2.appendChild(track);
     c2.appendChild(el('div', 'dx-sub', pct + '% (approved payments only)'));
-    grid.appendChild(c2);
+    mid.appendChild(c2);
 
     // dues summary card
     const c3 = card('Dues summary');
@@ -422,10 +460,50 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
       });
       c3.appendChild(link('Open Dues page', 'dues'));
     }
-    grid.appendChild(c3);
+    mid.appendChild(c3);
 
-    grid.appendChild(expensesCard());
-    return [grid];
+    const bottom = el('div', 'dx-grid');
+    bottom.appendChild(expensesCard());
+    return { notice, mid, bottom };
+  }
+
+  /* ---------- places on the dashboard ----------
+     #dx-n  = Notice board, right under the Quick pay buttons
+     #dx    = Fund progress / My progress, right under Live payments
+     #dx-b  = other cards, at the very bottom (below the charts)   */
+  function hosts() {
+    let n = $('dx-n'), m = $('dx'), b = $('dx-b');
+    const pay = $('paybar'), feed = $('feed'), page = $('page-overview');
+    if (!n && pay && pay.parentNode) {
+      n = el('div'); n.id = 'dx-n';
+      pay.parentNode.insertBefore(n, pay.nextSibling);
+    }
+    if (!m && feed) {
+      const fc = feed.closest('.card');
+      if (fc && fc.parentNode) {
+        m = el('div'); m.id = 'dx';
+        fc.parentNode.insertBefore(m, fc.nextSibling);
+      }
+    }
+    if (!b && page) {
+      b = el('div'); b.id = 'dx-b';
+      page.appendChild(b);
+    }
+    return { n, m, b };
+  }
+
+  // Draw nodes into a place. If nothing changed, do not redraw (no flicker).
+  function put(host, nodes) {
+    if (!host) return false;
+    const fresh = document.createElement('div');
+    nodes.filter(Boolean).forEach(x => fresh.appendChild(x));
+    const sig = fresh.innerHTML;
+    if (host.dataset.sig === sig) return false;
+    const y = window.scrollY;
+    host.replaceChildren(...Array.from(fresh.childNodes));
+    host.dataset.sig = sig;
+    window.scrollTo(0, y);
+    return true;
   }
 
   /* ---------- render ---------- */
@@ -438,46 +516,35 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     const typing = $('dx-notice-in');
     if (typing && document.activeElement === typing) return;
     const my = ++seq;
-    let nodes;
-    try { nodes = S.role === 'admin' ? await adminView() : await studentView(); }
+    let parts;
+    try { parts = S.role === 'admin' ? await adminView() : await studentView(); }
     catch (e) { console.error(e); document.body.classList.add('dx-ready'); return; }
     if (my !== seq) return;
-    let b = $('dx');
-    if (!b) { b = el('div'); b.id = 'dx'; stats.parentNode.insertBefore(b, stats); }
-    // build the new cards off-screen and compare with what is already shown
-    const fresh = document.createElement('div');
-    nodes.forEach(n => fresh.appendChild(n));
-    const sig = fresh.innerHTML;
-    if (!(b.dataset.sig === sig && b.childNodes.length)) {
-      const y = window.scrollY;
-      b.replaceChildren(...Array.from(fresh.childNodes));
-      b.dataset.sig = sig;
-      window.scrollTo(0, y);
-      // The cards are on screen now, so the notice slider has a width.
-      // Put it back on the notice that was showing before the refresh.
-      const car = b.querySelector('.dx-ncar');
+
+    const h = hosts();
+    const changed = put(h.n, [parts.notice]);
+    put(h.m, [parts.mid]);
+    put(h.b, [parts.bottom]);
+
+    // The notice is on screen now, so the slider has a width.
+    // Put it back on the notice that was showing before the refresh.
+    if (changed && h.n) {
+      const car = h.n.querySelector('.dx-ncar');
       if (car && car.clientWidth) {
         car.style.scrollBehavior = 'auto';
         car.scrollLeft = noticeIdx * car.clientWidth;
       }
     }
-    b.style.minHeight = '';
+    if (h.m) h.m.style.minHeight = '';
     document.body.classList.add('dx-ready');
   }
 
-  // Reserve the place for the cards at page load, so the balance cards do not jump
+  // Make the places ready at page load, so nothing jumps around
   (function () {
-    const st0 = $('stats');
-    if (st0 && !$('dx')) {
-      const ph = el('div');
-      ph.id = 'dx';
-      ph.style.minHeight = '360px';
-      st0.parentNode.insertBefore(ph, st0);
-    }
+    hosts();
     // safety: never keep things hidden if the first render fails
     setTimeout(() => {
       document.body.classList.add('dx-ready');
-      const d = $('dx'); if (d) d.style.minHeight = '';
     }, 8000);
   })();
 

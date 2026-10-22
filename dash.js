@@ -79,6 +79,12 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
 #page-overview #paybar .paybtn,#page-overview #paybar .paybtn::after,#page-overview #paybar .paybtn small::after{animation:none !important}
 }
 
+/* ===== Entrance animation: all dashboard parts rise in together after refresh ===== */
+#page-overview:not(.dx-go) .dx-sec{opacity:0}
+#page-overview.dx-go .dx-sec{animation:dxrise .6s cubic-bezier(.2,.7,.2,1) var(--d,0s) both !important}
+@keyframes dxrise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#page-overview.dx-go .dx-sec{animation:none !important}}
+
 /* ===== dashboard cards ===== */
 #dx-n:empty{display:none}
 #dx-n .dx-notice{margin-bottom:14px}
@@ -499,7 +505,29 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
       b = el('div'); b.id = 'dx-b';
       page.appendChild(b);
     }
+    // mark every part of the dashboard for the entrance animation (each one a little later)
+    const tag = (node, i) => {
+      if (node && !node.classList.contains('dx-sec')) {
+        node.classList.add('dx-sec');
+        node.style.setProperty('--d', (i * 0.06) + 's');
+      }
+    };
+    tag($('hello'), 0);
+    tag($('stats'), 1);
+    tag(pay, 2);
+    tag(n, 3);
+    tag(feed && feed.closest('.card'), 4);
+    tag(m, 5);
+    tag(document.querySelector('#page-overview .chartrow'), 6);
+    tag(b, 7);
     return { n, m, b };
+  }
+
+  // Show the dashboard: everything appears together with the animation
+  function reveal() {
+    document.body.classList.add('dx-ready');
+    const pg = $('page-overview');
+    if (pg) pg.classList.add('dx-go');
   }
 
   // Draw nodes into a place. If nothing changed, do not redraw (no flicker).
@@ -528,7 +556,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     const my = ++seq;
     let parts;
     try { parts = S.role === 'admin' ? await adminView() : await studentView(); }
-    catch (e) { console.error(e); document.body.classList.add('dx-ready'); return; }
+    catch (e) { console.error(e); reveal(); return; }
     if (my !== seq) return;
 
     const h = hosts();
@@ -546,16 +574,14 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
       }
     }
     if (h.m) h.m.style.minHeight = '';
-    document.body.classList.add('dx-ready');
+    reveal();
   }
 
   // Make the places ready at page load, so nothing jumps around
   (function () {
     hosts();
     // safety: never keep things hidden if the first render fails
-    setTimeout(() => {
-      document.body.classList.add('dx-ready');
-    }, 8000);
+    setTimeout(reveal, 8000);
   })();
 
   /* ---------- admin backup: download CSV files (shown in Settings) ---------- */
@@ -759,6 +785,33 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
       if (EEE.state.role === 'admin') openAdminPanel();
     });
   }
+
+
+  /* ---------- phone: swipe from the left edge to open the menu, swipe left to close ---------- */
+  (function () {
+    let sx = 0, sy = 0, track = false, done = false;
+    const narrow = () => window.innerWidth <= 900;
+    const isOpen = () => { const sd = $('side'); return !!(sd && sd.classList.contains('open')); };
+    document.addEventListener('touchstart', e => {
+      track = false; done = false;
+      if (!narrow()) return;
+      const app = $('app-view');
+      if (!app || app.hidden) return;
+      if (document.querySelector('.modal-back')) return;
+      const t = e.touches[0];
+      sx = t.clientX; sy = t.clientY;
+      if (isOpen() || sx <= 36) track = true;
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+      if (!track || done) return;
+      const t = e.touches[0];
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      // mostly up/down: it is a normal scroll, not a menu swipe
+      if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx) * 0.8) { track = false; return; }
+      if (!isOpen() && dx > 55) { done = true; $('menu-btn').click(); }
+      else if (isOpen() && dx < -55) { done = true; $('menu-btn').click(); }
+    }, { passive: true });
+  })();
 
   wireAdminBell();
   EEE.refreshHooks.push(render);

@@ -27,6 +27,54 @@
     return '#e2136e';
   }
 
+  // Fund start: before the start date nothing is due. The calendar week that
+  // contains the start date is the first week to pay (earlier weeks are never due).
+  function fundInfo() {
+    const st = EEE.state.settings || {};
+    const iso = String(st.start_date || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return { set: false, started: false, startIso: '', firstWeek: '' };
+    const t = todayDhaka();
+    const todayIso = monthKey(t.y, t.m) + '-' + pad(t.d);
+    const d = Number(iso.slice(8, 10));
+    let idx = 0;
+    START_DAYS.forEach((day, i) => { if (day <= d) idx = i; });
+    return { set: true, started: todayIso >= iso, startIso: iso, firstWeek: iso.slice(0, 7) + '-' + pad(START_DAYS[idx]) };
+  }
+  EEE.fundInfo = fundInfo;
+
+  // Message box: the fund has not started yet
+  function notStartedBox() {
+    const fi = fundInfo();
+    const back = el('div', 'modal-back');
+    back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = el('div', 'card');
+    box.style.cssText = 'width:100%;max-width:400px;margin:0;padding:26px;border-top:6px solid #f59e0b;text-align:center;';
+    const ic = el('div', '', '⏳');
+    ic.style.cssText = 'font-size:44px;margin-bottom:6px;';
+    box.appendChild(ic);
+    const h = el('h2', '', 'Fund has not started yet');
+    h.style.cssText = 'font-size:22px;font-weight:800;margin:0 0 10px;color:#92400e;';
+    box.appendChild(h);
+    if (fi.set) {
+      const d = el('div', '', EEE.fmtDate(fi.startIso));
+      d.style.cssText = 'display:inline-block;margin:0 0 12px;padding:8px 18px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:20px;font-weight:800;';
+      box.appendChild(d);
+      const p = el('div', '', 'The class fund will start on this date. You do not need to pay anything before that day.');
+      p.style.cssText = 'font-size:15px;line-height:1.5;color:#334155;margin-bottom:18px;';
+      box.appendChild(p);
+    } else {
+      const p = el('div', '', 'The admin has not set the fund start date yet. You do not need to pay anything now.');
+      p.style.cssText = 'font-size:15px;line-height:1.5;color:#334155;margin-bottom:18px;';
+      box.appendChild(p);
+    }
+    const ok = el('button', 'btn full', 'OK');
+    ok.addEventListener('click', () => back.remove());
+    box.appendChild(ok);
+    back.addEventListener('click', e => { if (e.target === back) back.remove(); });
+    back.appendChild(box);
+    document.body.appendChild(back);
+  }
+
   function weekInfoFromIso(iso) {
     const y = Number(iso.slice(0, 4)), m = Number(iso.slice(5, 7)), day = Number(iso.slice(8, 10));
     const idx = START_DAYS.indexOf(day);
@@ -88,6 +136,8 @@
       toast('Payment details are not set yet. Please contact the admin.');
       return;
     }
+    // before the fund start date nobody has to pay
+    if (!fundInfo().started) { notStartedBox(); return; }
     const weekly = Number(st.weekly_amount || 30);
     const cw = weekIso ? weekInfoFromIso(weekIso) : currentWeek();
     const taken = await takenWeeks();
@@ -372,6 +422,7 @@
     }
     const list = r.data || [];
     const st = EEE.state.settings || {};
+    const fi = fundInfo();
     const t = todayDhaka();
     const nowKey = monthKey(t.y, t.m);
     const weekly = Number(st.weekly_amount || 30);
@@ -403,13 +454,17 @@
     });
 
     function weeksFor(key) {
+      // before the fund starts there is nothing to pay
+      if (!fi.started) return [];
       const y = Number(key.slice(0, 4)), m = Number(key.slice(5, 7));
       const out = [];
       START_DAYS.forEach((day, i) => {
         if (day > daysInMonth(y, m)) return;
         if (y === t.y && m === t.m && day > t.d) return;
-        const endDay = i === 3 ? daysInMonth(y, m) : day + 6;
         const iso = key + '-' + pad(day);
+        // weeks before the first fund week are never due
+        if (iso < fi.firstWeek) return;
+        const endDay = i === 3 ? daysInMonth(y, m) : day + 6;
         out.push({
           iso, name: ORD[i] + ' week', range: day + ' - ' + endDay,
           isCurrent: key === nowKey && t.d >= day && t.d <= endDay,
@@ -433,6 +488,14 @@
     cards.appendChild(colorCard('linear-gradient(135deg,#f59e0b,#fbbf24)', '⏳', 'Waiting for approval', money(pendingAmt)));
     cards.appendChild(colorCard('linear-gradient(135deg,#ef4444,#f97316)', '!', 'Total due', money(dueTotal * weekly)));
     sec.appendChild(cards);
+
+    if (!fi.started) {
+      const soon = el('div', '', fi.set
+        ? 'The fund has not started yet. It will start on ' + EEE.fmtDate(fi.startIso) + '. You do not need to pay anything before that day.'
+        : 'The admin has not set the fund start date yet. You do not need to pay anything now.');
+      soon.style.cssText = 'margin-bottom:20px;padding:14px 16px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:14px;font-size:14px;font-weight:700;';
+      sec.appendChild(soon);
+    }
 
     if (oldDueMonths.length) {
       const warn = el('div', '', 'Unpaid weeks in earlier months: ' + oldDueMonths.join(', ') + '. Please contact the admin.');
@@ -469,7 +532,12 @@
       wcard.appendChild(row);
     });
     const dueHere = wl.filter(w => w.status === 'due').length;
-    const note = el('div', 'help', dueHere ? ('You have ' + dueHere + ' unpaid week(s) in this month. Tap bKash or Nagad next to a week to pay.') : 'All weeks of this month are paid or waiting for approval.');
+    let noteText;
+    if (!fi.started) noteText = fi.set ? 'Fund starts on ' + EEE.fmtDate(fi.startIso) + '. No weeks to pay yet.' : 'No weeks to pay yet.';
+    else if (!wl.length) noteText = 'No weeks to pay in this month yet.';
+    else if (dueHere) noteText = 'You have ' + dueHere + ' unpaid week(s) in this month. Tap bKash or Nagad next to a week to pay.';
+    else noteText = 'All weeks of this month are paid or waiting for approval.';
+    const note = el('div', 'help', noteText);
     note.style.marginTop = '12px';
     note.style.marginBottom = '0';
     wcard.appendChild(note);
@@ -699,6 +767,7 @@
 .sp-week.ok{background:#ecfdf5;border-color:#a7f3d0}.sp-week.ok span{background:#d1fae5;color:#047857}
 .sp-week.wait{background:#fffbeb;border-color:#fde68a}.sp-week.wait span{background:#fef3c7;color:#92400e}
 .sp-week.due{background:#fef2f2;border-color:#fecaca}.sp-week.due span{background:#fee2e2;color:#b91c1c}
+.sp-soon{margin-top:14px;padding:12px 14px;border-radius:12px;background:#fef3c7;color:#92400e;font-size:14px;font-weight:700}
 `;
   const style = document.createElement('style');
   style.textContent = css;
@@ -749,6 +818,7 @@
     const st = EEE.state.settings || {};
     const weekly = Number(st.weekly_amount || 30);
     const t = today();
+    const fi = EEE.fundInfo ? EEE.fundInfo() : { set: !!st.start_date, started: true, startIso: '', firstWeek: '' };
 
     let paid = 0, pending = 0;
     const wstat = {};
@@ -761,13 +831,16 @@
     });
 
     const need = [];
-    if (st.start_date) {
+    if (st.start_date && fi.started) {
       let [y, m] = st.start_date.split('-').map(Number);
       while (y < t.y || (y === t.y && m <= t.m)) {
         START.forEach(day => {
           if (day > dim(y, m)) return;
           if (y === t.y && m === t.m && day > t.d) return;
-          need.push(y + '-' + pad(m) + '-' + pad(day));
+          const iso = y + '-' + pad(m) + '-' + pad(day);
+          // weeks before the first fund week are never due
+          if (fi.firstWeek && iso < fi.firstWeek) return;
+          need.push(iso);
         });
         m++; if (m > 12) { m = 1; y++; }
       }
@@ -797,23 +870,30 @@
     track.appendChild(fillBar);
     card.appendChild(track);
 
-    const mon = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', month: 'long', year: 'numeric' });
-    const mh = el('div', '', 'This month · ' + mon);
-    mh.style.cssText = 'margin-top:16px;font-size:13px;font-weight:700;color:#047857;';
-    card.appendChild(mh);
-    const row = el('div', 'sp-weeks');
-    START.forEach((day, i) => {
-      if (day > dim(t.y, t.m) || day > t.d) return;
-      const iso = t.y + '-' + pad(t.m) + '-' + pad(day);
-      const status = wstat[iso];
-      const cls = status === 'approved' ? 'ok' : status === 'pending' ? 'wait' : 'due';
-      const txt = status === 'approved' ? 'Paid' : status === 'pending' ? 'Pending' : 'Due';
-      const w = el('div', 'sp-week ' + cls);
-      w.appendChild(el('b', '', ORD[i] + ' week'));
-      w.appendChild(el('span', '', txt));
-      row.appendChild(w);
-    });
-    card.appendChild(row);
+    if (!fi.started) {
+      card.appendChild(el('div', 'sp-soon', fi.set && fi.startIso
+        ? 'The fund has not started yet. It will start on ' + EEE.fmtDate(fi.startIso) + '. You do not need to pay anything before that day.'
+        : 'The fund start date is not set yet. You do not need to pay anything now.'));
+    } else {
+      const mon = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', month: 'long', year: 'numeric' });
+      const mh = el('div', '', 'This month · ' + mon);
+      mh.style.cssText = 'margin-top:16px;font-size:13px;font-weight:700;color:#047857;';
+      card.appendChild(mh);
+      const row = el('div', 'sp-weeks');
+      START.forEach((day, i) => {
+        if (day > dim(t.y, t.m) || day > t.d) return;
+        const iso = t.y + '-' + pad(t.m) + '-' + pad(day);
+        if (fi.firstWeek && iso < fi.firstWeek) return;
+        const status = wstat[iso];
+        const cls = status === 'approved' ? 'ok' : status === 'pending' ? 'wait' : 'due';
+        const txt = status === 'approved' ? 'Paid' : status === 'pending' ? 'Pending' : 'Due';
+        const w = el('div', 'sp-week ' + cls);
+        w.appendChild(el('b', '', ORD[i] + ' week'));
+        w.appendChild(el('span', '', txt));
+        row.appendChild(w);
+      });
+      card.appendChild(row);
+    }
 
     const tot = $('p-total');
     if (tot) tot.textContent = money(paid);

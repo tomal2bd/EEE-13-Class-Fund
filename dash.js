@@ -42,21 +42,25 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
 #hello-n{display:none !important}
 .hello-m{font-size:15px;font-weight:700;opacity:.97;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.25)}
 
-/* ===== Greeting card: bigger, clear text, date under the greeting ===== */
-#hello{padding:16px 18px;min-height:88px;border-radius:18px;margin-bottom:12px}
-#hello .hello-l{background:rgba(2,6,23,.32);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:9px 16px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-#hello .hello-g{font-size:24px;font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.55)}
-#hello .hello-m{font-size:15px;font-weight:700;color:#fff;opacity:1;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.55)}
-#hello .hello-t{padding:10px 14px;border-radius:14px;background:rgba(2,6,23,.32)}
-#hello #hello-time{font-size:20px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+/* ===== Greeting card: big, clear text, nice date chip ===== */
+#hello{padding:20px 22px;min-height:112px;border-radius:20px;margin-bottom:12px;gap:12px}
+#hello .hello-l{min-width:0;background:rgba(2,6,23,.30);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:12px 18px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#hello .hello-g{font-size:29px;line-height:1.2;font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.55)}
+#hello .hello-m{display:inline-flex;align-items:center;gap:8px;margin-top:9px;padding:6px 15px;border-radius:999px;background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.45);font-size:15px;font-weight:600;color:#fff;opacity:1;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+#hello .hello-m svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+#hello .hello-m b{font-weight:800}
+#hello .hello-m b::after{content:"·";margin-left:8px;opacity:.8}
+#hello .hello-t{padding:12px 18px;border-radius:16px;background:rgba(2,6,23,.32)}
+#hello #hello-time{font-size:25px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5)}
 #hello #hello-date{display:none}
 @media(max-width:600px){
-#hello{padding:12px 12px;min-height:80px;gap:8px}
-#hello .hello-l{padding:8px 12px}
-#hello .hello-g{font-size:19px}
-#hello .hello-m{font-size:13px}
-#hello .hello-t{padding:8px 10px}
-#hello #hello-time{font-size:15px}
+#hello{padding:14px 12px;min-height:96px;gap:8px}
+#hello .hello-l{padding:10px 12px}
+#hello .hello-g{font-size:21px}
+#hello .hello-m{font-size:12.5px;padding:5px 11px;gap:6px;margin-top:7px}
+#hello .hello-m svg{width:14px;height:14px}
+#hello .hello-t{padding:9px 10px}
+#hello #hello-time{font-size:16px}
 }
 
 /* ===== bKash / Nagad: clear "tap to pay" buttons with effect ===== */
@@ -131,7 +135,13 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     if (!n) return;
     let m = $('hello-m');
     if (!m) { m = el('div', 'hello-m'); m.id = 'hello-m'; n.parentNode.insertBefore(m, n.nextSibling); }
-    m.textContent = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const d = new Date();
+    const wd = d.toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', weekday: 'long' });
+    const rest = d.toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'long', year: 'numeric' });
+    const key = wd + '|' + rest;
+    if (m.dataset.k === key) return;
+    m.dataset.k = key;
+    m.innerHTML = '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><b>' + wd + '</b><span>' + rest + '</span>';
   }
   setDateLine();
   setInterval(setDateLine, 60000);

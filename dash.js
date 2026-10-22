@@ -105,18 +105,19 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
 .dx-todo.zero{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
 .dx-todo b{font-size:20px}
 .dx-notice{grid-column:1/-1;border:2px solid #fbbf24;background:#fffbeb}
-.dx-notice h2{color:#92400e}
-.dx-nitem{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 0}
+.dx-notice{padding:14px 16px}
+.dx-notice h2{color:#92400e;margin:0 0 4px}
+.dx-nitem{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:4px 0}
 .dx-nmsg{font-size:16px;font-weight:700;color:#0f172a;word-break:break-word}
 .dx-ntime{font-size:12px;color:#92400e;margin-top:2px}
-.dx-ncar{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.dx-ncar{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;transition:height .25s ease;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .dx-ncar::-webkit-scrollbar{display:none}
-.dx-nslide{flex:0 0 100%;min-width:0;box-sizing:border-box;scroll-snap-align:start}
-.dx-ndots{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:6px}
+.dx-nslide{align-self:flex-start;flex:0 0 100%;min-width:0;box-sizing:border-box;scroll-snap-align:start}
+.dx-ndots{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:4px}
 .dx-ndot{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:#fcd34d;cursor:pointer;transition:width .2s}
 .dx-ndot.on{background:#92400e;width:22px;border-radius:999px}
-.dx-ncount{text-align:center;font-size:12px;color:#92400e;margin-top:4px}
-.dx-nform{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.dx-ncount{text-align:center;font-size:12px;color:#92400e;margin-top:2px}
+.dx-nform{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .dx-nform input{flex:1;min-width:200px;margin:0}
 `;
   const style = document.createElement('style');
@@ -151,6 +152,19 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
   }
   setDateLine();
   setInterval(setDateLine, 60000);
+
+  // Make the notice box exactly as tall as the notice that is showing
+  function fitNotice() {
+    const car = document.querySelector('#dx-n .dx-ncar');
+    if (!car || !car.clientWidth) return;
+    const slides = car.children;
+    if (!slides.length) return;
+    let i = Math.round(car.scrollLeft / car.clientWidth);
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    const h = slides[i].offsetHeight;
+    if (h) car.style.height = h + 'px';
+  }
+  window.addEventListener('resize', fitNotice);
 
   /* ---------- notice board (one notice at a time, swipe sideways) ---------- */
   let noticeIdx = 0; // which notice is showing, kept when the page refreshes
@@ -222,6 +236,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
           const i = Math.max(0, Math.min(list.length - 1, Math.round(car.scrollLeft / car.clientWidth)));
           noticeIdx = i;
           mark(i);
+          fitNotice();
         });
         mark(noticeIdx);
         c.appendChild(dots);
@@ -574,6 +589,8 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
       }
     }
     if (h.m) h.m.style.minHeight = '';
+    fitNotice();
+    setTimeout(fitNotice, 400);
     reveal();
   }
 

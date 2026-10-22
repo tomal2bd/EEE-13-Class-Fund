@@ -80,7 +80,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
 }
 
 /* ===== Entrance animation: all dashboard parts rise in together after refresh ===== */
-#page-overview:not(.dx-go) .dx-sec{opacity:0}
+#page-overview:not(.dx-go) .dx-sec{opacity:0 !important;visibility:hidden !important}
 #page-overview.dx-go .dx-sec{animation:dxrise .6s cubic-bezier(.2,.7,.2,1) var(--d,0s) both !important}
 @keyframes dxrise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#page-overview.dx-go .dx-sec{animation:none !important}}

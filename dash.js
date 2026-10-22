@@ -42,19 +42,21 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
 #hello-n{display:none !important}
 .hello-m{font-size:15px;font-weight:700;opacity:.97;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.25)}
 
-/* ===== Greeting card: a little bigger ===== */
-#hello{padding:16px 20px;min-height:84px;border-radius:18px;margin-bottom:12px}
-#hello .hello-g{font-size:23px}
-#hello .hello-m{font-size:14px;margin-top:5px}
-#hello .hello-t{padding:8px 14px;border-radius:12px}
-#hello #hello-time{font-size:19px}
-#hello #hello-date{display:block;font-size:12px;margin-top:2px}
+/* ===== Greeting card: bigger, clear text, date under the greeting ===== */
+#hello{padding:16px 18px;min-height:88px;border-radius:18px;margin-bottom:12px}
+#hello .hello-l{background:rgba(2,6,23,.32);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:9px 16px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#hello .hello-g{font-size:24px;font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.55)}
+#hello .hello-m{font-size:15px;font-weight:700;color:#fff;opacity:1;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.55)}
+#hello .hello-t{padding:10px 14px;border-radius:14px;background:rgba(2,6,23,.32)}
+#hello #hello-time{font-size:20px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+#hello #hello-date{display:none}
 @media(max-width:600px){
-#hello{padding:14px 14px;min-height:76px}
+#hello{padding:12px 12px;min-height:80px;gap:8px}
+#hello .hello-l{padding:8px 12px}
 #hello .hello-g{font-size:19px}
 #hello .hello-m{font-size:13px}
+#hello .hello-t{padding:8px 10px}
 #hello #hello-time{font-size:15px}
-#hello #hello-date{display:none}
 }
 
 /* ===== bKash / Nagad: clear "tap to pay" buttons with effect ===== */
@@ -123,13 +125,16 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     b.addEventListener('click', () => EEE.showPage(page));
     return b;
   }
-  function setBannerMsg(text) {
+  // Greeting card: shows today's date (Dhaka time) under the greeting
+  function setDateLine() {
     const n = $('hello-n');
     if (!n) return;
     let m = $('hello-m');
     if (!m) { m = el('div', 'hello-m'); m.id = 'hello-m'; n.parentNode.insertBefore(m, n.nextSibling); }
-    m.textContent = text || '';
+    m.textContent = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
+  setDateLine();
+  setInterval(setDateLine, 60000);
 
   /* ---------- notice board (one notice at a time, swipe sideways) ---------- */
   let noticeIdx = 0; // which notice is showing, kept when the page refreshes
@@ -314,10 +319,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     if (ph) ph.textContent = 'Tap bKash or Nagad to pay this week (' + money(weekly) + ')';
     document.querySelectorAll('#paybar .paybtn small').forEach(s => { s.textContent = 'Tap to pay'; });
 
-    // banner message
-    if (status === 'due') setBannerMsg('This week ' + money(weekly) + ' is due. Please pay.');
-    else if (dueWeeks) setBannerMsg('This week is done. ' + dueWeeks + ' older week(s) still unpaid.');
-    else setBannerMsg('All your payments are done ✓');
+    setDateLine();
 
     /* ----- middle part: fund progress, my progress ----- */
     const mid = el('div', 'dx-grid');
@@ -395,9 +397,7 @@ body:not(.dx-ready) #dx ~ *{visibility:hidden}
     const pendPay = p.count || 0;
     const pendMem = (m.data || []).length;
 
-    setBannerMsg(pendPay || pendMem
-      ? pendPay + ' payment(s) and ' + pendMem + ' member(s) waiting for you.'
-      : 'Nothing is waiting. All clear ✓');
+    setDateLine();
 
     const mid = el('div', 'dx-grid');
 

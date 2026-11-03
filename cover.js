@@ -36,7 +36,7 @@
     name: ['Your name', 40, ''],
     class_roll: ['Class roll', 10, ''],
     exam_roll: ['Exam roll (optional)', 15, 'Leave empty if you do not have one yet.'],
-    reg_no: ['Reg no.', 20, 'Example: 2025-732-270'],
+    reg_no: ['Reg no.', 20, 'Example: 2025-732-270. Hyphens are added for you.'],
     batch: ['Batch', 6, 'Example: 13'],
     semester: ['Semester', 12, 'Example: 1st'],
     session: ['Session', 12, 'Example: 2025-2026'],
@@ -56,6 +56,15 @@
   const clean = s => String(s || '').replace(/\s+/g, ' ').trim();
   const todayISO = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
   const dmy = iso => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) : '');
+  // Registration no format: 2025-732-270 (10 digits -> 4-3-3). Anything else is left as typed.
+  function fmtReg(v) {
+    const t = String(v || '').trim();
+    if (!t || /[^0-9\-\s]/.test(t)) return t;
+    const d = t.replace(/\D/g, '');
+    if (d.length > 10) return t;
+    return [d.slice(0, 4), d.slice(4, 7), d.slice(7, 10)].filter(Boolean).join('-');
+  }
+  EEE.fmtReg = fmtReg;
   const curTeacher = () => teachers.find(t => t.id === teacherId) || null;
   const missingGlyphs = s => Array.from(new Set(Array.from(clean(s)).filter(c => BM_GLYPHS.indexOf(c) === -1)));
 
@@ -194,7 +203,7 @@
     const rows = [['name', 1114], ['class_roll', 1166], ['exam_roll', 1218], ['reg_no', 1270], ['batch', 1321],
       ['semester', 1372], ['session', 1424], ['date_exp', 1476], ['date_sub', 1527]];
     rows.forEach(([k, y]) => {
-      const v = (k === 'date_exp' || k === 'date_sub') ? dmy(D[k]) : clean(D[k]);
+      const v = (k === 'date_exp' || k === 'date_sub') ? dmy(D[k]) : k === 'reg_no' ? fmtReg(clean(D[k])) : clean(D[k]);
       if (v) put(343, y, v, shrink(ALICE, v, BOX, 352), ALICE);
     });
 
@@ -430,7 +439,10 @@
     if (key === 'date_exp' || key === 'date_sub') i.type = 'date';
     else if (max) i.maxLength = max;
     i.value = D[key];
-    i.addEventListener('input', () => { D[key] = i.value; renderSoon(); });
+    i.addEventListener('input', () => {
+      if (key === 'reg_no') { const f = fmtReg(i.value); if (f !== i.value) i.value = f; }
+      D[key] = i.value; renderSoon();
+    });
     inputs[key] = i;
     w.appendChild(i);
     if (hint) w.appendChild(el('p', 'hint', hint));
@@ -442,7 +454,7 @@
     if (st) {
       if (!D.name) D.name = st.full_name || '';
       if (!D.class_roll) D.class_roll = st.roll_no || '';
-      if (!D.reg_no) D.reg_no = st.registration_no || '';
+      if (!D.reg_no) D.reg_no = fmtReg(st.registration_no);
     }
     if (!D.date_sub) D.date_sub = todayISO();
     Object.keys(inputs).forEach(k => { if (inputs[k].value !== D[k]) inputs[k].value = D[k]; });
@@ -563,6 +575,14 @@
     anchor.parentNode.insertBefore(p, anchor.nextSibling);
   }
   mountPromo();
+
+  /* ---------- sign up form: add the hyphens while the student types the registration no ---------- */
+  (function () {
+    const u = $('u-reg');
+    if (!u || u.dataset.fmt) return;
+    u.dataset.fmt = '1';
+    u.addEventListener('input', () => { const f = fmtReg(u.value); if (f !== u.value) u.value = f; });
+  })();
 
   /* ---------- sidebar: put "Cover Page" just above Settings and show NEW until opened ---------- */
   EEE.refreshHooks.push(async () => {

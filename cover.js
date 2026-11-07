@@ -144,6 +144,7 @@
   /* ---------- drawing the cover (same layout as the template) ---------- */
   function draw(canvas, tpl, scale) {
     const ctx = canvas.getContext('2d');
+    const FB = ', "Cover Alice", serif';
     canvas.width = Math.round(CW * scale);
     canvas.height = Math.round(CH * scale);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
@@ -153,14 +154,14 @@
     ctx.fillStyle = '#000';
     ctx.textBaseline = 'alphabetic';
 
-    const widthAt = (font, size, text) => { ctx.font = size + 'px ' + font; return ctx.measureText(text).width; };
+    const widthAt = (font, size, text) => { ctx.font = size + 'px ' + font + FB; return ctx.measureText(text).width; };
     const fit = (font, text, px) => 100 * (px * K) / widthAt(font, 100, text);
     const shrink = (font, text, size, maxPx) => {
       const w = widthAt(font, size, text);
       return w > maxPx * K ? size * maxPx * K / w : size;
     };
     const put = (x, y, text, size, font, align) => {
-      ctx.font = size + 'px ' + font;
+      ctx.font = size + 'px ' + font + FB;
       ctx.textAlign = align || 'left';
       ctx.fillText(text, x * K, y * K + SHIFT + 0.33 * size);
     };

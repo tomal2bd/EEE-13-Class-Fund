@@ -127,7 +127,7 @@
     if (assets) return assets;
     assets = (async () => {
       const f1 = new FontFace('Cover Alice', 'url(cover-alice.ttf' + V + ')');
-      const f2 = new FontFace('Cover Black Mango', 'url(cover-blackmango.ttf' + V + ')');
+      const f2 = new FontFace('Cover Black Mango', 'url(cover-blackmango.ttf.otf' + V + ')');
       const img = new Image();
       img.src = 'cover-template.png' + V;
       await Promise.all([

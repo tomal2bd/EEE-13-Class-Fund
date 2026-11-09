@@ -225,9 +225,9 @@
         lines = [lines[0], l2 + '…'];
       }
       if (lines.length === 1) { put(438, y, lines[0], size, ALICE); return; }
-      const gap = (size * 1.3) / K;       // distance between the two lines, in layout units
-      put(438, y - gap / 2, lines[0], size, ALICE);
-      put(438, y + gap / 2, lines[1], size, ALICE);
+      const gap = (size * 1.15) / K;      // distance between the two lines, in layout units
+      put(438, y, lines[0], size, ALICE);          // first line sits on the colon
+      put(438, y + gap, lines[1], size, ALICE);    // second line goes just below
     };
 
     // top part: course and experiment

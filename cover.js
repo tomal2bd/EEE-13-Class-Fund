@@ -293,7 +293,8 @@
 
   function drawIndex(canvas, logo, t, scale) {
     const ctx = canvas.getContext('2d');
-    const KI = 1240 / 920, X0 = 60, X1 = 138, X2 = 704, X3 = 860;   // page is 920 wide: left margin 60 = right margin 60
+    // page is 920 wide: left margin 80 = right margin 80 (same look as the cover page boxes)
+    const KI = 1240 / 920, X0 = 80, X1 = 158, X2 = 684, X3 = 840, BOXY = 315;
     const rows = t && Array.isArray(t.rows) ? t.rows : [];
     ctx.font = '700 20px ' + IDXF;
     // course box: label | colon | value columns, so both colons and both values line up.
@@ -305,11 +306,11 @@
     const valW = Math.max.apply(null, cl.map(l => ctx.measureText(l).width));
     const sx = 460 - (valOff + valW) / 2;
     const boxH = Math.max(100, 28 + cl.length * 31);
-    const TOPY = Math.max(335, 205 + boxH + 30);
+    const TOPY = BOXY + boxH + 30;
     const lines = rows.map(r => wrapIdx(ctx, clean(r.name), X2 - X1 - 26));
     const hs = lines.map(l => Math.max(54, l.length * 27 + 24));
     const bot = TOPY + 63 + hs.reduce((a, b) => a + b, 0);
-    const H = Math.max(1301, bot + 60);
+    const H = Math.max(1301, bot + 80);
     canvas.width = Math.round(1240 * scale);
     canvas.height = Math.round(H * KI * scale);
     const k = KI * scale;
@@ -317,15 +318,16 @@
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 920, H);
     ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    if (logo && logo.complete && logo.naturalWidth) ctx.drawImage(logo, X0, 40, 150, 150);
+    // header: logo in the middle, INDEX under it (same as the cover page)
+    if (logo && logo.complete && logo.naturalWidth) ctx.drawImage(logo, 460 - 65, 80, 130, 130);
     ctx.font = '700 74px ' + IDXF;
-    ctx.fillText('INDEX', 460, 140);
+    ctx.fillText('INDEX', 460, 285);
 
     // course box
     ctx.lineWidth = 2;
-    ctx.strokeRect(X0, 205, X3 - X0, boxH);
+    ctx.strokeRect(X0, BOXY, X3 - X0, boxH);
     ctx.font = '700 20px ' + IDXF;
-    const cy = 205 + (boxH - cl.length * 31) / 2 + 22;
+    const cy = BOXY + (boxH - cl.length * 31) / 2 + 22;
     const codeY = cy + nameLines.length * 31;
     ctx.textAlign = 'left';
     ctx.fillText('Course Name', sx, cy);

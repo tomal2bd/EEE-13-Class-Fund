@@ -215,7 +215,7 @@
       const maxW = 852 * K;
       const s1 = shrink(ALICE, text, TOP, 852);
       if (s1 >= TOP * 0.9) { put(438, y, text, s1, ALICE); return; }
-      let size = TOP * 0.9, lines = wrap(text, ALICE, size, maxW);
+      let size = TOP, lines = wrap(text, ALICE, size, maxW);
       while ((lines.length > 2 || lines.some(l => widthAt(ALICE, size, l) > maxW)) && size > TOP * 0.5) {
         size *= 0.95; lines = wrap(text, ALICE, size, maxW);
       }
@@ -225,7 +225,7 @@
         lines = [lines[0], l2 + '…'];
       }
       if (lines.length === 1) { put(438, y, lines[0], size, ALICE); return; }
-      const gap = (size * 1.02) / K;       // distance between the two lines, in layout units
+      const gap = (size * 1.3) / K;       // distance between the two lines, in layout units
       put(438, y - gap / 2, lines[0], size, ALICE);
       put(438, y + gap / 2, lines[1], size, ALICE);
     };
@@ -702,9 +702,15 @@
     form.appendChild(bar);
     card.appendChild(form);
 
-    const nb = el('div', 'cv-actions'); nb.style.marginTop = '14px';
-    const newBtn = el('button', 'btn ghost', '+ Create new Index');
-    nb.appendChild(newBtn);
+    card.appendChild(el('div', 'sec', 'Create a new Index'));
+    const nrow = el('div', 'formgrid');
+    const nw = el('div'); nw.appendChild(el('label', '', 'Name of the new Index (example: Physics)'));
+    const nIn = el('input'); nIn.maxLength = 40; nw.appendChild(nIn); nrow.appendChild(nw);
+    card.appendChild(nrow);
+    const nb = el('div', 'cv-actions');
+    const newBtn = el('button', 'btn', 'Create Index');
+    const seedBtn = el('button', 'btn ghost', 'Create ready-made EEE-1102 Index');
+    nb.appendChild(newBtn); nb.appendChild(seedBtn);
     card.appendChild(nb);
     const msg = el('p', '');
     card.appendChild(msg);
@@ -747,20 +753,31 @@
       loadIndex();
     });
 
-    newBtn.addEventListener('click', async () => {
-      const n = prompt('Name of the new Index (example: Physics)');
-      if (n === null) return;
+    const create = async (n, extra) => {
+      msg.className = 'err'; msg.textContent = '';
       const nn = clean(n);
-      if (nn.length < 2 || nn.length > 40) { toast('Index name must be 2 to 40 letters.'); return; }
-      const r = await db.from('index_templates').insert({ name: nn, rows: [{ sn: '01', name: '' }] }).select('id').single();
+      if (nn.length < 2 || nn.length > 40) { msg.textContent = 'Index name must be 2 to 40 letters.'; return; }
+      const r = await db.from('index_templates').insert(Object.assign({ name: nn, rows: [{ sn: '01', name: '' }] }, extra || {})).select('id').single();
       if (r.error) {
-        toast(r.error.code === '23505' ? 'This name is already used.' : 'Could not create: ' + r.error.message);
+        msg.textContent = r.error.code === '23505' ? 'This name is already used.' : 'Could not create: ' + r.error.message;
         return;
       }
-      idxId = r.data.id;
-      toast('Index created. Now fill in the details and press Save changes.');
+      idxId = r.data.id; nIn.value = '';
+      msg.className = 'ok'; msg.textContent = 'Index created. Check the details above and press Save changes if you change anything.';
       loadIndex();
-    });
+    };
+    newBtn.addEventListener('click', () => create(nIn.value));
+    seedBtn.addEventListener('click', () => create('EEE', {
+      course_name: 'Electrical Circuit I Sessional', course_code: 'EEE-1102',
+      rows: [
+        ['01', 'Observation of Different Instruments in Circuit Lab'], ['02', 'Observation of Ohm\u2019s Law'],
+        ['03', 'Observation of Kirchhoff\u2019s Current Law (KCL)'], ['04', 'Observation of Kirchhoff\u2019s Voltage Law (KVL)'],
+        ['05', 'Observation of Nodal Analysis'], ['06', 'Observation of Mesh Analysis'],
+        ['07', 'Observation of Superposition Theorem'], ['08', 'Observation of Thevenin\u2019s Theorem'],
+        ['09', 'Observation of Maximum Power Transfer Theorem'], ['10', 'Observation of Norton\u2019s Theorem'],
+        ['11', 'Observation of R, R-L, R-C, and R-L-C Circuit in AC Trainer Board']
+      ].map(r => ({ sn: r[0], name: r[1] }))
+    }));
 
     parent.appendChild(card);
   }

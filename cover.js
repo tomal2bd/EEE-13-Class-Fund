@@ -215,7 +215,7 @@
       const maxW = 852 * K;
       const s1 = shrink(ALICE, text, TOP, 852);
       if (s1 >= TOP * 0.9) { put(438, y, text, s1, ALICE); return; }
-      let size = TOP, lines = wrap(text, ALICE, size, maxW);
+      let size = TOP * 0.92, lines = wrap(text, ALICE, size, maxW);
       while ((lines.length > 2 || lines.some(l => widthAt(ALICE, size, l) > maxW)) && size > TOP * 0.5) {
         size *= 0.95; lines = wrap(text, ALICE, size, maxW);
       }
@@ -225,9 +225,9 @@
         lines = [lines[0], l2 + '…'];
       }
       if (lines.length === 1) { put(438, y, lines[0], size, ALICE); return; }
-      const gap = (size * 1.15) / K;      // distance between the two lines, in layout units
-      put(438, y, lines[0], size, ALICE);          // first line sits on the colon
-      put(438, y + gap, lines[1], size, ALICE);    // second line goes just below
+      const gap = (size * 1.08) / K;      // distance between the two lines, in layout units
+      put(438, y - 5, lines[0], size, ALICE);          // first line sits on the colon
+      put(438, y - 5 + gap, lines[1], size, ALICE);    // second line goes just below, clear of Experiment No.
     };
 
     // top part: course and experiment
@@ -304,11 +304,10 @@
     ctx.lineWidth = 2;
     ctx.strokeRect(X0, 205, X3 - X0, 100);
     const cl = [['Course Name: ', clean(t && t.course_name), 248], ['Course Code: ', clean(t && t.course_code), 288]];
-    cl.forEach(([a, b, y]) => {
-      let f = 22;
-      do { ctx.font = '700 ' + f + 'px ' + IDXF; f--; } while (ctx.measureText(a + b).width > X3 - X0 - 30 && f > 10);
-      ctx.fillText(a + b, 460, y);
-    });
+    let f = 22;                          // one size for both lines, small enough for the longer one
+    while (f > 9 && cl.some(([a, b]) => { ctx.font = '700 ' + f + 'px ' + IDXF; return ctx.measureText(a + b).width > X3 - X0 - 30; })) f--;
+    ctx.font = '700 ' + f + 'px ' + IDXF;
+    cl.forEach(([a, b, y]) => ctx.fillText(a + b, 460, y));
 
     // table
     ctx.strokeRect(X0, TOPY, X3 - X0, bot - TOPY);

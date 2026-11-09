@@ -1,5 +1,5 @@
 // Bump CACHE whenever you change any ?v=N in index.html
-const CACHE = 'eee13-fund-v6';
+const CACHE = 'eee13-fund-v7';
 const V = '?v=5';      // version of the other files (style.css, payments.js ...)
 const APPV = '?v=6';   // version of app.js
 const SUPA = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
@@ -55,7 +55,18 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // other files: answer from the phone's cache straight away (fast).
+  // code files (.js and .css): always ask the server first, so a new upload shows up at once.
+  // The phone's copy is used only when there is no internet.
+  if (/\.(js|css)$/.test(url.pathname)) {
+    e.respondWith(
+      fetch(req, { cache: 'no-cache' })
+        .then(res => { if (res.ok) { const c = res.clone(); caches.open(CACHE).then(x => x.put(req, c)); } return res; })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // other files (images, fonts, icons): answer from the phone's cache straight away (fast).
   // Files with ?v=N are new URLs whenever you bump N, so they are always fresh.
   // Files without ?v (icons, manifest) refresh quietly in the background.
   e.respondWith(

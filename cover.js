@@ -33,7 +33,7 @@
   /* ---------- form fields ---------- */
   const FIELDS = {
     course_code: ['Course code', 20, 'Example: EEE-1102'],
-    course_title: ['Course title', 120, 'Example: Electrical Circuit I Sessional. Long titles go to two lines.'],
+    course_title: ['Course title', 200, 'Example: Electrical Circuit I Sessional. Long titles go to two lines.'],
     exp_no: ['Experiment no.', 10, ''],
     exp_name: ['Experiment name', 120, 'Two lines fit. Very long names get smaller.'],
     name: ['Your name', 40, ''],
@@ -214,8 +214,8 @@
     const putTitle = (text, y) => {
       const maxW = 852 * K;
       const s1 = shrink(ALICE, text, TOP, 852);
-      if (s1 >= TOP * 0.75) { put(438, y, text, s1, ALICE); return; }
-      let size = TOP * 0.8, lines = wrap(text, ALICE, size, maxW);
+      if (s1 >= TOP * 0.9) { put(438, y, text, s1, ALICE); return; }
+      let size = TOP * 0.9, lines = wrap(text, ALICE, size, maxW);
       while ((lines.length > 2 || lines.some(l => widthAt(ALICE, size, l) > maxW)) && size > TOP * 0.5) {
         size *= 0.95; lines = wrap(text, ALICE, size, maxW);
       }
@@ -225,7 +225,7 @@
         lines = [lines[0], l2 + '…'];
       }
       if (lines.length === 1) { put(438, y, lines[0], size, ALICE); return; }
-      const gap = (size * 1.1) / K;       // distance between the two lines, in layout units
+      const gap = (size * 1.02) / K;       // distance between the two lines, in layout units
       put(438, y - gap / 2, lines[0], size, ALICE);
       put(438, y + gap / 2, lines[1], size, ALICE);
     };

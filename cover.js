@@ -293,7 +293,7 @@
 
   function drawIndex(canvas, logo, t, scale) {
     const ctx = canvas.getContext('2d');
-    const KI = 1240 / 920, X0 = 67, X1 = 145, X2 = 704, X3 = 860;
+    const KI = 1240 / 920, X0 = 60, X1 = 138, X2 = 704, X3 = 860;   // page is 920 wide: left margin 60 = right margin 60
     const rows = t && Array.isArray(t.rows) ? t.rows : [];
     ctx.font = '700 20px ' + IDXF;
     // course box: label | colon | value columns, so both colons and both values line up.
@@ -317,9 +317,9 @@
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 920, H);
     ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    if (logo && logo.complete && logo.naturalWidth) ctx.drawImage(logo, 50, 30, 160, 160);
+    if (logo && logo.complete && logo.naturalWidth) ctx.drawImage(logo, X0, 40, 150, 150);
     ctx.font = '700 74px ' + IDXF;
-    ctx.fillText('INDEX', 460, 128);
+    ctx.fillText('INDEX', 460, 140);
 
     // course box
     ctx.lineWidth = 2;

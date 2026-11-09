@@ -30,7 +30,7 @@
   /* ---------- form fields ---------- */
   const FIELDS = {
     course_code: ['Course code', 20, 'Example: EEE-1102'],
-    course_title: ['Course title', 60, 'Example: Electrical Circuit I Sessional.'],
+    course_title: ['Course title', 120, 'Example: Electrical Circuit I Sessional. Long titles go to two lines.'],
     exp_no: ['Experiment no.', 10, ''],
     exp_name: ['Experiment name', 120, 'Two lines fit. Very long names get smaller.'],
     name: ['Your name', 40, ''],
@@ -180,10 +180,32 @@
     const DEPT = fit(ALICE, 'Electrical & Electronic Engineering', 480);
     const TEACH = fit(BMANGO, 'Md. Ifthakhar Khan Sagor', 470);
 
+    // course title: one line if it fits nicely, otherwise two smaller lines inside the same row
+    const putTitle = (text, y) => {
+      const maxW = 852 * K;
+      const s1 = shrink(ALICE, text, TOP, 852);
+      if (s1 >= TOP * 0.75) { put(438, y, text, s1, ALICE); return; }
+      let size = TOP * 0.8, lines = wrap(text, ALICE, size, maxW);
+      while ((lines.length > 2 || lines.some(l => widthAt(ALICE, size, l) > maxW)) && size > TOP * 0.5) {
+        size *= 0.95; lines = wrap(text, ALICE, size, maxW);
+      }
+      if (lines.length > 2) {
+        let l2 = lines.slice(1).join(' ');
+        while (widthAt(ALICE, size, l2 + '…') > maxW && l2.length > 1) l2 = l2.slice(0, -1);
+        lines = [lines[0], l2 + '…'];
+      }
+      if (lines.length === 1) { put(438, y, lines[0], size, ALICE); return; }
+      const gap = (size * 1.1) / K;       // distance between the two lines, in layout units
+      put(438, y - gap / 2, lines[0], size, ALICE);
+      put(438, y + gap / 2, lines[1], size, ALICE);
+    };
+
     // top part: course and experiment
     [['course_code', 780], ['course_title', 837], ['exp_no', 894]].forEach(([k, y]) => {
       const v = clean(D[k]);
-      if (v) put(438, y, v, shrink(ALICE, v, TOP, 852), ALICE);
+      if (!v) return;
+      if (k === 'course_title') putTitle(v, y);
+      else put(438, y, v, shrink(ALICE, v, TOP, 852), ALICE);
     });
     const en = clean(D.exp_name);
     if (en) {

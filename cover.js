@@ -241,7 +241,7 @@
     } else ctx.drawImage(tpl, 0, SHIFT, CW, CH);
 
     if (tl) {
-      if (two) { put(438, 832, tl.lines[0], tl.size, ALICE, 'left', true); put(438, 832 + gap, tl.lines[1], tl.size, ALICE, 'left', true); }
+      if (two) { put(438, 837, tl.lines[0], tl.size, ALICE, 'left', true); put(438, 837 + gap, tl.lines[1], tl.size, ALICE, 'left', true); }
       else put(438, 837, tl.lines[0], tl.size, ALICE);
     }
     [['course_code', 780], ['exp_no', 894]].forEach(([k, y]) => {

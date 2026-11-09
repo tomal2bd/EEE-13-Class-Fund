@@ -190,10 +190,10 @@
       const w = widthAt(font, size, text);
       return w > maxPx * K ? size * maxPx * K / w : size;
     };
-    const put = (x, y, text, size, font, align) => {
+    const put = (x, y, text, size, font, align, fixed) => {
       ctx.font = size + 'px ' + font + FB;
       ctx.textAlign = align || 'left';
-      ctx.fillText(text, x * K, (y > 870 ? y + dy : y) * K + SHIFT + 0.33 * size);
+      ctx.fillText(text, x * K, (y > 870 && !fixed ? y + dy : y) * K + SHIFT + 0.33 * size);
     };
     const wrap = (text, font, size, maxW) => {
       const lines = []; let cur = '';
@@ -232,7 +232,7 @@
       }
     }
     const two = !!(tl && tl.lines.length === 2);
-    const gap = two ? (tl.size * 1.12) / K : 0;     // distance between the two title lines, in layout units
+    const gap = two ? 57 : 0;                        // distance between the two title lines, same as the Experiment Name lines (57)
     dy = gap;
     if (two) {
       const sy = Math.round(866 * K);                // cut the template in the empty space under the Course Title row
@@ -241,7 +241,7 @@
     } else ctx.drawImage(tpl, 0, SHIFT, CW, CH);
 
     if (tl) {
-      if (two) { put(438, 832, tl.lines[0], tl.size, ALICE); put(438, 832 + gap, tl.lines[1], tl.size, ALICE); }
+      if (two) { put(438, 832, tl.lines[0], tl.size, ALICE, 'left', true); put(438, 832 + gap, tl.lines[1], tl.size, ALICE, 'left', true); }
       else put(438, 837, tl.lines[0], tl.size, ALICE);
     }
     [['course_code', 780], ['exp_no', 894]].forEach(([k, y]) => {

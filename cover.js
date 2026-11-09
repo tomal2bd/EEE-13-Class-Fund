@@ -180,10 +180,10 @@
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, CW, CH);
-    ctx.drawImage(tpl, 0, SHIFT, CW, CH);
     ctx.fillStyle = '#000';
     ctx.textBaseline = 'alphabetic';
 
+    let dy = 0;                          // how far everything under the Course Title row moves down
     const widthAt = (font, size, text) => { ctx.font = size + 'px ' + font + FB; return ctx.measureText(text).width; };
     const fit = (font, text, px) => 100 * (px * K) / widthAt(font, 100, text);
     const shrink = (font, text, size, maxPx) => {
@@ -193,7 +193,7 @@
     const put = (x, y, text, size, font, align) => {
       ctx.font = size + 'px ' + font + FB;
       ctx.textAlign = align || 'left';
-      ctx.fillText(text, x * K, y * K + SHIFT + 0.33 * size);
+      ctx.fillText(text, x * K, (y > 870 ? y + dy : y) * K + SHIFT + 0.33 * size);
     };
     const wrap = (text, font, size, maxW) => {
       const lines = []; let cur = '';
@@ -210,32 +210,43 @@
     const DEPT = fit(ALICE, 'Electrical & Electronic Engineering', 480);
     const TEACH = fit(BMANGO, 'Md. Ifthakhar Khan Sagor', 470);
 
-    // course title: one line if it fits nicely, otherwise two smaller lines inside the same row
-    const putTitle = (text, y) => {
+    // course title: one line if it fits, otherwise two lines at the same size as the other lines.
+    // When it takes two lines, the template below the title row moves down by one line.
+    const titleText = clean(D.course_title);
+    let tl = null;
+    if (titleText) {
       const maxW = 852 * K;
-      const s1 = shrink(ALICE, text, TOP, 852);
-      if (s1 >= TOP * 0.9) { put(438, y, text, s1, ALICE); return; }
-      let size = TOP * 0.92, lines = wrap(text, ALICE, size, maxW);
-      while ((lines.length > 2 || lines.some(l => widthAt(ALICE, size, l) > maxW)) && size > TOP * 0.5) {
-        size *= 0.95; lines = wrap(text, ALICE, size, maxW);
+      const s1 = shrink(ALICE, titleText, TOP, 852);
+      if (s1 >= TOP * 0.9) tl = { size: s1, lines: [titleText] };
+      else {
+        let size = TOP, lines = wrap(titleText, ALICE, size, maxW);
+        while ((lines.length > 2 || lines.some(l => widthAt(ALICE, size, l) > maxW)) && size > TOP * 0.5) {
+          size *= 0.95; lines = wrap(titleText, ALICE, size, maxW);
+        }
+        if (lines.length > 2) {
+          let l2 = lines.slice(1).join(' ');
+          while (widthAt(ALICE, size, l2 + '…') > maxW && l2.length > 1) l2 = l2.slice(0, -1);
+          lines = [lines[0], l2 + '…'];
+        }
+        tl = { size, lines };
       }
-      if (lines.length > 2) {
-        let l2 = lines.slice(1).join(' ');
-        while (widthAt(ALICE, size, l2 + '…') > maxW && l2.length > 1) l2 = l2.slice(0, -1);
-        lines = [lines[0], l2 + '…'];
-      }
-      if (lines.length === 1) { put(438, y, lines[0], size, ALICE); return; }
-      const gap = (size * 1.08) / K;      // distance between the two lines, in layout units
-      put(438, y - 5, lines[0], size, ALICE);          // first line sits on the colon
-      put(438, y - 5 + gap, lines[1], size, ALICE);    // second line goes just below, clear of Experiment No.
-    };
+    }
+    const two = !!(tl && tl.lines.length === 2);
+    const gap = two ? (tl.size * 1.12) / K : 0;     // distance between the two title lines, in layout units
+    dy = gap;
+    if (two) {
+      const sy = Math.round(866 * K);                // cut the template in the empty space under the Course Title row
+      ctx.drawImage(tpl, 0, 0, CW, sy, 0, SHIFT, CW, sy);
+      ctx.drawImage(tpl, 0, sy, CW, CH - sy, 0, SHIFT + sy + Math.round(gap * K), CW, CH - sy);
+    } else ctx.drawImage(tpl, 0, SHIFT, CW, CH);
 
-    // top part: course and experiment
-    [['course_code', 780], ['course_title', 837], ['exp_no', 894]].forEach(([k, y]) => {
+    if (tl) {
+      if (two) { put(438, 832, tl.lines[0], tl.size, ALICE); put(438, 832 + gap, tl.lines[1], tl.size, ALICE); }
+      else put(438, 837, tl.lines[0], tl.size, ALICE);
+    }
+    [['course_code', 780], ['exp_no', 894]].forEach(([k, y]) => {
       const v = clean(D[k]);
-      if (!v) return;
-      if (k === 'course_title') putTitle(v, y);
-      else put(438, y, v, shrink(ALICE, v, TOP, 852), ALICE);
+      if (v) put(438, y, v, shrink(ALICE, v, TOP, 852), ALICE);
     });
     const en = clean(D.exp_name);
     if (en) {
@@ -282,9 +293,13 @@
 
   function drawIndex(canvas, logo, t, scale) {
     const ctx = canvas.getContext('2d');
-    const KI = 1240 / 920, X0 = 67, X1 = 145, X2 = 704, X3 = 860, TOPY = 335;
+    const KI = 1240 / 920, X0 = 67, X1 = 145, X2 = 704, X3 = 860;
     const rows = t && Array.isArray(t.rows) ? t.rows : [];
     ctx.font = '700 20px ' + IDXF;
+    // course box: the course name may take two lines (same size as the rest of the page), then the course code
+    const cl = wrapIdx(ctx, 'Course Name: ' + clean(t && t.course_name), X3 - X0 - 40).concat(['Course Code: ' + clean(t && t.course_code)]);
+    const boxH = Math.max(100, 28 + cl.length * 31);
+    const TOPY = Math.max(335, 205 + boxH + 30);
     const lines = rows.map(r => wrapIdx(ctx, clean(r.name), X2 - X1 - 26));
     const hs = lines.map(l => Math.max(54, l.length * 27 + 24));
     const bot = TOPY + 63 + hs.reduce((a, b) => a + b, 0);
@@ -300,14 +315,11 @@
     ctx.font = '700 74px ' + IDXF;
     ctx.fillText('INDEX', 460, 128);
 
-    // course box: two lines, one for the course name and one for the course code
+    // course box
     ctx.lineWidth = 2;
-    ctx.strokeRect(X0, 205, X3 - X0, 100);
-    const cl = [['Course Name: ', clean(t && t.course_name), 248], ['Course Code: ', clean(t && t.course_code), 288]];
-    let f = 22;                          // one size for both lines, small enough for the longer one
-    while (f > 9 && cl.some(([a, b]) => { ctx.font = '700 ' + f + 'px ' + IDXF; return ctx.measureText(a + b).width > X3 - X0 - 30; })) f--;
-    ctx.font = '700 ' + f + 'px ' + IDXF;
-    cl.forEach(([a, b, y]) => ctx.fillText(a + b, 460, y));
+    ctx.strokeRect(X0, 205, X3 - X0, boxH);
+    ctx.font = '700 20px ' + IDXF;
+    cl.forEach((l, n) => ctx.fillText(l, 460, 205 + (boxH - cl.length * 31) / 2 + 22 + n * 31));
 
     // table
     ctx.strokeRect(X0, TOPY, X3 - X0, bot - TOPY);

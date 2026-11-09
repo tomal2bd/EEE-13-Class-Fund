@@ -296,8 +296,14 @@
     const KI = 1240 / 920, X0 = 67, X1 = 145, X2 = 704, X3 = 860;
     const rows = t && Array.isArray(t.rows) ? t.rows : [];
     ctx.font = '700 20px ' + IDXF;
-    // course box: the course name may take two lines (same size as the rest of the page), then the course code
-    const cl = wrapIdx(ctx, 'Course Name: ' + clean(t && t.course_name), X3 - X0 - 40).concat(['Course Code: ' + clean(t && t.course_code)]);
+    // course box: label | colon | value columns, so both colons and both values line up.
+    // The course name may take two lines (same size as the rest of the page), then the course code.
+    const labW = Math.max(ctx.measureText('Course Name').width, ctx.measureText('Course Code').width);
+    const valOff = labW + 10 + ctx.measureText(':').width + 10;
+    const nameLines = wrapIdx(ctx, clean(t && t.course_name), X3 - X0 - 40 - valOff);
+    const cl = nameLines.concat([clean(t && t.course_code)]);
+    const valW = Math.max.apply(null, cl.map(l => ctx.measureText(l).width));
+    const sx = 460 - (valOff + valW) / 2;
     const boxH = Math.max(100, 28 + cl.length * 31);
     const TOPY = Math.max(335, 205 + boxH + 30);
     const lines = rows.map(r => wrapIdx(ctx, clean(r.name), X2 - X1 - 26));
@@ -319,7 +325,16 @@
     ctx.lineWidth = 2;
     ctx.strokeRect(X0, 205, X3 - X0, boxH);
     ctx.font = '700 20px ' + IDXF;
-    cl.forEach((l, n) => ctx.fillText(l, 460, 205 + (boxH - cl.length * 31) / 2 + 22 + n * 31));
+    const cy = 205 + (boxH - cl.length * 31) / 2 + 22;
+    const codeY = cy + nameLines.length * 31;
+    ctx.textAlign = 'left';
+    ctx.fillText('Course Name', sx, cy);
+    ctx.fillText(':', sx + labW + 10, cy);
+    nameLines.forEach((l, n) => ctx.fillText(l, sx + valOff, cy + n * 31));
+    ctx.fillText('Course Code', sx, codeY);
+    ctx.fillText(':', sx + labW + 10, codeY);
+    ctx.fillText(cl[cl.length - 1], sx + valOff, codeY);
+    ctx.textAlign = 'center';
 
     // table
     ctx.strokeRect(X0, TOPY, X3 - X0, bot - TOPY);

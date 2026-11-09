@@ -1,8 +1,10 @@
 /* =====================================================================
-   EEE-13 Class Fund · Cover Page Maker (Lab Report)
+   EEE-13 Class Fund · Cover Page Maker (Lab Report + Index)
    Cover page by Tomal & Pronay
    - Students fill a form, see a live preview and download a PDF.
    - The admin controls the "Submitted to" teacher dropdown (name + department).
+   - The admin controls the Index templates (course name, course code, rows).
+     Students only type the page numbers and download the Index.
    - Everything is drawn in the browser. No student data is saved on a server.
    ===================================================================== */
 (function () {
@@ -20,6 +22,7 @@
   const V = '?v=1';
   const ALICE = '"Cover Alice", Georgia, serif';
   const BMANGO = '"Cover Black Mango", "Cover Alice", Georgia, serif';
+  const IDXF = '"Index Font", "DejaVu Serif", Georgia, serif';
   // letters that exist in the Black Mango file we have. Update when the full font is added.
   const BM_GLYPHS = ' .IKMSabdefghikmnortuy';
   const DEPT_SUGGEST = [
@@ -52,6 +55,15 @@
   const inputs = {};
   let built = false, ui = {}, assets = null;
 
+  /* ---------- Index state ---------- */
+  let mode = 'lab';                    // 'lab' or 'index'
+  let idxList = [];
+  let idxId = '';
+  let idxErr = '';
+  const idxPages = {};                 // page numbers typed by the student: idxPages[templateId][rowIndex]
+  let idxAssets = null;
+  let ix = {};                         // Index screen elements
+
   /* ---------- small helpers ---------- */
   const clean = s => String(s || '').replace(/\s+/g, ' ').trim();
   const todayISO = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
@@ -66,6 +78,7 @@
   }
   EEE.fmtReg = fmtReg;
   const curTeacher = () => teachers.find(t => t.id === teacherId) || null;
+  const curIdx = () => idxList.find(t => t.id === idxId) || null;
   const missingGlyphs = s => Array.from(new Set(Array.from(clean(s)).filter(c => BM_GLYPHS.indexOf(c) === -1)));
 
   EEE.ICON.file = '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>';
@@ -80,7 +93,8 @@
 .cv-credit::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-20deg);animation:cvshine 3s ease-in-out infinite}
 @keyframes cvshine{0%,55%{left:-60%}100%{left:130%}}
 .cv-types{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.cv-type{padding:9px 16px;border-radius:999px;border:1px solid var(--b);background:#fff;font-size:14px;font-weight:700;color:var(--m);cursor:default}
+.cv-type{padding:9px 16px;border-radius:999px;border:1px solid var(--b);background:#fff;font-size:14px;font-weight:700;color:var(--m);cursor:pointer;font-family:inherit}
+.cv-type.soon{cursor:default}
 .cv-type.on{background:var(--g6);border-color:var(--g5);color:var(--g3)}
 .cv-type small{margin-left:6px;font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;padding:2px 8px;border-radius:999px}
 .cv-wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:start}
@@ -98,6 +112,9 @@
 .cv-trow .cv-tn{font-weight:700;word-break:break-word}
 .cv-trow .cv-td{font-size:12px;color:var(--m);word-break:break-word}
 .cv-admin{margin-top:20px;border:2px dashed #10b981}
+.cv-ir{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:8px;align-items:center;margin-bottom:8px}
+.cv-pg{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:10px;align-items:center;margin-bottom:8px}
+.cv-pg span{font-size:14px;line-height:1.35;word-break:break-word}
 /* dashboard promo card */
 .cv-promo{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 18px;margin-bottom:14px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399);box-shadow:0 8px 22px rgba(5,150,105,.28)}
 .cv-promo img{width:74px;height:auto;border-radius:6px;background:#fff;transform:rotate(-4deg);box-shadow:0 6px 16px rgba(0,0,0,.3);flex-shrink:0}
@@ -139,6 +156,19 @@
     })();
     assets.catch(() => { assets = null; });
     return assets;
+  }
+
+  function loadIdxAssets() {
+    if (idxAssets) return idxAssets;
+    idxAssets = (async () => {
+      const f = new FontFace('Index Font', 'url(index-font.ttf' + V + ')');
+      const img = new Image();
+      img.src = 'index-logo.png' + V;
+      await Promise.all([f.load().then(x => document.fonts.add(x)), img.decode()]);
+      return img;
+    })();
+    idxAssets.catch(() => { idxAssets = null; });
+    return idxAssets;
   }
 
   /* ---------- drawing the cover (same layout as the template) ---------- */
@@ -239,13 +269,76 @@
     }
   }
 
-  /* ---------- tiny PDF writer: one A4 page holding the cover as a JPEG ---------- */
+  /* ---------- drawing the Index (black and white, no blue) ---------- */
+  function wrapIdx(ctx, text, maxW) {
+    const lines = []; let cur = '';
+    String(text || '').split(' ').filter(Boolean).forEach(w => {
+      const t = cur ? cur + ' ' + w : w;
+      if (!cur || ctx.measureText(t).width <= maxW) cur = t; else { lines.push(cur); cur = w; }
+    });
+    if (cur || !lines.length) lines.push(cur);
+    return lines;
+  }
+
+  function drawIndex(canvas, logo, t, scale) {
+    const ctx = canvas.getContext('2d');
+    const KI = 1240 / 920, X0 = 67, X1 = 145, X2 = 704, X3 = 860, TOPY = 335;
+    const rows = t && Array.isArray(t.rows) ? t.rows : [];
+    ctx.font = '700 20px ' + IDXF;
+    const lines = rows.map(r => wrapIdx(ctx, clean(r.name), X2 - X1 - 26));
+    const hs = lines.map(l => Math.max(54, l.length * 27 + 24));
+    const bot = TOPY + 63 + hs.reduce((a, b) => a + b, 0);
+    const H = Math.max(1301, bot + 60);
+    canvas.width = Math.round(1240 * scale);
+    canvas.height = Math.round(H * KI * scale);
+    const k = KI * scale;
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 920, H);
+    ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    if (logo && logo.complete && logo.naturalWidth) ctx.drawImage(logo, 50, 30, 160, 160);
+    ctx.font = '700 74px ' + IDXF;
+    ctx.fillText('INDEX', 460, 128);
+
+    // course box: two lines, one for the course name and one for the course code
+    ctx.lineWidth = 2;
+    ctx.strokeRect(X0, 205, X3 - X0, 100);
+    const cl = [['Course Name: ', clean(t && t.course_name), 248], ['Course Code: ', clean(t && t.course_code), 288]];
+    cl.forEach(([a, b, y]) => {
+      let f = 22;
+      do { ctx.font = '700 ' + f + 'px ' + IDXF; f--; } while (ctx.measureText(a + b).width > X3 - X0 - 30 && f > 10);
+      ctx.fillText(a + b, 460, y);
+    });
+
+    // table
+    ctx.strokeRect(X0, TOPY, X3 - X0, bot - TOPY);
+    [X1, X2].forEach(v => { ctx.beginPath(); ctx.moveTo(v, TOPY); ctx.lineTo(v, bot); ctx.stroke(); });
+    const edges = [TOPY + 63];
+    hs.forEach(h => edges.push(edges[edges.length - 1] + h));
+    edges.forEach((e, i) => { if (i < edges.length - 1) { ctx.beginPath(); ctx.moveTo(X0, e); ctx.lineTo(X3, e); ctx.stroke(); } });
+    ctx.font = '700 22px ' + IDXF;
+    ctx.fillText('SL', (X0 + X1) / 2, TOPY + 28);
+    ctx.fillText('NO.', (X0 + X1) / 2, TOPY + 54);
+    ctx.fillText('NAME OF THE EXPERIMENT', (X1 + X2) / 2, TOPY + 40);
+    ctx.fillText('PAGE', (X2 + X3) / 2, TOPY + 40);
+    ctx.font = '700 20px ' + IDXF;
+    const pg = (t && idxPages[t.id]) || {};
+    rows.forEach((r, i) => {
+      const a = edges[i], h = hs[i], m = a + h / 2 + 7;
+      ctx.fillText(clean(r.sn), (X0 + X1) / 2, m);
+      const s = a + (h - lines[i].length * 27) / 2 + 20;
+      lines[i].forEach((l, j) => ctx.fillText(l, (X1 + X2) / 2, s + j * 27));
+      ctx.fillText(clean(pg[i]), (X2 + X3) / 2, m);
+    });
+  }
+
+  /* ---------- tiny PDF writer: one page holding the picture as a JPEG ---------- */
   function jpegToPdf(jpeg, w, h) {
     const enc = new TextEncoder();
     const chunks = []; const offsets = []; let pos = 0;
     const add = d => { const u = typeof d === 'string' ? enc.encode(d) : d; chunks.push(u); pos += u.length; };
     const begin = n => { offsets[n] = pos; add(n + ' 0 obj\n'); };
-    const PW = 595.28, PH = 841.89;
+    const PW = 595.28, PH = Math.max(841.89, PW * h / w);   // A4, or a taller page when the Index has many rows
     add('%PDF-1.4\n');
     add(new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));
     begin(1); add('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
@@ -256,7 +349,7 @@
     add(jpeg); add('\nendstream\nendobj\n');
     const content = 'q ' + PW + ' 0 0 ' + PH + ' 0 0 cm /Im0 Do Q';
     begin(5); add('<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream\nendobj\n');
-    begin(6); add('<< /Title (Lab Report Cover) /Producer (EEE-13 Class Fund) >>\nendobj\n');
+    begin(6); add('<< /Title (Lab Report) /Producer (EEE-13 Class Fund) >>\nendobj\n');
     const xref = pos;
     let x = 'xref\n0 7\n0000000000 65535 f \n';
     for (let i = 1; i <= 6; i++) x += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
@@ -275,7 +368,7 @@
   }
   const fileBase = () => 'Lab-Report-Cover-' + (clean(D.name) + '-' + clean(D.course_code)).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 50);
 
-  /* ---------- preview ---------- */
+  /* ---------- preview (cover) ---------- */
   let timer = null;
   function renderSoon() {
     if (!built) return;
@@ -283,7 +376,7 @@
     timer = setTimeout(renderPreview, 120);
   }
   async function renderPreview() {
-    if (!built) return;
+    if (!built || mode !== 'lab') return;
     try {
       const tpl = await loadAssets();
       ui.load.hidden = true; ui.canvas.hidden = false;
@@ -453,6 +546,272 @@
     page.appendChild(card);
   }
 
+  /* ---------- Index: templates from the database ---------- */
+  let idxTimer = null;
+  function idxSoon() {
+    clearTimeout(idxTimer);
+    idxTimer = setTimeout(renderIdxPreview, 120);
+  }
+
+  async function renderIdxPreview() {
+    if (!built || mode !== 'index' || !ix.canvas) return;
+    try {
+      const logo = await loadIdxAssets();
+      ix.load.hidden = true; ix.canvas.hidden = false;
+      drawIndex(ix.canvas, logo, curIdx(), 0.5);
+    } catch (e) {
+      console.error(e);
+      ix.load.hidden = false; ix.canvas.hidden = true;
+      ix.load.textContent = 'Could not load the Index files (index-logo.png and index-font.ttf). Please tell the admin.';
+    }
+  }
+
+  function fillIdxSelect() {
+    if (!built || !ix.sel) return;
+    const sel = ix.sel;
+    sel.innerHTML = '';
+    const first = el('option', '', idxList.length ? 'Select Index' : 'No Index added yet');
+    first.value = '';
+    sel.appendChild(first);
+    idxList.forEach(t => { const o = el('option', '', t.name); o.value = t.id; sel.appendChild(o); });
+    if (!idxList.some(t => t.id === idxId)) idxId = idxList.length ? idxList[0].id : '';
+    sel.value = idxId;
+    if (idxErr) {
+      ix.err.hidden = false;
+      ix.err.textContent = isAdmin() ? 'The Index list is not ready. (' + idxErr + ')' : 'The Index list is not ready yet. Please tell the admin.';
+    } else if (!idxList.length) {
+      ix.err.hidden = false;
+      ix.err.textContent = isAdmin() ? 'Create an Index in the box below.' : 'The admin has not added any Index yet.';
+    } else ix.err.hidden = true;
+  }
+
+  function renderIdxPages() {
+    if (!built || !ix.pages) return;
+    const t = curIdx();
+    ix.pages.innerHTML = '';
+    if (!t) return;
+    if (!idxPages[t.id]) idxPages[t.id] = {};
+    const pg = idxPages[t.id];
+    (t.rows || []).forEach((r, i) => {
+      const row = el('div', 'cv-pg');
+      row.appendChild(el('span', '', clean(r.sn) + '. ' + clean(r.name)));
+      const inp = el('input'); inp.maxLength = 12; inp.placeholder = 'Example: 01-09';
+      inp.value = pg[i] || '';
+      inp.addEventListener('input', () => { pg[i] = inp.value; idxSoon(); });
+      row.appendChild(inp);
+      ix.pages.appendChild(row);
+    });
+    if (!(t.rows || []).length) ix.pages.appendChild(el('p', 'empty', 'This Index has no rows yet.'));
+  }
+
+  function renderIdxAdmin() {
+    if (!built || !ix.arows) return;
+    const t = curIdx();
+    ix.aname.value = t ? t.name : '';
+    ix.acn.value = t ? (t.course_name || '') : '';
+    ix.acc.value = t ? (t.course_code || '') : '';
+    ix.aform.hidden = !t;
+    ix.arows.innerHTML = '';
+    if (!t) return;
+    (t.rows || []).forEach((r, i) => {
+      const row = el('div', 'cv-ir');
+      const sn = el('input'); sn.maxLength = 6; sn.value = r.sn || ''; sn.placeholder = 'SL';
+      const nm = el('input'); nm.maxLength = 120; nm.value = r.name || ''; nm.placeholder = 'Name of the experiment';
+      const del = el('button', 'btn danger sm', 'Remove');
+      sn.addEventListener('input', () => { r.sn = sn.value; idxSoon(); });
+      nm.addEventListener('input', () => { r.name = nm.value; renderIdxPagesLabels(); idxSoon(); });
+      del.addEventListener('click', () => {
+        t.rows.splice(i, 1);
+        idxPages[t.id] = {};
+        renderIdxAdmin(); renderIdxPages(); idxSoon();
+      });
+      row.appendChild(sn); row.appendChild(nm); row.appendChild(del);
+      ix.arows.appendChild(row);
+    });
+  }
+
+  function renderIdxPagesLabels() {
+    // keep the student list in step with the admin's typing, without losing page numbers
+    const t = curIdx();
+    if (!t || !ix.pages) return;
+    const spans = ix.pages.querySelectorAll('.cv-pg span');
+    (t.rows || []).forEach((r, i) => { if (spans[i]) spans[i].textContent = clean(r.sn) + '. ' + clean(r.name); });
+  }
+
+  async function loadIndex() {
+    const r = await db.from('index_templates').select('id, name, course_name, course_code, rows').order('name');
+    if (r.error) { idxErr = r.error.message || 'error'; idxList = []; }
+    else { idxErr = ''; idxList = (r.data || []).map(t => Object.assign(t, { rows: Array.isArray(t.rows) ? t.rows : [] })); }
+    fillIdxSelect();
+    renderIdxPages();
+    if (isAdmin()) renderIdxAdmin();
+    idxSoon();
+  }
+
+  async function makeIdxFile(kind) {
+    ix.msg.className = 'err'; ix.msg.textContent = '';
+    const t = curIdx();
+    if (!t) { ix.msg.textContent = 'Please select an Index first.'; return; }
+    const btn = kind === 'pdf' ? ix.pdf : ix.img;
+    const old = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Preparing...';
+    try {
+      const logo = await loadIdxAssets();
+      const cv = document.createElement('canvas');
+      drawIndex(cv, logo, t, 1);
+      const blob = await new Promise((res, rej) => cv.toBlob(b => (b ? res(b) : rej(new Error('Could not make the image'))), 'image/jpeg', 0.95));
+      const base = 'Index-' + (clean(t.course_code) || t.name).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+      if (kind === 'img') saveBlob(blob, base + '.jpg');
+      else {
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        saveBlob(jpegToPdf(bytes, cv.width, cv.height), base + '.pdf');
+      }
+      ix.msg.className = 'ok';
+      ix.msg.textContent = 'Your Index is ready. Check the download.';
+    } catch (e) {
+      console.error(e);
+      ix.msg.textContent = 'Could not make the file: ' + (e && e.message ? e.message : e);
+    }
+    btn.disabled = false; btn.textContent = old;
+  }
+
+  function buildIdxAdmin(parent) {
+    const card = el('div', 'card cv-admin');
+    card.appendChild(el('h2', '', 'Index templates (admin only)'));
+    card.appendChild(el('div', 'help', 'You set the course name, course code and the experiment rows. Students only type the page numbers. Press "Save changes" when you finish.'));
+
+    const form = el('div');
+    ix.aform = form;
+    const g = el('div', 'formgrid');
+    const a1 = el('div'); a1.appendChild(el('label', '', 'Index name (shown in the list)'));
+    ix.aname = el('input'); ix.aname.maxLength = 40; a1.appendChild(ix.aname);
+    const a2 = el('div'); a2.appendChild(el('label', '', 'Course name'));
+    ix.acn = el('input'); ix.acn.maxLength = 120; a2.appendChild(ix.acn);
+    const a3 = el('div'); a3.appendChild(el('label', '', 'Course code'));
+    ix.acc = el('input'); ix.acc.maxLength = 20; a3.appendChild(ix.acc);
+    g.appendChild(a1); g.appendChild(a2); g.appendChild(a3);
+    form.appendChild(g);
+    form.appendChild(el('div', 'sec', 'Rows (serial number and name of the experiment)'));
+    ix.arows = el('div');
+    form.appendChild(ix.arows);
+    const bar = el('div', 'cv-actions');
+    const addRow = el('button', 'btn ghost', '+ Add row');
+    const save = el('button', 'btn', 'Save changes');
+    const del = el('button', 'btn danger', 'Delete this Index');
+    bar.appendChild(addRow); bar.appendChild(save); bar.appendChild(del);
+    form.appendChild(bar);
+    card.appendChild(form);
+
+    const nb = el('div', 'cv-actions'); nb.style.marginTop = '14px';
+    const newBtn = el('button', 'btn ghost', '+ Create new Index');
+    nb.appendChild(newBtn);
+    card.appendChild(nb);
+    const msg = el('p', '');
+    card.appendChild(msg);
+
+    ix.aname.addEventListener('input', () => { const t = curIdx(); if (t) t.name = ix.aname.value; });
+    ix.acn.addEventListener('input', () => { const t = curIdx(); if (t) { t.course_name = ix.acn.value; idxSoon(); } });
+    ix.acc.addEventListener('input', () => { const t = curIdx(); if (t) { t.course_code = ix.acc.value; idxSoon(); } });
+
+    addRow.addEventListener('click', () => {
+      const t = curIdx(); if (!t) return;
+      t.rows.push({ sn: String(t.rows.length + 1).padStart(2, '0'), name: '' });
+      renderIdxAdmin(); renderIdxPages(); idxSoon();
+    });
+
+    save.addEventListener('click', async () => {
+      const t = curIdx(); if (!t) return;
+      msg.className = 'err'; msg.textContent = '';
+      const nn = clean(t.name);
+      if (nn.length < 2 || nn.length > 40) { msg.textContent = 'Index name must be 2 to 40 letters.'; return; }
+      const rows = t.rows.map(r => ({ sn: clean(r.sn), name: clean(r.name) }));
+      save.disabled = true;
+      const r = await db.from('index_templates').update({ name: nn, course_name: clean(t.course_name), course_code: clean(t.course_code), rows }).eq('id', t.id);
+      save.disabled = false;
+      if (r.error) {
+        msg.textContent = r.error.code === '23505' ? 'Another Index already has this name.' : 'Could not save: ' + r.error.message;
+        return;
+      }
+      msg.className = 'ok'; msg.textContent = 'Saved.';
+      toast('Index saved.');
+      loadIndex();
+    });
+
+    del.addEventListener('click', async () => {
+      const t = curIdx(); if (!t) return;
+      if (!confirm('Delete the Index "' + t.name + '"?')) return;
+      const r = await db.from('index_templates').delete().eq('id', t.id);
+      if (r.error) { toast('Could not delete: ' + r.error.message); return; }
+      toast('Index deleted.');
+      idxId = '';
+      loadIndex();
+    });
+
+    newBtn.addEventListener('click', async () => {
+      const n = prompt('Name of the new Index (example: Physics)');
+      if (n === null) return;
+      const nn = clean(n);
+      if (nn.length < 2 || nn.length > 40) { toast('Index name must be 2 to 40 letters.'); return; }
+      const r = await db.from('index_templates').insert({ name: nn, rows: [{ sn: '01', name: '' }] }).select('id').single();
+      if (r.error) {
+        toast(r.error.code === '23505' ? 'This name is already used.' : 'Could not create: ' + r.error.message);
+        return;
+      }
+      idxId = r.data.id;
+      toast('Index created. Now fill in the details and press Save changes.');
+      loadIndex();
+    });
+
+    parent.appendChild(card);
+  }
+
+  function buildIndexView(view) {
+    const wrap = el('div', 'cv-wrap');
+
+    const fc = el('div', 'card');
+    fc.appendChild(el('div', 'sec', 'Choose your Index'));
+    const tw = el('div');
+    tw.appendChild(el('label', '', 'Index'));
+    ix.sel = el('select');
+    ix.sel.addEventListener('change', () => {
+      idxId = ix.sel.value;
+      renderIdxPages();
+      if (isAdmin()) renderIdxAdmin();
+      idxSoon();
+    });
+    tw.appendChild(ix.sel);
+    ix.err = el('p', 'err'); ix.err.hidden = true; ix.err.style.margin = '8px 0 0';
+    tw.appendChild(ix.err);
+    fc.appendChild(tw);
+    fc.appendChild(el('div', 'sec', 'Page numbers'));
+    fc.appendChild(el('div', 'help', 'Type the page numbers of each experiment from your own lab report. Example: 01-09.'));
+    ix.pages = el('div');
+    fc.appendChild(ix.pages);
+    const act = el('div', 'cv-actions');
+    ix.pdf = el('button', 'btn', 'Download PDF');
+    ix.img = el('button', 'btn ghost', 'Save as image');
+    act.appendChild(ix.pdf); act.appendChild(ix.img);
+    fc.appendChild(act);
+    ix.msg = el('p', '');
+    fc.appendChild(ix.msg);
+    fc.appendChild(el('p', 'cv-note', 'Your page numbers are not saved anywhere. The Index is made on your own device.'));
+    wrap.appendChild(fc);
+
+    const pc = el('div', 'card cv-prev');
+    pc.appendChild(el('h2', '', 'Live preview'));
+    ix.load = el('div', 'cv-load', 'Loading preview...');
+    ix.canvas = document.createElement('canvas');
+    ix.canvas.hidden = true;
+    pc.appendChild(ix.load); pc.appendChild(ix.canvas);
+    wrap.appendChild(pc);
+    view.appendChild(wrap);
+
+    ix.pdf.addEventListener('click', () => makeIdxFile('pdf'));
+    ix.img.addEventListener('click', () => makeIdxFile('img'));
+
+    if (isAdmin()) buildIdxAdmin(view);
+  }
+
   /* ---------- the page ---------- */
   function field(grid, key) {
     const [label, max, hint] = FIELDS[key];
@@ -483,21 +842,38 @@
     Object.keys(inputs).forEach(k => { if (inputs[k].value !== D[k]) inputs[k].value = D[k]; });
   }
 
+  function setMode(m) {
+    mode = m;
+    if (!ui.labView) return;
+    ui.labView.hidden = m !== 'lab';
+    ui.idxView.hidden = m !== 'index';
+    ui.t1.classList.toggle('on', m === 'lab');
+    ui.t3.classList.toggle('on', m === 'index');
+    if (m === 'lab') renderSoon(); else idxSoon();
+  }
+
   function build(page) {
     page.innerHTML = '';
 
     const hero = el('div', 'cv-hero');
     hero.appendChild(el('h2', '', 'Cover Page Maker'));
-    hero.appendChild(el('p', '', 'Fill in your details and get a ready-to-print lab report cover page, made exactly like the department template.'));
+    hero.appendChild(el('p', '', 'Fill in your details and get a ready-to-print lab report cover page or Index, made exactly like the department template.'));
     hero.appendChild(credit());
     page.appendChild(hero);
 
     const types = el('div', 'cv-types');
-    const t1 = el('span', 'cv-type on', 'Lab Report');
-    const t2 = el('span', 'cv-type', 'Assignment'); t2.appendChild(el('small', '', 'Soon'));
-    const t3 = el('span', 'cv-type', 'Index'); t3.appendChild(el('small', '', 'Soon'));
+    const t1 = el('button', 'cv-type on', 'Lab Report');
+    const t2 = el('span', 'cv-type soon', 'Assignment'); t2.appendChild(el('small', '', 'Soon'));
+    const t3 = el('button', 'cv-type', 'Index');
+    t1.type = 'button'; t3.type = 'button';
     [t1, t2, t3].forEach(t => types.appendChild(t));
     page.appendChild(types);
+
+    const labView = el('div');
+    const idxView = el('div');
+    idxView.hidden = true;
+    page.appendChild(labView);
+    page.appendChild(idxView);
 
     const wrap = el('div', 'cv-wrap');
 
@@ -547,17 +923,21 @@
     canvas.hidden = true;
     pc.appendChild(load); pc.appendChild(canvas);
     wrap.appendChild(pc);
-    page.appendChild(wrap);
+    labView.appendChild(wrap);
 
-    ui = { teacher: sel, dept, terr, pdf, img, msg, load, canvas };
+    ui = { teacher: sel, dept, terr, pdf, img, msg, load, canvas, labView, idxView, t1, t3 };
     pdf.addEventListener('click', () => makeFile('pdf'));
     img.addEventListener('click', () => makeFile('img'));
 
-    if (isAdmin()) buildAdminCard(page);
+    if (isAdmin()) buildAdminCard(labView);
+    buildIndexView(idxView);
+    t1.addEventListener('click', () => setMode('lab'));
+    t3.addEventListener('click', () => setMode('index'));
     built = true;
     prefill();
     fillTeacherSelect();
-    if (isAdmin()) renderTeacherAdmin();
+    fillIdxSelect();
+    if (isAdmin()) { renderTeacherAdmin(); renderIdxAdmin(); }
   }
 
   function markSeen() {
@@ -571,7 +951,7 @@
       markSeen();
       if (!built) build(page); else prefill();
       renderSoon();
-      await loadTeachers();
+      await Promise.all([loadTeachers(), loadIndex()]);
     }
   });
 
@@ -589,7 +969,7 @@
     p.appendChild(img);
     const t = el('div', 'cv-pt');
     t.appendChild(el('h3', '', 'Make your lab report cover page'));
-    t.appendChild(el('p', '', 'Fill in a short form and download a ready-to-print cover page in the department template.'));
+    t.appendChild(el('p', '', 'Fill in a short form and download a ready-to-print cover page or Index in the department template.'));
     t.appendChild(credit());
     p.appendChild(t);
     const b = el('button', 'btn', 'Create cover page →');
